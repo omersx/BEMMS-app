@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: bemms_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: bemms
+      POSTGRES_PASSWORD: bemms_dev_password
+      POSTGRES_DB: bemms_db
+    volumes:
+      - bemms_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bemms -d bemms_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      target: runner
+    container_name: bemms_app
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://bemms:bemms_dev_password@db:5432/bemms_db
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your-secret-key-change-in-production
+      - ADMIN_EMAIL=admin@bemms.local
+      - ADMIN_PASSWORD=Admin123!@#
+      - ADMIN_FULL_NAME=System Administrator
+      - NODE_ENV=development
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+
+volumes:
+  bemms_postgres_data:
