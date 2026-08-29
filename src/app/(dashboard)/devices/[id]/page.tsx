@@ -1,37 +1,37 @@
-import { getDeviceById } from "@/lib/actions/devices"
-import { getDeviceStatusHistory, getDeviceLocationHistory } from "@/lib/actions/devices"
+import { getDeviceById, getDeviceStatusHistory, getDeviceLocationHistory } from "@/lib/actions/devices"
 import { getActiveQrLabel } from "@/lib/actions/qr"
+import { getDeviceActiveTickets } from "@/lib/actions/tickets"
 import { PageHeader } from "@/components/shared/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DeviceStatusBadge, CriticalityBadge, RiskClassBadge } from "@/components/devices/device-badges"
 import { DeviceAvailabilityBanner } from "@/components/devices/device-availability-banner"
-import { DeviceStatusTimeline } from "@/components/devices/device-timelines"
-import { DeviceLocationTimeline } from "@/components/devices/device-timelines"
-import { Edit, QrCode, ArrowLeftRight, Activity } from "lucide-react"
+import { DeviceStatusTimeline, DeviceLocationTimeline } from "@/components/devices/device-timelines"
+import { TicketStatusBadge } from "@/components/tickets/ticket-badges"
+import { Edit, QrCode, ArrowLeftRight, Activity, AlertTriangle, Plus } from "lucide-react"
 import Link from "next/link"
 import { use } from "react"
 
 export default function DeviceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-
-  // We need to call these in a server component context — use async wrapper
   return <DeviceDetailContent deviceId={id} />
 }
 
 async function DeviceDetailContent({ deviceId }: { deviceId: string }) {
-  const [deviceResult, statusResult, locationResult, qrResult] = await Promise.all([
+  const [deviceResult, statusResult, locationResult, qrResult, ticketsResult] = await Promise.all([
     getDeviceById(deviceId),
     getDeviceStatusHistory(deviceId),
     getDeviceLocationHistory(deviceId),
     getActiveQrLabel(deviceId),
+    getDeviceActiveTickets(deviceId)
   ])
 
   const device = deviceResult?.success ? deviceResult.data : null
   const statusHistory = (statusResult?.success && Array.isArray(statusResult.data)) ? statusResult.data : []
   const locationHistory = (locationResult?.success && Array.isArray(locationResult.data)) ? locationResult.data : []
   const qrLabel = qrResult?.success ? qrResult.data : null
+  const activeTickets = (ticketsResult?.success && Array.isArray(ticketsResult.data)) ? ticketsResult.data : []
 
   if (!device) {
     return <div className="p-8 text-center text-muted-foreground">Device not found</div>
@@ -43,7 +43,12 @@ async function DeviceDetailContent({ deviceId }: { deviceId: string }) {
         title={device.name}
         description={`${device.internalCode} — Asset #${device.assetNumber}`}
       >
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/tickets/create?deviceId=${deviceId}&source=device_profile`}>
+            <Button variant="default" size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
+              <AlertTriangle className="w-4 h-4 mr-2" /> Report Problem
+            </Button>
+          </Link>
           <Link href={`/devices/${deviceId}/qr`}>
             <Button variant="outline" size="sm">
               <QrCode className="w-4 h-4 mr-2" /> QR Code
@@ -62,6 +67,7 @@ async function DeviceDetailContent({ deviceId }: { deviceId: string }) {
           </Button>
         </div>
       </PageHeader>
+
 
       <DeviceAvailabilityBanner
         status={device.currentStatusCode}
@@ -181,8 +187,40 @@ async function DeviceDetailContent({ deviceId }: { deviceId: string }) {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Active Tickets Display */}
+            {activeTickets.length > 0 && (
+              <Card className="md:col-span-2 border-amber-200">
+                <CardHeader className="bg-amber-50/50 pb-4">
+                  <CardTitle className="text-amber-900 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-amber-600" /> 
+                    Active Service Tickets
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 grid gap-3">
+                  {activeTickets.map(t => (
+                    <div key={t.id} className="flex flex-col md:flex-row md:items-center justify-between p-3 rounded-lg border bg-card gap-4">
+                      <div className="space-y-1">
+                        <Link href={`/tickets/${t.id}`} className="font-medium hover:underline text-primary flex items-center gap-2">
+                          <span className="font-mono text-xs px-1.5 py-0.5 bg-muted rounded">{t.ticketNumber}</span>
+                          {t.title}
+                        </Link>
+                        <p className="text-sm text-muted-foreground line-clamp-1">{t.description}</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <TicketStatusBadge status={t.statusCode} />
+                        <Link href={`/tickets/${t.id}`}>
+                          <Button variant="outline" size="sm">View</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
+
 
         <TabsContent value="technical" className="mt-6">
           <Card>

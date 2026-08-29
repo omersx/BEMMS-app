@@ -32,3 +32,49 @@ export const transferReasonEnum = pgEnum('transfer_reason', [
   'replacement', 'workshop', 'storage', 'other'
 ]);
 export const refDataStatusEnum = pgEnum('ref_data_status', ['active', 'archived']);
+
+// Phase 4: Helpdesk Tickets enums
+export const ticketStatusCodeEnum = pgEnum('ticket_status_code', [
+  'new', 'acknowledged', 'in_triage', 'in_progress',
+  'waiting_requester', 'waiting_parts_vendor',
+  'resolved', 'closed', 'cancelled'
+]);
+export const ticketPriorityCodeEnum = pgEnum('ticket_priority_code', [
+  'p1_critical', 'p2_high', 'p3_normal', 'p4_low'
+]);
+export const ticketTypeCodeEnum = pgEnum('ticket_type_code', [
+  'device_problem', 'urgent_equipment_concern', 'maintenance_request',
+  'inspection_request', 'calibration_request', 'pm_followup'
+]);
+export const ticketSourceEnum = pgEnum('ticket_source', [
+  'qr_scan', 'department_device_selection', 'device_profile', 'manual_entry', 'import'
+]);
+export const reportedImpactCodeEnum = pgEnum('reported_impact_code', [
+  'device_usable', 'device_not_usable', 'patient_care_affected'
+]);
+export const reporterProblemCategoryCodeEnum = pgEnum('reporter_problem_category_code', [
+  'power_issue', 'device_not_starting', 'display_interface', 'alarm_problem',
+  'sensor_accessory', 'electrical_concern', 'mechanical_damage',
+  'software_configuration', 'performance_concern', 'maintenance_request', 'other'
+]);
+export const maintenanceTypeCodeEnum = pgEnum('maintenance_type_code', [
+  'preventive_maintenance', 'corrective_maintenance', 'troubleshooting',
+  'inspection', 'calibration', 'electrical_safety_testing',
+  'performance_testing', 'installation_commissioning',
+  'software_configuration', 'decommissioning'
+]);
+export const technicalProblemCategoryCodeEnum = pgEnum('technical_problem_category_code', [
+  'electrical_power', 'display_user_interface', 'alarm_safety',
+  'sensor_measurement', 'mechanical', 'software_configuration',
+  'performance_output', 'accessory_consumable', 'physical_damage',
+  'communication_network', 'no_fault_found', 'other'
+]);
+export const ticketCommentVisibilityEnum = pgEnum('ticket_comment_visibility', [
+  'public', 'internal', 'restricted'
+]);
+export const ticketEventTypeEnum = pgEnum('ticket_event_type', [
+  'created', 'acknowledged', 'triaged', 'assigned', 'reassigned',
+  'accepted', 'status_changed', 'priority_changed', 'waiting_for_info',
+  'info_received', 'maintenance_task_linked', 'resolved', 'closed',
+  'cancelled', 'reopened'
+]);

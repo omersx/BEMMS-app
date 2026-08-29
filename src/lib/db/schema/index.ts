@@ -11,3 +11,4 @@ export * from './audit-logs';
 export * from './device-categories';
 export * from './manufacturers';
 export * from './devices';
+export * from './tickets';
