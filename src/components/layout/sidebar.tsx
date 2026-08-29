@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   LayoutDashboard, QrCode, Monitor, TicketCheck, Wrench, BarChart3,
-  Bell, Settings, Activity, ChevronLeft, ChevronRight, AlertTriangle
+  Bell, Settings, Activity, ChevronLeft, ChevronRight, AlertTriangle,
+  ClipboardList, Calendar, CheckSquare
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,9 @@ export function Sidebar({ user }: SidebarProps) {
     { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck },
     { href: '/tickets/triage', label: 'Triage Queue', icon: AlertTriangle },
     { href: '/maintenance', label: 'Maintenance', icon: Wrench },
+    { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList },
+    { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar },
+    { href: '/maintenance/checklists', label: 'Checklists', icon: CheckSquare },
     { href: '/reports', label: 'Reports', icon: BarChart3 },
     { href: '/notifications', label: 'Notifications', icon: Bell },
   ]
@@ -60,7 +64,10 @@ export function Sidebar({ user }: SidebarProps) {
         <nav className="space-y-1 px-2">
           <TooltipProvider delayDuration={0}>
             {links.map((link) => {
-              const active = pathname === link.href || (link.href !== '/tickets' && pathname.startsWith(link.href + '/')) || (link.href === '/tickets' && pathname.startsWith('/tickets') && !pathname.startsWith('/tickets/triage'))
+              const active = pathname === link.href || 
+                (link.href !== '/tickets' && link.href !== '/maintenance' && pathname.startsWith(link.href + '/')) || 
+                (link.href === '/tickets' && pathname.startsWith('/tickets') && !pathname.startsWith('/tickets/triage')) ||
+                (link.href === '/maintenance' && pathname === '/maintenance')
               return (
                 <Tooltip key={link.href}>
                   <TooltipTrigger asChild>
