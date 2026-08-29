@@ -78,3 +78,43 @@ export const ticketEventTypeEnum = pgEnum('ticket_event_type', [
   'info_received', 'maintenance_task_linked', 'resolved', 'closed',
   'cancelled', 'reopened'
 ]);
+
+// Phase 5: Maintenance enums
+export const maintenanceTaskStatusCodeEnum = pgEnum('maintenance_task_status_code', [
+  'draft', 'assigned', 'in_progress', 'waiting_dependency',
+  'work_complete', 'awaiting_review', 'returned_for_rework',
+  'awaiting_release', 'closed', 'cancelled'
+]);
+export const maintenancePlanStatusEnum = pgEnum('maintenance_plan_status', [
+  'active', 'paused', 'archived'
+]);
+export const pmCalculationMethodEnum = pgEnum('pm_calculation_method', [
+  'fixed_calendar', 'completion_based'
+]);
+export const occurrenceDueStateEnum = pgEnum('occurrence_due_state', [
+  'scheduled', 'due_soon', 'due_today', 'overdue', 'completed', 'deferred', 'cancelled'
+]);
+export const checklistResultCodeEnum = pgEnum('checklist_result_code', [
+  'passed', 'failed', 'not_applicable', 'requires_follow_up'
+]);
+export const maintenanceFinalResultCodeEnum = pgEnum('maintenance_final_result_code', [
+  'passed', 'passed_with_limitations', 'failed', 'no_fault_found',
+  'decommission_recommended', 'requires_external_service'
+]);
+export const signaturePurposeEnum = pgEnum('signature_purpose', [
+  'accept', 'perform', 'review', 'approve', 'release',
+  'resolve', 'close', 'reject', 'amend', 'void'
+]);
+export const signatureAuthMethodEnum = pgEnum('signature_auth_method', [
+  'password_reauth', 'signing_pin', 'passkey', 'session_challenge'
+]);
+export const signatureStatusEnum = pgEnum('signature_status', [
+  'active', 'superseded', 'rejected', 'voided'
+]);
+export const costTypeEnum = pgEnum('cost_type', [
+  'part', 'vendor_service', 'labor', 'transport', 'other'
+]);
+export const recordVersionEntityTypeEnum = pgEnum('record_version_entity_type', [
+  'maintenance_record', 'device_status_change', 'calibration_record',
+  'test_record', 'ticket_resolution'
+]);
