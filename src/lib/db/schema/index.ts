@@ -12,6 +12,7 @@ export * from './device-categories';
 export * from './manufacturers';
 export * from './devices';
 export * from './tickets';
+export * from './maintenance-plans';
 export * from './maintenance-tasks';
 export * from './maintenance-records';
 export * from './signatures';
