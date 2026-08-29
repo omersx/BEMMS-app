@@ -57,7 +57,7 @@ Establish the complete production project skeleton with authentication, authoriz
 - [x] **Phase 2:** Organization Structure & Administration (`COMPLETE`)
 - [x] **Phase 3:** Equipment Lifecycle & QR Code Management (`COMPLETE`)
 - [x] **Phase 4:** Helpdesk Tickets (`COMPLETE`)
-- [ ] **Phase 5:** Maintenance (`IN_PROGRESS`)
+- [x] **Phase 5:** Maintenance (`COMPLETE`)
 
 ### Status: `COMPLETE`
 
@@ -158,7 +158,11 @@ Enable hospital staff to report device problems and biomedical teams to triage, 
 
 ---
 
-## Phase 5: Maintenance — `IN_PROGRESS`
+## Phase 5: Maintenance
+
+- **Status:** **COMPLETE**
+- **In-Scope:** Preventive Maintenance (PM), Work Orders, Checklists, Signatures
+- **Acceptance:** PM schedule engine, Parts & Costs, e-Signatures with SHA-256.
 
 ### Objective & Business Value
 Implement preventive and corrective maintenance workflows including PM scheduling, checklist execution, parts/cost tracking, electronic signatures, and immutable maintenance records.
