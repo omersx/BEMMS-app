@@ -36,7 +36,7 @@ export async function requireRole(...roles: RoleCode[]): Promise<SessionUser> {
   return user;
 }
 
-export async function requireScope(params: { organizationId?: string, hospitalId?: string, departmentId?: string }): Promise<SessionUser> {
+export async function requireScope(params: { organizationId?: string, hospitalId?: string, departmentId?: string, locationId?: string }): Promise<SessionUser> {
   const user = await requireAuth();
   
   if (user.roles.includes('SYS_ADMIN')) {
@@ -52,6 +52,7 @@ export async function requireScope(params: { organizationId?: string, hospitalId
     if (params.organizationId && scope.organizationId && scope.organizationId !== params.organizationId) match = false;
     if (params.hospitalId && scope.hospitalId && scope.hospitalId !== params.hospitalId) match = false;
     if (params.departmentId && scope.departmentId && scope.departmentId !== params.departmentId) match = false;
+    if (params.locationId && scope.locationId && scope.locationId !== params.locationId) match = false;
     return match;
   });
 
