@@ -8,3 +8,6 @@ export * from './roles';
 export * from './user-assignments';
 export * from './sessions';
 export * from './audit-logs';
+export * from './device-categories';
+export * from './manufacturers';
+export * from './devices';
