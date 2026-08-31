@@ -676,7 +676,7 @@ export function TaskActionBar({
 
           <form onSubmit={handleSignAndSubmit} className="space-y-4 pt-2">
             <blockquote className="rounded-md border-l-2 border-primary/50 bg-muted/40 p-3 text-xs italic text-foreground/90">
-              "I confirm that I performed the recorded maintenance/inspection and the details entered are accurate."
+              &quot;I confirm that I performed the recorded maintenance/inspection and the details entered are accurate.&quot;
             </blockquote>
 
             <div className="space-y-1.5">
@@ -756,7 +756,7 @@ export function TaskActionBar({
             {reviewDecision === "approve" ? (
               <>
                 <blockquote className="rounded-md border-l-2 border-purple-500 bg-purple-50/40 dark:bg-purple-950/20 p-3 text-xs italic text-foreground/90">
-                  "I have reviewed the findings, checklist, test results, and parts used, and verify technical completeness."
+                  &quot;I have reviewed the findings, checklist, test results, and parts used, and verify technical completeness.&quot;
                 </blockquote>
                 <div className="space-y-1.5">
                   <Label htmlFor="review-notes">Review Notes (Optional)</Label>
@@ -840,7 +840,7 @@ export function TaskActionBar({
 
           <form onSubmit={handleReleaseDevice} className="space-y-4 pt-2">
             <blockquote className="rounded-md border-l-2 border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20 p-3 text-xs italic text-foreground/90">
-              "I authorize the release of this medical device for clinical use with the specified status."
+              &quot;I authorize the release of this medical device for clinical use with the specified status.&quot;
             </blockquote>
 
             <div className="space-y-1.5">

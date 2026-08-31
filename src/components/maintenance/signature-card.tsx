@@ -267,7 +267,7 @@ export function SignatureCard({ signature, className }: SignatureCardProps) {
         {/* Attestation Text in Quote Block */}
         {signature?.attestationTextVersion && (
           <blockquote className="relative rounded-r-md border-l-2 border-primary/50 bg-muted/40 px-3 py-2 text-xs italic text-foreground/90 leading-relaxed">
-            "{signature.attestationTextVersion}"
+            &quot;{signature.attestationTextVersion}&quot;
           </blockquote>
         )}
 
