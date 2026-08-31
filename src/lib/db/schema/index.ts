@@ -16,3 +16,4 @@ export * from './maintenance-plans';
 export * from './maintenance-tasks';
 export * from './maintenance-records';
 export * from './signatures';
+export * from './report-history';
