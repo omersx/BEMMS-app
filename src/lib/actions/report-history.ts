@@ -17,6 +17,9 @@ export async function saveReportToHistory(params: {
   fileName: string;
 }) {
   const user = await requireAuth();
+  if (!user.organizationId) {
+    throw new Error('Organization ID required');
+  }
   
   const [report] = await db.insert(generatedReports).values({
     organizationId: user.organizationId,
@@ -38,6 +41,7 @@ export async function saveReportToHistory(params: {
 export async function getReportHistory() {
   const user = await requireAuth();
   await requirePermission('REPORTS', 'VIEW');
+  if (!user.organizationId) return [];
   
   return db.query.generatedReports.findMany({
     where: eq(generatedReports.organizationId, user.organizationId),
@@ -54,6 +58,7 @@ export async function getReportHistory() {
 export async function getReportById(id: string) {
   const user = await requireAuth();
   await requirePermission('REPORTS', 'VIEW');
+  if (!user.organizationId) return null;
   
   const report = await db.query.generatedReports.findFirst({
     where: and(

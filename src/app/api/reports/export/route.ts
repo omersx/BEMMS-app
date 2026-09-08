@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
     let columns: { key: string; header: string }[] = [];
 
     if (reportType === 'inventory') {
-      const results = await getInventoryReport(filters);
+      const results = await getInventoryReport(filters as any);
       data = results;
       columns = [
         { key: 'groupId', header: 'Group' },
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
         { key: 'decommissionedCount', header: 'Decommissioned' }
       ];
     } else if (reportType === 'tickets') {
-      const results = await getTicketPerformanceReport(filters);
+      const results = await getTicketPerformanceReport(filters as any);
       data = [results];
       columns = [
         { key: 'total', header: 'Total Tickets' },
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
         { key: 'priorityP4', header: 'P4 Low' }
       ];
     } else if (reportType === 'costs') {
-      const results = await getCostReport(filters);
+      const results = await getCostReport(filters as any);
       data = results.byCostType;
       columns = [
         { key: 'costType', header: 'Cost Type' },
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
         { key: 'count', header: 'Record Count' }
       ];
     } else if (reportType === 'workload') {
-      const results = await getWorkloadReport(filters);
+      const results = await getWorkloadReport(filters as any);
       data = results;
       columns = [
         { key: 'engineerId', header: 'Engineer ID' },

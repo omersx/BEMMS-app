@@ -90,7 +90,7 @@ export default async function WorkloadReportPage({ searchParams }: { searchParam
                   <div className="text-sm grid grid-cols-2 gap-2">
                     <span className="text-muted-foreground">Assigned: {item.assignedCount}</span>
                     <span className="text-green-600 font-medium">Completed: {item.completedCount}</span>
-                    <span className="text-red-600 font-medium col-span-2">P1 Critical Completed: {item.priorityP1Completed}</span>
+                    <span className="text-red-600 font-medium col-span-2">P1 Critical: {item.priorityP1Count}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -101,11 +101,11 @@ export default async function WorkloadReportPage({ searchParams }: { searchParam
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Engineer Name</TableHead>
-                  <TableHead className="text-right">Assigned Tasks</TableHead>
-                  <TableHead className="text-right">Completed Tasks</TableHead>
-                  <TableHead className="text-right text-red-600">P1 Critical Completed</TableHead>
-                  <TableHead className="text-right">Completion Rate</TableHead>
+                  <TableHead>Engineer</TableHead>
+                  <TableHead className="text-right">Assigned</TableHead>
+                  <TableHead className="text-right text-green-600">Completed</TableHead>
+                  <TableHead className="text-right text-red-600">P1 Critical</TableHead>
+                  <TableHead className="text-right">PM Rate</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -114,7 +114,7 @@ export default async function WorkloadReportPage({ searchParams }: { searchParam
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell className="text-right">{item.assignedCount}</TableCell>
                     <TableCell className="text-right font-medium text-green-600">{item.completedCount}</TableCell>
-                    <TableCell className="text-right font-medium text-red-600">{item.priorityP1Completed}</TableCell>
+                    <TableCell className="text-right font-medium text-red-600">{item.priorityP1Count}</TableCell>
                     <TableCell className="text-right">
                       {item.assignedCount > 0 ? ((item.completedCount / item.assignedCount) * 100).toFixed(1) : 0}%
                     </TableCell>
