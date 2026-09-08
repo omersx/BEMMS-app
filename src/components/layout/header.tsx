@@ -1,15 +1,15 @@
 'use client'
 
-import { Bell, Search, Activity, LogOut, User, Settings } from 'lucide-react'
+import { Search, Activity, LogOut, User, Settings } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 
 export function Header({ user }: { user: { name: string; role: string; email: string } }) {
   return (
@@ -31,11 +31,7 @@ export function Header({ user }: { user: { name: string; role: string; email: st
       </div>
 
       <div className="flex items-center gap-4 ml-auto md:ml-0">
-        <Button variant="ghost" size="icon" className="relative min-h-[44px] min-w-[44px]">
-          <Bell className="h-5 w-5" />
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 rounded-full">3</Badge>
-          <span className="sr-only">Notifications</span>
-        </Button>
+        <NotificationBell />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

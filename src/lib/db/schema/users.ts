@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, jsonb } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { userAccountStatusEnum } from './enums';
 import { organizations } from './organizations';
@@ -14,6 +14,15 @@ export const users = pgTable('users', {
   organizationId: uuid('organization_id').references(() => organizations.id),
   accountStatus: userAccountStatusEnum('account_status').default('invited'),
   avatarUrl: text('avatar_url'),
+  notificationPreferences: jsonb('notification_preferences').$type<{
+    pushEnabled: boolean;
+    categories: {
+      tickets: boolean;
+      maintenance: boolean;
+      devices: boolean;
+      system: boolean;
+    };
+  }>(),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

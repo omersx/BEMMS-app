@@ -118,3 +118,11 @@ export const recordVersionEntityTypeEnum = pgEnum('record_version_entity_type', 
   'maintenance_record', 'device_status_change', 'calibration_record',
   'test_record', 'ticket_resolution'
 ]);
+
+// Phase 7: Notification enums
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'ticket_assigned', 'ticket_updated', 'ticket_comment',
+  'pm_due_soon', 'pm_overdue', 'calibration_due',
+  'task_review_required', 'task_approved', 'task_rejected',
+  'device_status_changed', 'sla_warning', 'system_alert'
+]);
