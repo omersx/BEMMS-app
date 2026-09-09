@@ -11,8 +11,8 @@ export function MobileNav() {
   const tabs = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/scan', label: 'Scan', icon: QrCode },
-    { href: '/tickets/report', label: 'Report', icon: PlusCircle },
-    { href: '/dashboard/my-work', label: 'My Work', icon: ClipboardList },
+    { href: '/tickets/create', label: 'Report', icon: PlusCircle },
+    { href: '/maintenance/tasks', label: 'Work', icon: ClipboardList },
     { href: '/more', label: 'More', icon: Menu },
   ]
 
