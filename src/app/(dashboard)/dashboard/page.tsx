@@ -108,16 +108,14 @@ async function StaffDashboard({ stats, userId }: { stats: any; userId: string })
         <StatCard
           title="Open Tickets"
           value={stats?.openTickets || 0}
-          icon={TicketCheck}
+          icon={<TicketCheck className="h-4 w-4 text-orange-500" />}
           href="/tickets?status=open"
-          color="text-orange-500"
         />
         <StatCard
           title="Devices Available"
           value={stats?.activeDevices || 0}
-          icon={Monitor}
+          icon={<Monitor className="h-4 w-4 text-green-500" />}
           href="/devices?status=operational"
-          color="text-green-500"
         />
       </div>
     </>
@@ -143,32 +141,28 @@ async function BMEDashboard({ stats }: { stats: any }) {
           <StatCard
             title="Critical Tickets"
             value={stats.criticalTickets}
-            icon={ShieldAlert}
+            icon={<ShieldAlert className="h-4 w-4 text-red-500" />}
             href="/tickets?priority=p1_critical"
-            color="text-red-500"
           />
         )}
         <StatCard
           title="Untriaged"
           value={triage.length}
-          icon={AlertTriangle}
+          icon={<AlertTriangle className="h-4 w-4 text-amber-500" />}
           href="/tickets/triage"
-          color="text-amber-500"
         />
         <StatCard
           title="Due / Overdue"
           value={`${maintenanceDue.due_today + maintenanceDue.overdue}`}
-          icon={Clock}
+          icon={<Clock className={`h-4 w-4 ${maintenanceDue.overdue > 0 ? 'text-red-500' : 'text-yellow-500'}`} />}
           href="/maintenance/tasks?due=today"
-          color={maintenanceDue.overdue > 0 ? 'text-red-500' : 'text-yellow-500'}
           trend={maintenanceDue.overdue > 0 ? `${maintenanceDue.overdue} overdue` : undefined}
         />
         <StatCard
           title="Out of Service"
           value={stats?.outOfService || 0}
-          icon={AlertTriangle}
+          icon={<AlertTriangle className="h-4 w-4 text-red-500" />}
           href="/devices?status=out_of_service"
-          color="text-red-500"
         />
       </div>
 
@@ -242,30 +236,26 @@ async function ManagerDashboard({ stats }: { stats: any }) {
         <StatCard
           title="Critical Tickets"
           value={stats?.criticalTickets || 0}
-          icon={ShieldAlert}
+          icon={<ShieldAlert className="h-4 w-4 text-red-500" />}
           href="/tickets?priority=p1_critical"
-          color="text-red-500"
         />
         <StatCard
           title="Overdue Maintenance"
           value={maintenanceDue.overdue}
-          icon={Clock}
+          icon={<Clock className={`h-4 w-4 ${maintenanceDue.overdue > 0 ? 'text-red-500' : 'text-green-500'}`} />}
           href="/maintenance/tasks?due=overdue"
-          color={maintenanceDue.overdue > 0 ? 'text-red-500' : 'text-green-500'}
         />
         <StatCard
           title="Out of Service"
           value={stats?.outOfService || 0}
-          icon={AlertTriangle}
+          icon={<AlertTriangle className="h-4 w-4 text-red-500" />}
           href="/devices?status=out_of_service"
-          color="text-red-500"
         />
         <StatCard
           title="PM Compliance"
           value={`${complianceRate}%`}
-          icon={ClipboardCheck}
+          icon={<ClipboardCheck className={`h-4 w-4 ${complianceRate >= 90 ? 'text-green-500' : 'text-amber-500'}`} />}
           href="/reports/maintenance"
-          color={complianceRate >= 90 ? 'text-green-500' : 'text-amber-500'}
         />
       </div>
 
@@ -274,30 +264,26 @@ async function ManagerDashboard({ stats }: { stats: any }) {
         <StatCard
           title="Total Devices"
           value={stats?.totalDevices || 0}
-          icon={Monitor}
+          icon={<Monitor className="h-4 w-4 text-blue-500" />}
           href="/devices"
-          color="text-blue-500"
         />
         <StatCard
           title="Open Tickets"
           value={stats?.openTickets || 0}
-          icon={TicketCheck}
+          icon={<TicketCheck className="h-4 w-4 text-orange-500" />}
           href="/tickets?status=open"
-          color="text-orange-500"
         />
         <StatCard
           title="Untriaged"
           value={triage.length}
-          icon={AlertTriangle}
+          icon={<AlertTriangle className="h-4 w-4 text-amber-500" />}
           href="/tickets/triage"
-          color="text-amber-500"
         />
         <StatCard
           title="Awaiting Review"
           value={review.length}
-          icon={Wrench}
+          icon={<Wrench className="h-4 w-4 text-purple-500" />}
           href="/maintenance/tasks?status=awaiting_review"
-          color="text-purple-500"
         />
       </div>
 
@@ -340,30 +326,26 @@ async function AdminDashboard({ stats }: { stats: any }) {
         <StatCard
           title="Total Devices"
           value={stats?.totalDevices || 0}
-          icon={Monitor}
+          icon={<Monitor className="h-4 w-4 text-blue-500" />}
           href="/devices"
-          color="text-blue-500"
         />
         <StatCard
           title="Open Tickets"
           value={stats?.openTickets || 0}
-          icon={TicketCheck}
+          icon={<TicketCheck className="h-4 w-4 text-orange-500" />}
           href="/tickets"
-          color="text-orange-500"
         />
         <StatCard
           title="Out of Service"
           value={stats?.outOfService || 0}
-          icon={AlertTriangle}
+          icon={<AlertTriangle className="h-4 w-4 text-red-500" />}
           href="/devices?status=out_of_service"
-          color="text-red-500"
         />
         <StatCard
           title="PM Compliance"
           value={`${stats?.pmComplianceRate || 100}%`}
-          icon={ClipboardCheck}
+          icon={<ClipboardCheck className="h-4 w-4 text-green-500" />}
           href="/reports/maintenance"
-          color="text-green-500"
         />
       </div>
 
@@ -382,16 +364,14 @@ function GenericDashboard({ stats }: { stats: any }) {
         <StatCard
           title="Total Devices"
           value={stats?.totalDevices || 0}
-          icon={Monitor}
+          icon={<Monitor className="h-4 w-4 text-blue-500" />}
           href="/devices"
-          color="text-blue-500"
         />
         <StatCard
           title="Open Tickets"
           value={stats?.openTickets || 0}
-          icon={TicketCheck}
+          icon={<TicketCheck className="h-4 w-4 text-orange-500" />}
           href="/tickets"
-          color="text-orange-500"
         />
       </div>
     </>

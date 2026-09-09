@@ -11,9 +11,10 @@ interface ActionButtonsProps {
 }
 
 export function ActionButtons({ role, triageCount = 0 }: ActionButtonsProps) {
-  const isStaff = role === 'STAFF' || role === 'DEPT_MGR';
-  const isBiomed = role.startsWith('BIOMED');
-  const isAdmin = role.includes('ADMIN');
+  const normalizedRole = (role || '').toUpperCase();
+  const isStaff = normalizedRole === 'STAFF' || normalizedRole === 'DEPT_MGR';
+  const isBiomed = normalizedRole.startsWith('BIOMED') || normalizedRole === 'BME';
+  const isAdmin = normalizedRole.includes('ADMIN');
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
