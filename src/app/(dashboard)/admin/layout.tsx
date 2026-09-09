@@ -8,7 +8,6 @@ const adminNav = [
   { title: "Dashboard", href: "/admin" },
   { title: "Organizations", href: "/admin/organizations" },
   { title: "Hospitals", href: "/admin/hospitals" },
-  { title: "Departments", href: "/admin/departments" },
   { title: "Users", href: "/admin/users" },
   { title: "Roles", href: "/admin/roles" },
   { title: "Audit Logs", href: "/admin/audit-logs" },

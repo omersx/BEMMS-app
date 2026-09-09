@@ -163,13 +163,6 @@ export default async function MorePage() {
                 color: 'text-blue-500 bg-blue-50 dark:bg-blue-950',
               },
               {
-                label: 'Departments',
-                description: 'Manage hospital departments and units',
-                href: '/admin/departments',
-                icon: Building,
-                color: 'text-sky-500 bg-sky-50 dark:bg-sky-950',
-              },
-              {
                 label: 'Organizations',
                 description: 'Manage multi-tenant health system organizations',
                 href: '/admin/organizations',

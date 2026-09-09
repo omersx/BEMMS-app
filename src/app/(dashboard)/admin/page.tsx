@@ -2,13 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import Link from "next/link";
-import { Building2, Hospital, Users, Network } from "lucide-react";
+import { Building2, Hospital, Users, Shield } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const stats = [
     { title: "Total Organizations", value: "0", icon: Building2 },
     { title: "Total Hospitals", value: "0", icon: Hospital },
-    { title: "Total Departments", value: "0", icon: Network },
+    { title: "Total Roles", value: "0", icon: Shield },
     { title: "Total Users", value: "0", icon: Users },
   ];
 
