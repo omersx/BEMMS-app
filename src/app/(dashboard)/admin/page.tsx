@@ -6,17 +6,17 @@ import { Building2, Hospital, Users, Shield } from "lucide-react";
 
 export default function AdminDashboardPage() {
   const stats = [
-    { title: "Total Organizations", value: "0", icon: Building2 },
-    { title: "Total Hospitals", value: "0", icon: Hospital },
-    { title: "Total Roles", value: "0", icon: Shield },
-    { title: "Total Users", value: "0", icon: Users },
+    { title: "Health System", value: "1", icon: Building2 },
+    { title: "Hospital Campuses", value: "1", icon: Hospital },
+    { title: "Total Roles", value: "6", icon: Shield },
+    { title: "Total Users", value: "1", icon: Users },
   ];
 
   return (
     <div className="space-y-6">
       <PageHeader title="Admin Dashboard" description="Overview of the BEMMS platform">
         <Button asChild>
-          <Link href="/admin/organizations/new">Add Organization</Link>
+          <Link href="/admin/general">General Settings</Link>
         </Button>
         <Button variant="outline" asChild>
           <Link href="/admin/hospitals/new">Add Hospital</Link>

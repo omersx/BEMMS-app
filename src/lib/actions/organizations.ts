@@ -9,7 +9,7 @@ import { eq } from 'drizzle-orm';
 
 export async function getOrganizations() {
   await requireAuth();
-  await requireRole('SYS_ADMIN');
+  await requireRole('SYS_ADMIN', 'ORG_ADMIN');
   try {
     const data = await db.query.organizations.findMany();
     return { success: true, data };
@@ -20,7 +20,7 @@ export async function getOrganizations() {
 
 export async function getOrganizationById(id: string) {
   await requireAuth();
-  await requireRole('SYS_ADMIN');
+  await requireRole('SYS_ADMIN', 'ORG_ADMIN');
   try {
     const data = await db.query.organizations.findFirst({
       where: eq(organizations.id, id),

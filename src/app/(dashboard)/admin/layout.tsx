@@ -6,8 +6,7 @@ import { cn } from "@/lib/utils";
 
 const adminNav = [
   { title: "Dashboard", href: "/admin" },
-  { title: "Organizations", href: "/admin/organizations" },
-  { title: "Hospitals", href: "/admin/hospitals" },
+  { title: "General", href: "/admin/general" },
   { title: "Users", href: "/admin/users" },
   { title: "Roles", href: "/admin/roles" },
   { title: "Audit Logs", href: "/admin/audit-logs" },

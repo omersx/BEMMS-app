@@ -156,18 +156,11 @@ export default async function MorePage() {
                 color: 'text-purple-500 bg-purple-50 dark:bg-purple-950',
               },
               {
-                label: 'Hospitals',
-                description: 'Manage hospital facilities and campuses',
-                href: '/admin/hospitals',
+                label: 'General Settings',
+                description: 'Manage health system organization and hospital facilities',
+                href: '/admin/general',
                 icon: Building2,
                 color: 'text-blue-500 bg-blue-50 dark:bg-blue-950',
-              },
-              {
-                label: 'Organizations',
-                description: 'Manage multi-tenant health system organizations',
-                href: '/admin/organizations',
-                icon: ShieldCheck,
-                color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950',
               },
               {
                 label: 'Audit Logs',
