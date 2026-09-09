@@ -27,13 +27,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const identifier = (credentials.email as string).trim();
 
-        const userResult = await db.query.users.findFirst({
-          where: or(
-            eq(users.email, identifier),
-            eq(users.email, `${identifier}@bemms.local`),
-            eq(users.employeeIdentifier, identifier)
-          ),
-        });
+        let userResult;
+        try {
+          userResult = await db.query.users.findFirst({
+            where: or(
+              eq(users.email, identifier),
+              eq(users.email, `${identifier}@bemms.local`),
+              eq(users.employeeIdentifier, identifier)
+            ),
+          });
+        } catch (dbError: any) {
+          console.error('[Auth] Database connection error during login:', dbError.message);
+          throw new Error('DATABASE_CONNECTION_ERROR');
+        }
 
         if (!userResult || !userResult.passwordHash) {
           return null;
