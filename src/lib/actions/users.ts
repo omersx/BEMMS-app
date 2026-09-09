@@ -23,8 +23,42 @@ export async function getUserById(id: string) {
   try {
     const data = await db.query.users.findFirst({
       where: eq(users.id, id),
+      with: {
+        organization: true,
+      },
     });
-    return { success: true, data };
+    if (!data) return { success: false, error: "User not found" };
+
+    const roleAssignments = await db.query.userRoleAssignments.findMany({
+      where: eq(userRoleAssignments.userId, id),
+      with: {
+        role: true,
+      },
+    });
+
+    const accessScopes = await db.query.userAccessScopes.findMany({
+      where: eq(userAccessScopes.userId, id),
+      with: {
+        hospital: true,
+        department: true,
+        location: true,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        ...data,
+        roleAssignments,
+        roles: roleAssignments.map((ra) => ({
+          ...ra.role,
+          assignmentId: ra.id,
+          effectiveFrom: ra.effectiveFrom,
+          effectiveTo: ra.effectiveTo,
+        })),
+        accessScopes,
+      },
+    };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -215,13 +249,20 @@ export async function revokeUserScope(scopeId: string) {
   }
 }
 
-export async function deactivateUser(id: string) {
+export async function deactivateUser(id: string, reason?: string) {
   const session = await requireAuth();
   await requireRole('SYS_ADMIN', 'ORG_ADMIN');
   try {
     return await db.transaction(async (tx) => {
       const [updated] = await tx.update(users).set({ accountStatus: 'deactivated' }).where(eq(users.id, id)).returning();
-      await createAuditLog(tx, { action: 'DEACTIVATE', entityType: 'user', entityId: id, actorId: session.id, details: {} });
+      await createAuditLog(tx, {
+        action: 'DEACTIVATE',
+        entityType: 'user',
+        entityId: id,
+        actorId: session.id,
+        changeReason: reason || 'Administrative deactivation',
+        details: { reason },
+      });
       return { success: true, data: updated };
     });
   } catch (error: any) {
@@ -229,13 +270,20 @@ export async function deactivateUser(id: string) {
   }
 }
 
-export async function reactivateUser(id: string) {
+export async function reactivateUser(id: string, reason?: string) {
   const session = await requireAuth();
   await requireRole('SYS_ADMIN', 'ORG_ADMIN');
   try {
     return await db.transaction(async (tx) => {
       const [updated] = await tx.update(users).set({ accountStatus: 'active' }).where(eq(users.id, id)).returning();
-      await createAuditLog(tx, { action: 'REACTIVATE', entityType: 'user', entityId: id, actorId: session.id, details: {} });
+      await createAuditLog(tx, {
+        action: 'REACTIVATE',
+        entityType: 'user',
+        entityId: id,
+        actorId: session.id,
+        changeReason: reason || 'Administrative reactivation',
+        details: { reason },
+      });
       return { success: true, data: updated };
     });
   } catch (error: any) {

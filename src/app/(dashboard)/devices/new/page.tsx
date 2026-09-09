@@ -13,13 +13,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
+import { QuickAddCategoryDialog } from "@/components/devices/quick-add-category-dialog"
+import { QuickAddManufacturerDialog } from "@/components/devices/quick-add-manufacturer-dialog"
 
 export default function NewDevicePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [categories, setCategories] = useState<any[]>([])
+  const [selectedCategoryId, setSelectedCategoryId] = useState("")
   const [manufacturers, setManufacturers] = useState<any[]>([])
+  const [selectedManufacturerId, setSelectedManufacturerId] = useState("")
   const [hospitals, setHospitals] = useState<any[]>([])
   const [departments, setDepartments] = useState<any[]>([])
 
@@ -84,19 +88,54 @@ export default function NewDevicePage() {
                 <Input id="serialNumber" name="serialNumber" placeholder="Manufacturer serial #" />
               </div>
               <div>
-                <Label htmlFor="deviceCategoryId">Category *</Label>
-                <select id="deviceCategoryId" name="deviceCategoryId" required
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <Label htmlFor="deviceCategoryId">Category *</Label>
+                  <QuickAddCategoryDialog
+                    onSuccess={(newCat) => {
+                      setCategories((prev) => [newCat, ...prev])
+                      setSelectedCategoryId(newCat.id)
+                    }}
+                  />
+                </div>
+                <select
+                  id="deviceCategoryId"
+                  name="deviceCategoryId"
+                  required
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
                   <option value="">Select category...</option>
-                  {categories.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {categories.map((c: any) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.riskClassification ? `(${c.riskClassification.replace('class_', 'Class ')})` : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
-                <Label htmlFor="manufacturerId">Manufacturer</Label>
-                <select id="manufacturerId" name="manufacturerId"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <Label htmlFor="manufacturerId">Manufacturer</Label>
+                  <QuickAddManufacturerDialog
+                    onSuccess={(newMfr) => {
+                      setManufacturers((prev) => [newMfr, ...prev])
+                      setSelectedManufacturerId(newMfr.id)
+                    }}
+                  />
+                </div>
+                <select
+                  id="manufacturerId"
+                  name="manufacturerId"
+                  value={selectedManufacturerId}
+                  onChange={(e) => setSelectedManufacturerId(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
                   <option value="">Select manufacturer...</option>
-                  {manufacturers.map((m: any) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  {manufacturers.map((m: any) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} {m.country ? `(${m.country})` : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

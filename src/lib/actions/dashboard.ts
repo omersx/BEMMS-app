@@ -5,7 +5,7 @@ import { requireAuth } from '@/lib/auth/rbac';
 import { 
   devices, serviceTickets, maintenanceTasks, 
   maintenanceScheduleOccurrences, userAccessScopes, users,
-  departments,
+  departments, organizations, hospitals, roles,
   userRoleAssignments
 } from '@/lib/db/schema';
 import { eq, and, sql, isNull, inArray, or, desc, lt, gte, ne, not } from 'drizzle-orm';
@@ -305,6 +305,49 @@ export async function getAdminAlerts() {
     usersWithoutRoles: Number(s.usersWithoutRoles) || 0,
     pendingInvitations: Number(s.pendingInvitations) || 0,
     departmentsWithoutManager: Number(s.departmentsWithoutManager) || 0,
+  };
+}
+
+export async function getAdminDashboardStats() {
+  const user = await requireAuth();
+  const orgId = user.organizationId;
+
+  const [
+    orgCountRes,
+    hospCountRes,
+    deptCountRes,
+    deviceCountRes,
+    userCountRes,
+    activeUserCountRes,
+    roleCountRes,
+  ] = await Promise.all([
+    db.select({ count: sql<number>`count(*)` }).from(organizations),
+    orgId
+      ? db.select({ count: sql<number>`count(*)` }).from(hospitals).where(eq(hospitals.organizationId, orgId))
+      : db.select({ count: sql<number>`count(*)` }).from(hospitals),
+    orgId
+      ? db.select({ count: sql<number>`count(*)` }).from(departments).where(eq(departments.organizationId, orgId))
+      : db.select({ count: sql<number>`count(*)` }).from(departments),
+    orgId
+      ? db.select({ count: sql<number>`count(*)` }).from(devices).where(eq(devices.organizationId, orgId))
+      : db.select({ count: sql<number>`count(*)` }).from(devices),
+    orgId
+      ? db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.organizationId, orgId))
+      : db.select({ count: sql<number>`count(*)` }).from(users),
+    orgId
+      ? db.select({ count: sql<number>`count(*)` }).from(users).where(and(eq(users.organizationId, orgId), eq(users.accountStatus, 'active')))
+      : db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.accountStatus, 'active')),
+    db.select({ count: sql<number>`count(*)` }).from(roles),
+  ]);
+
+  return {
+    totalOrganizations: Number(orgCountRes[0]?.count) || 0,
+    totalHospitals: Number(hospCountRes[0]?.count) || 0,
+    totalDepartments: Number(deptCountRes[0]?.count) || 0,
+    totalDevices: Number(deviceCountRes[0]?.count) || 0,
+    totalUsers: Number(userCountRes[0]?.count) || 0,
+    activeUsers: Number(activeUserCountRes[0]?.count) || 0,
+    totalRoles: Number(roleCountRes[0]?.count) || 0,
   };
 }
 

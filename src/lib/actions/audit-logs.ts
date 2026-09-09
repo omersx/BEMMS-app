@@ -29,6 +29,9 @@ export async function getAuditLogs(filters?: {
 
     const data = await db.query.auditLogs.findMany({
       where: whereClause,
+      with: {
+        actorUser: true,
+      },
       orderBy: [desc(auditLogs.timestamp)],
       limit: pageSize,
       offset: (page - 1) * pageSize,

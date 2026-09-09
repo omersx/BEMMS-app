@@ -2,6 +2,11 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getOrganizations } from "@/lib/actions/organizations";
 import { getHospitals } from "@/lib/actions/hospitals";
+import { getDeviceCategories } from "@/lib/actions/device-categories";
+import { getManufacturers } from "@/lib/actions/manufacturers";
+import { QuickAddCategoryDialog } from "@/components/devices/quick-add-category-dialog";
+import { QuickAddManufacturerDialog } from "@/components/devices/quick-add-manufacturer-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -9,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Building2, Hospital, Plus, Eye, Edit, Globe, Calendar, ShieldCheck } from "lucide-react";
+import { Building2, Hospital, Plus, Eye, Edit, Globe, Calendar, ShieldCheck, Cpu, Factory } from "lucide-react";
 import { hasRole } from "@/lib/auth/rbac";
 
 export const dynamic = "force-dynamic";
@@ -21,13 +26,17 @@ export default async function AdminGeneralPage() {
   const user = session.user as { roles?: string[] };
   const isSysAdmin = hasRole(user.roles || [], "SYS_ADMIN");
 
-  const [orgsResult, hospitalsResult] = await Promise.all([
+  const [orgsResult, hospitalsResult, categoriesResult, manufacturersResult] = await Promise.all([
     getOrganizations(),
     getHospitals(),
+    getDeviceCategories(),
+    getManufacturers(),
   ]);
 
   const organizations = orgsResult.success && orgsResult.data ? orgsResult.data : [];
   const hospitals = hospitalsResult.success && hospitalsResult.data ? hospitalsResult.data : [];
+  const categories = categoriesResult.success && categoriesResult.data ? categoriesResult.data : [];
+  const manufacturers = manufacturersResult.success && manufacturersResult.data ? manufacturersResult.data : [];
 
   const currentOrg = organizations[0]; // Primary organization
 
@@ -81,6 +90,109 @@ export default async function AdminGeneralPage() {
           </Button>
         </div>
       ),
+    },
+  ];
+
+  const categoryColumns = [
+    {
+      key: "code",
+      header: "Code",
+      render: (item: any) => (
+        <span className="font-mono text-xs font-semibold text-primary">
+          {item.code}
+        </span>
+      ),
+    },
+    {
+      key: "name",
+      header: "Category Name",
+      render: (item: any) => (
+        <span className="font-medium text-foreground">{item.name}</span>
+      ),
+    },
+    {
+      key: "riskClassification",
+      header: "Risk Class",
+      render: (item: any) => item.riskClassification ? (
+        <Badge variant="outline" className="text-xs uppercase font-mono">
+          {item.riskClassification.replace('class_', 'Class ')}
+        </Badge>
+      ) : "—",
+    },
+    {
+      key: "criticalityLevel",
+      header: "Criticality",
+      render: (item: any) => item.criticalityLevel ? (
+        <Badge
+          variant={item.criticalityLevel === 'critical' ? 'destructive' : 'secondary'}
+          className="text-xs capitalize"
+        >
+          {item.criticalityLevel}
+        </Badge>
+      ) : "—",
+    },
+    {
+      key: "defaultPmIntervalDays",
+      header: "Default PM",
+      render: (item: any) => item.defaultPmIntervalDays ? `${item.defaultPmIntervalDays} days` : "—",
+    },
+    {
+      key: "description",
+      header: "Description",
+      render: (item: any) => (
+        <span className="text-xs text-muted-foreground truncate max-w-[200px] block">
+          {item.description || "—"}
+        </span>
+      ),
+    },
+  ];
+
+  const manufacturerColumns = [
+    {
+      key: "code",
+      header: "Code",
+      render: (item: any) => (
+        <span className="font-mono text-xs font-semibold text-primary">
+          {item.code || "—"}
+        </span>
+      ),
+    },
+    {
+      key: "name",
+      header: "Manufacturer Name",
+      render: (item: any) => (
+        <span className="font-medium text-foreground">{item.name}</span>
+      ),
+    },
+    {
+      key: "country",
+      header: "Country",
+      render: (item: any) => item.country || "—",
+    },
+    {
+      key: "contacts",
+      header: "Support Contact",
+      render: (item: any) => (
+        <div className="text-xs space-y-0.5">
+          {item.supportPhone && <div>{item.supportPhone}</div>}
+          {item.supportEmail && <div className="text-muted-foreground">{item.supportEmail}</div>}
+          {!item.supportPhone && !item.supportEmail && "—"}
+        </div>
+      ),
+    },
+    {
+      key: "website",
+      header: "Website",
+      render: (item: any) => item.website ? (
+        <a
+          href={item.website}
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs text-primary hover:underline truncate max-w-[160px] block"
+        >
+          {item.website.replace(/^https?:\/\//, '')}
+        </a>
+      ) : "—",
     },
   ];
 
@@ -191,6 +303,70 @@ export default async function AdminGeneralPage() {
           searchPlaceholder="Search hospitals by name, code, city..."
           emptyMessage="No hospital facilities configured yet."
         />
+      </div>
+
+      {/* ── Section 3: Medical Device Reference Catalogs ── */}
+      <div className="space-y-4 pt-2">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Cpu className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold tracking-tight">Device Master Catalogs & Reference Data</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Standardize device classifications, risk categories, and approved manufacturers across your health system
+          </p>
+        </div>
+
+        <Tabs defaultValue="categories" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="categories" className="gap-2">
+              <Cpu className="w-3.5 h-3.5" />
+              Categories ({categories.length})
+            </TabsTrigger>
+            <TabsTrigger value="manufacturers" className="gap-2">
+              <Factory className="w-3.5 h-3.5" />
+              Manufacturers ({manufacturers.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="categories" className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium text-muted-foreground">
+                Registered Device Categories
+              </div>
+              <QuickAddCategoryDialog
+                triggerLabel="Add Category"
+                triggerVariant="default"
+              />
+            </div>
+            <DataTable
+              columns={categoryColumns}
+              data={categories}
+              searchable
+              searchPlaceholder="Search categories by name, code, risk..."
+              emptyMessage="No device categories configured yet."
+            />
+          </TabsContent>
+
+          <TabsContent value="manufacturers" className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium text-muted-foreground">
+                Approved Manufacturers & Vendors
+              </div>
+              <QuickAddManufacturerDialog
+                triggerLabel="Add Manufacturer"
+                triggerVariant="default"
+              />
+            </div>
+            <DataTable
+              columns={manufacturerColumns}
+              data={manufacturers}
+              searchable
+              searchPlaceholder="Search manufacturers by name, code, country..."
+              emptyMessage="No manufacturers configured yet."
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

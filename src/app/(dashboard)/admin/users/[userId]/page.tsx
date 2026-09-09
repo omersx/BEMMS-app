@@ -1,25 +1,32 @@
 import { getUserById } from "@/lib/actions/users"
 import { getAuditLogs } from "@/lib/actions/audit-logs"
+import { getRoles } from "@/lib/actions/roles"
 import { PageHeader } from "@/components/shared/page-header"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { UserStatusDialog } from "@/components/admin/user-status-dialog"
+import { UserRoleDialog } from "@/components/admin/user-role-dialog"
 import Link from "next/link"
-import { Edit, UserX, UserCheck, Archive } from "lucide-react"
+import { Edit } from "lucide-react"
 
 export default async function UserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
-  const result = await getUserById(userId)
+  const [result, logsResult, rolesResult] = await Promise.all([
+    getUserById(userId),
+    getAuditLogs({ actorId: userId, pageSize: 10 }),
+    getRoles(),
+  ])
+
   const user = result?.success ? result.data : null
 
   if (!user) {
     return <div>User not found</div>
   }
 
-  const logsResult = await getAuditLogs({ actorId: userId, pageSize: 10 })
   const activityLogs = (logsResult?.success && logsResult.data) ? logsResult.data : []
+  const availableRoles = (rolesResult?.success && Array.isArray(rolesResult.data)) ? rolesResult.data : []
 
   return (
     <div className="space-y-6">
@@ -34,17 +41,11 @@ export default async function UserDetailPage({ params }: { params: Promise<{ use
               Edit
             </Link>
           </Button>
-          {user.accountStatus === 'active' ? (
-            <Button variant="destructive">
-              <UserX className="w-4 h-4 mr-2" />
-              Deactivate
-            </Button>
-          ) : (
-            <Button variant="default" className="bg-green-600 hover:bg-green-700">
-              <UserCheck className="w-4 h-4 mr-2" />
-              Reactivate
-            </Button>
-          )}
+          <UserStatusDialog
+            userId={user.id}
+            userName={user.fullName}
+            currentStatus={user.accountStatus || 'active'}
+          />
         </div>
       </PageHeader>
       
@@ -89,28 +90,15 @@ export default async function UserDetailPage({ params }: { params: Promise<{ use
         
         <TabsContent value="roles" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Assigned Roles</CardTitle>
-              <Button size="sm">Add Role</Button>
+            <CardHeader>
+              <CardTitle>Assigned Roles & Access Privileges</CardTitle>
             </CardHeader>
             <CardContent>
-              {(user as any).roles && (user as any).roles.length > 0 ? (
-                <div className="space-y-4">
-                  {(user as any).roles.map((role: any) => (
-                    <div key={role.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                      <div>
-                        <div className="font-medium">{role.name}</div>
-                        <div className="text-sm text-muted-foreground">{role.description}</div>
-                      </div>
-                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                        Revoke
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-muted-foreground py-4 text-center">No roles assigned.</div>
-              )}
+              <UserRoleDialog
+                userId={user.id}
+                assignedRoles={(user as any).roles || []}
+                availableRoles={availableRoles}
+              />
             </CardContent>
           </Card>
         </TabsContent>

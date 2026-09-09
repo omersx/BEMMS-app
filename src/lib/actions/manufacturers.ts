@@ -40,8 +40,19 @@ export async function getManufacturerById(id: string) {
 
 export async function createManufacturer(input: unknown) {
   const session = await requireAuth();
-  await requireRole('SYS_ADMIN', 'ORG_ADMIN', 'BIOMED_MGR');
-  const validated = createManufacturerSchema.safeParse(input);
+  await requireRole('SYS_ADMIN', 'ORG_ADMIN', 'BIOMED_MGR', 'BIOMED_ENG');
+
+  let orgId = (input as any)?.organizationId || session.organizationId;
+  if (!orgId) {
+    const firstOrg = await db.query.organizations.findFirst();
+    orgId = firstOrg?.id;
+  }
+
+  const payload = typeof input === 'object' && input !== null
+    ? { organizationId: orgId, ...input }
+    : input;
+
+  const validated = createManufacturerSchema.safeParse(payload);
   if (!validated.success) return { success: false, error: validated.error.message };
 
   try {
