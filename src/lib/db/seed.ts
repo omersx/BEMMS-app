@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from './schema';
 import * as bcrypt from 'bcryptjs';
+import { eq } from 'drizzle-orm';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -78,15 +79,16 @@ async function seed() {
       }).onConflictDoNothing();
     }
 
-    // 5. Create Admin User
+    // 5. Create or Update Admin User
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@bemms.local';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'adminpassword';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
     const passwordHash = await bcrypt.hash(adminPassword, 10);
 
     const [adminUser] = await db.insert(schema.users).values({
       email: adminEmail,
       passwordHash,
       fullName: 'System Administrator',
+      employeeIdentifier: 'admin',
       organizationId: orgId,
       accountStatus: 'active',
     }).onConflictDoNothing().returning();
@@ -97,6 +99,15 @@ async function seed() {
         where: (users, { eq }) => eq(users.email, adminEmail),
       });
       adminId = existingUser!.id;
+
+      // Update password and ensure active status
+      await db.update(schema.users)
+        .set({
+          passwordHash,
+          employeeIdentifier: 'admin',
+          accountStatus: 'active',
+        })
+        .where(eq(schema.users.id, adminId));
     }
 
     // 6. Assign SYS_ADMIN role to admin user

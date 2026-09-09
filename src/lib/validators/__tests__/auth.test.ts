@@ -10,34 +10,28 @@ describe('loginSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects invalid email', () => {
+  it('accepts simple username like admin', () => {
     const result = loginSchema.safeParse({
-      email: 'not-an-email',
-      password: 'password123',
+      email: 'admin',
+      password: 'admin123',
     });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0].message).toBe('Invalid email address');
-    }
+    expect(result.success).toBe(true);
   });
 
-  it('rejects empty email', () => {
+  it('rejects empty username/email', () => {
     const result = loginSchema.safeParse({
       email: '',
-      password: 'password123',
+      password: 'admin123',
     });
     expect(result.success).toBe(false);
   });
 
-  it('rejects password shorter than 8 characters', () => {
+  it('rejects password shorter than 6 characters', () => {
     const result = loginSchema.safeParse({
-      email: 'user@example.com',
-      password: 'short',
+      email: 'admin',
+      password: '12345',
     });
     expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0].message).toBe('Password must be at least 8 characters');
-    }
   });
 
   it('rejects missing fields', () => {

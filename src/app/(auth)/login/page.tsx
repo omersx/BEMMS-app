@@ -44,7 +44,7 @@ export default function LoginPage() {
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>
-          Enter your email and password to access your account
+          Enter your username or email and password to access your account
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -55,11 +55,13 @@ export default function LoginPage() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Username or Email</Label>
             <Input
               id="email"
-              type="email"
-              placeholder="m.engineer@hospital.org"
+              type="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              placeholder="admin or email@hospital.org"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

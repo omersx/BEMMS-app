@@ -4,7 +4,7 @@ import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import { db } from '@/lib/db';
 import { users, accounts, sessions, userRoleAssignments, roles } from '@/lib/db/schema';
 import { verifyPassword } from '@/lib/auth/password';
-import { eq } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -17,7 +17,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        email: { label: 'Username or Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       authorize: async (credentials) => {
@@ -25,8 +25,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
+        const identifier = (credentials.email as string).trim();
+
         const userResult = await db.query.users.findFirst({
-          where: eq(users.email, credentials.email as string),
+          where: or(
+            eq(users.email, identifier),
+            eq(users.email, `${identifier}@bemms.local`),
+            eq(users.employeeIdentifier, identifier)
+          ),
         });
 
         if (!userResult || !userResult.passwordHash) {
