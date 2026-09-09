@@ -51,6 +51,13 @@ export default async function MorePage() {
           color: 'text-blue-500 bg-blue-50 dark:bg-blue-950',
         },
         {
+          label: 'Departments',
+          description: 'Explore hospital departments and departmental equipment',
+          href: '/departments',
+          icon: Building2,
+          color: 'text-sky-500 bg-sky-50 dark:bg-sky-950',
+        },
+        {
           label: 'Scan QR Code',
           description: 'Quick scan device label with camera',
           href: '/scan',

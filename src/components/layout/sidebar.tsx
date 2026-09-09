@@ -6,7 +6,7 @@ import { useState } from 'react'
 import {
   LayoutDashboard, QrCode, Monitor, TicketCheck, Wrench, BarChart3,
   Bell, Settings, Activity, ChevronLeft, ChevronRight, AlertTriangle,
-  ClipboardList, Calendar, CheckSquare
+  ClipboardList, Calendar, CheckSquare, Building2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -26,6 +26,7 @@ export function Sidebar({ user }: SidebarProps) {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/scan', label: 'Scan QR', icon: QrCode },
     { href: '/devices', label: 'Devices', icon: Monitor },
+    { href: '/departments', label: 'Departments', icon: Building2 },
     { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck },
     { href: '/tickets/triage', label: 'Triage Queue', icon: AlertTriangle },
     { href: '/maintenance', label: 'Maintenance', icon: Wrench },
