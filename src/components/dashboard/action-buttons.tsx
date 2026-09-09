@@ -1,5 +1,3 @@
-'use client';
-
 import Link from "next/link";
 import { QrCode, PlusCircle, Inbox, Users, MonitorSmartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";

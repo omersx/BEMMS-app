@@ -1,5 +1,3 @@
-'use client';
-
 import Link from "next/link";
 import { formatDistanceToNow, isPast, isToday } from "date-fns";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
