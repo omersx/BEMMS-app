@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from './schema';
-import * as bcrypt from 'bcryptjs';
+import { hashPassword } from '@/lib/auth/password';
 import { eq } from 'drizzle-orm';
 
 const pool = new Pool({
@@ -82,7 +82,7 @@ async function seed() {
     // 5. Create or Update Admin User
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@bemms.local';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-    const passwordHash = await bcrypt.hash(adminPassword, 10);
+    const passwordHash = await hashPassword(adminPassword);
 
     const [adminUser] = await db.insert(schema.users).values({
       email: adminEmail,
