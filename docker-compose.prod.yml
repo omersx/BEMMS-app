@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: bemms_prod_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bemms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bemms_prod_password_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-bemms_db}
+    volumes:
+      - bemms_prod_postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bemms} -d ${POSTGRES_DB:-bemms_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bemms_network
+
+  app:
+    build:
+      context: .
+      target: runner
+    container_name: bemms_prod_app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-bemms}:${POSTGRES_PASSWORD:-bemms_prod_password_change_me}@db:5432/${POSTGRES_DB:-bemms_db}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-generate_a_random_32_character_secret_here}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@bemms.local}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Admin123!@#}
+      - ADMIN_FULL_NAME=${ADMIN_FULL_NAME:-System Administrator}
+      - NODE_ENV=production
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - VAPID_SUBJECT=${VAPID_SUBJECT:-mailto:admin@bemms.app}
+    networks:
+      - bemms_network
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: bemms_prod_caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - bemms_network
+
+networks:
+  bemms_network:
+    driver: bridge
+
+volumes:
+  bemms_prod_postgres_data:
+  caddy_data:
+  caddy_config:

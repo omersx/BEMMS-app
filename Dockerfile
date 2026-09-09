@@ -11,6 +11,7 @@ RUN corepack enable pnpm
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV BUILD_STANDALONE=true
 RUN pnpm build
 
 # Stage 3: Runner
