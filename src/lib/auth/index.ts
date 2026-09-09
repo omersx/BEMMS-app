@@ -12,7 +12,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     accountsTable: accounts as any,
     sessionsTable: sessions as any,
   }) as any,
-  session: { strategy: 'database' },
+  session: { strategy: 'jwt' },
   pages: { signIn: '/login' },
   providers: [
     Credentials({
@@ -24,7 +24,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
-        
+
         const userResult = await db.query.users.findFirst({
           where: eq(users.email, credentials.email as string),
         });
@@ -32,12 +32,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!userResult || !userResult.passwordHash) {
           return null;
         }
-        
+
         if (userResult.accountStatus !== 'active') {
           return null;
         }
 
-        const isPasswordValid = await verifyPassword(credentials.password as string, userResult.passwordHash);
+        const isPasswordValid = await verifyPassword(
+          credentials.password as string,
+          userResult.passwordHash
+        );
 
         if (!isPasswordValid) {
           return null;
@@ -55,30 +58,35 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, user, token }) {
-      if (session.user) {
-        let userId = user?.id;
-        
-        if (!userId && token?.sub) {
-            userId = token.sub;
-        }
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.fullName = (user as any).fullName;
+        token.organizationId = (user as any).organizationId;
+        token.avatarUrl = (user as any).avatarUrl;
 
-        if (userId) {
+        try {
           const assignments = await db
             .select({ code: roles.code })
             .from(userRoleAssignments)
             .innerJoin(roles, eq(userRoleAssignments.roleId, roles.id))
-            .where(eq(userRoleAssignments.userId, userId));
-            
-          session.user.id = userId;
-          session.user.roles = assignments.map((a: any) => a.code);
-          
-          if (user) {
-            session.user.fullName = user.fullName;
-            session.user.organizationId = user.organizationId;
-            session.user.avatarUrl = user.avatarUrl;
-          }
+            .where(eq(userRoleAssignments.userId, user.id as string));
+
+          token.roles = assignments.map((a: any) => a.code);
+        } catch (e) {
+          console.error('[Auth] Failed to load user roles:', e);
+          token.roles = [];
         }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token) {
+        session.user.id = (token.id as string) || (token.sub as string);
+        session.user.fullName = token.fullName as string;
+        session.user.organizationId = token.organizationId as string;
+        session.user.avatarUrl = token.avatarUrl as string;
+        session.user.roles = (token.roles as string[]) || [];
       }
       return session;
     },
