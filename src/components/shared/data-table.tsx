@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -9,8 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { TableSearch } from "./table-search";
 
 export interface ColumnDef<T> {
   key: string;
@@ -27,6 +23,21 @@ interface DataTableProps<T> {
   searchKey?: string;
 }
 
+function getSearchText(item: any): string {
+  return Object.entries(item)
+    .map(([_, v]) => {
+      if (v === null || v === undefined) return "";
+      if (typeof v === "object") {
+        if ("name" in v && typeof (v as any).name === "string") return (v as any).name;
+        if ("title" in v && typeof (v as any).title === "string") return (v as any).title;
+        return "";
+      }
+      return String(v);
+    })
+    .join(" ")
+    .toLowerCase();
+}
+
 export function DataTable<T extends Record<string, any>>({
   columns,
   data,
@@ -35,66 +46,58 @@ export function DataTable<T extends Record<string, any>>({
   emptyMessage = "No results found.",
   searchKey,
 }: DataTableProps<T>) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const isSearchable = searchable || Boolean(searchKey) || (searchPlaceholder !== "Search..." && Boolean(searchPlaceholder));
 
-  const filteredData = searchable
-    ? data.filter((item) => {
-        if (!searchQuery) return true;
-        const query = searchQuery.toLowerCase();
-        
-        if (searchKey && item[searchKey]) {
-           return String(item[searchKey]).toLowerCase().includes(query);
-        }
-
-        return Object.values(item).some((value) =>
-          String(value).toLowerCase().includes(query)
-        );
-      })
-    : data;
-
-  return (
-    <div className="space-y-4">
-      {searchable && (
-        <div className="relative max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={searchPlaceholder}
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      )}
-      <div className="rounded-md border bg-white">
-        <Table>
-          <TableHeader>
+  const tableContent = (
+    <div className="rounded-md border bg-white overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {columns.map((column) => (
+              <TableHead key={column.key}>{column.header}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.length === 0 ? (
             <TableRow>
-              {columns.map((column) => (
-                <TableHead key={column.key}>{column.header}</TableHead>
-              ))}
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                {emptyMessage}
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  {emptyMessage}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredData.map((item, i) => (
-                <TableRow key={item.id || i}>
+          ) : (
+            <>
+              {data.map((item, i) => (
+                <TableRow
+                  key={item.id || i}
+                  data-search-row={getSearchText(item)}
+                >
                   {columns.map((column) => (
                     <TableCell key={column.key}>
                       {column.render ? column.render(item) : item[column.key]}
                     </TableCell>
                   ))}
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+              <TableRow data-no-results style={{ display: "none" }}>
+                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                  No matching records found.
+                </TableCell>
+              </TableRow>
+            </>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
+
+  if (isSearchable) {
+    return (
+      <TableSearch placeholder={searchPlaceholder} emptyMessage={emptyMessage}>
+        {tableContent}
+      </TableSearch>
+    );
+  }
+
+  return tableContent;
 }
