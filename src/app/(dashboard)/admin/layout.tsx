@@ -9,6 +9,7 @@ const adminNav = [
   { title: "General", href: "/admin/general" },
   { title: "Users", href: "/admin/users" },
   { title: "Roles", href: "/admin/roles" },
+  { title: "System Settings", href: "/admin/settings" },
   { title: "Audit Logs", href: "/admin/audit-logs" },
 ];
 
