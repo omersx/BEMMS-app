@@ -18,25 +18,24 @@ interface SidebarProps {
   user: { name: string; role: string; email: string }
 }
 
+const SIDEBAR_LINKS = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/scan', label: 'Scan QR', icon: QrCode },
+  { href: '/devices', label: 'Devices', icon: Monitor },
+  { href: '/departments', label: 'Departments', icon: Building2 },
+  { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck },
+  { href: '/tickets/triage', label: 'Triage Queue', icon: AlertTriangle },
+  { href: '/maintenance', label: 'Maintenance', icon: Wrench },
+  { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList },
+  { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar },
+  { href: '/maintenance/checklists', label: 'Checklists', icon: CheckSquare },
+  { href: '/reports', label: 'Reports', icon: BarChart3 },
+  { href: '/notifications', label: 'Notifications', icon: Bell },
+]
+
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
-
-  const links = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/scan', label: 'Scan QR', icon: QrCode },
-    { href: '/devices', label: 'Devices', icon: Monitor },
-    { href: '/departments', label: 'Departments', icon: Building2 },
-    { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck },
-    { href: '/tickets/triage', label: 'Triage Queue', icon: AlertTriangle },
-    { href: '/maintenance', label: 'Maintenance', icon: Wrench },
-    { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList },
-    { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar },
-    { href: '/maintenance/checklists', label: 'Checklists', icon: CheckSquare },
-    { href: '/reports', label: 'Reports', icon: BarChart3 },
-    { href: '/notifications', label: 'Notifications', icon: Bell },
-  ]
-
   const isAdmin = user.role.toLowerCase().includes('admin')
 
   return (
@@ -64,7 +63,7 @@ export function Sidebar({ user }: SidebarProps) {
       <ScrollArea className="flex-1 py-4">
         <nav className="space-y-1 px-2">
           <TooltipProvider delayDuration={0}>
-            {links.map((link) => {
+            {SIDEBAR_LINKS.map((link) => {
               const active = pathname === link.href || 
                 (link.href !== '/tickets' && link.href !== '/maintenance' && pathname.startsWith(link.href + '/')) || 
                 (link.href === '/tickets' && pathname.startsWith('/tickets') && !pathname.startsWith('/tickets/triage')) ||
