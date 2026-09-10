@@ -69,12 +69,17 @@ export async function getOrganizationSettings(orgId?: string): Promise<GetSettin
   }
 
   try {
-    const org = await db.query.organizations.findFirst({
+    let org = await db.query.organizations.findFirst({
       where: eq(organizations.id, targetOrgId),
     });
 
     if (!org) {
-      return { success: false, error: 'Organization not found' };
+      // Fallback to first available organization if targetOrgId is invalid or unseeded
+      org = await db.query.organizations.findFirst();
+    }
+
+    if (!org) {
+      return { success: false, error: 'No organization found. Please register an organization in General settings.' };
     }
 
     const parsed = systemSettingsSchema.safeParse(org.settings || {});
