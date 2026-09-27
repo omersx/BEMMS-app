@@ -25,15 +25,17 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createHospital } from "@/lib/actions/hospitals";
 import { getOrganizations } from "@/lib/actions/organizations";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   organizationId: z.string().min(1, "Please select an organization"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   code: z.string().min(2, "Code must be at least 2 characters").toUpperCase(),
-  address: z.string().min(5, "Address is required"),
-  city: z.string().min(2, "City is required"),
-  country: z.string().min(2, "Country is required"),
-  phone: z.string().optional(),
+  address: z.string().optional().or(z.literal("")),
+  city: z.string().optional().or(z.literal("")),
+  country: z.string().optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   timezone: z.string().min(1, "Please select a timezone"),
   status: z.enum(["active", "inactive"]),
@@ -42,16 +44,7 @@ const formSchema = z.object({
 export default function NewHospitalPage() {
   const router = useRouter();
   const [organizations, setOrganizations] = useState<any[]>([]);
-
-  useEffect(() => {
-    async function loadOrgs() {
-      const result = await getOrganizations();
-      if (result.success && result.data) {
-        setOrganizations(result.data);
-      }
-    }
-    loadOrgs();
-  }, []);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,12 +62,34 @@ export default function NewHospitalPage() {
     },
   });
 
+  useEffect(() => {
+    async function loadOrgs() {
+      const result = await getOrganizations();
+      if (result?.success && result.data && result.data.length > 0) {
+        setOrganizations(result.data);
+        if (!form.getValues("organizationId")) {
+          form.setValue("organizationId", result.data[0].id);
+        }
+      }
+    }
+    loadOrgs();
+  }, [form]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const result = await createHospital(values);
-    if (result.success) {
-      router.push("/admin/hospitals");
-    } else {
-      console.error((result as any).error);
+    setIsSubmitting(true);
+    try {
+      const result = await createHospital(values);
+      if (result.success) {
+        toast.success("Hospital registered successfully!");
+        router.push("/admin/general");
+        router.refresh();
+      } else {
+        toast.error((result as any).error || "Failed to create hospital");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -90,7 +105,7 @@ export default function NewHospitalPage() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Organization</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || undefined}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select an organization" />
@@ -265,8 +280,17 @@ export default function NewHospitalPage() {
           </div>
 
           <div className="flex gap-4">
-            <Button type="submit">Create Hospital</Button>
-            <Button type="button" variant="outline" onClick={() => router.back()}>
+            <Button type="submit" disabled={isSubmitting} className="gap-2">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating Hospital...
+                </>
+              ) : (
+                "Create Hospital"
+              )}
+            </Button>
+            <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => router.back()}>
               Cancel
             </Button>
           </div>

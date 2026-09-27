@@ -1,10 +1,11 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { hospitals } from '@/lib/db/schema';
+import { hospitals, departments } from '@/lib/db/schema';
 import { requireAuth, requireRole, requireScope } from '@/lib/auth/rbac';
 import { createAuditLog } from '@/lib/audit';
 import { createHospitalSchema, updateHospitalSchema } from '@/lib/validators/hospitals';
+import { DEFAULT_HOSPITAL_DEPARTMENTS } from '@/lib/constants/departments';
 import { eq, and } from 'drizzle-orm';
 
 export async function getHospitals(filters?: { organizationId?: string } | string) {
@@ -34,20 +35,48 @@ export async function getHospitalById(id: string) {
 export async function createHospital(input: unknown) {
   const session = await requireAuth();
   const validated = createHospitalSchema.safeParse(input);
-  if (!validated.success) return { success: false, error: validated.error.message };
+  if (!validated.success) {
+    const msg = validated.error.issues?.[0]?.message || 'Validation failed';
+    return { success: false, error: msg };
+  }
 
   await requireRole('SYS_ADMIN', 'ORG_ADMIN');
   await requireScope({ organizationId: validated.data.organizationId });
 
   try {
+    const payload = {
+      ...validated.data,
+      address: validated.data.address || null,
+      city: validated.data.city || null,
+      country: validated.data.country || null,
+      phone: validated.data.phone || null,
+      email: validated.data.email || null,
+      timezone: validated.data.timezone || null,
+    };
+
     return await db.transaction(async (tx) => {
-      const [newHospital] = await tx.insert(hospitals).values(validated.data).returning();
+      const [newHospital] = await tx.insert(hospitals).values(payload).returning();
+
+      // Automatically seed default clinical departments for the new hospital
+      for (const d of DEFAULT_HOSPITAL_DEPARTMENTS) {
+        await tx.insert(departments).values({
+          organizationId: newHospital.organizationId,
+          hospitalId: newHospital.id,
+          name: d.name,
+          code: d.code,
+          departmentType: d.departmentType,
+          status: 'active',
+          managerUserId: session.id,
+          createdByUserId: session.id,
+        }).onConflictDoNothing();
+      }
+
       await createAuditLog(tx, {
         action: 'CREATE',
         entityType: 'hospital',
         entityId: newHospital.id,
         actorId: session.id,
-        details: validated.data,
+        details: payload,
       });
       return { success: true, data: newHospital };
     });
@@ -68,14 +97,22 @@ export async function updateHospital(id: string, input: unknown) {
     if (!hospital) return { success: false, error: 'Hospital not found' };
     await requireScope({ organizationId: hospital.organizationId, hospitalId: id });
 
+    const payload: any = { ...validated.data };
+    if ('email' in payload) payload.email = payload.email || null;
+    if ('phone' in payload) payload.phone = payload.phone || null;
+    if ('address' in payload) payload.address = payload.address || null;
+    if ('city' in payload) payload.city = payload.city || null;
+    if ('country' in payload) payload.country = payload.country || null;
+    if ('timezone' in payload) payload.timezone = payload.timezone || null;
+
     return await db.transaction(async (tx) => {
-      const [updated] = await tx.update(hospitals).set(validated.data).where(eq(hospitals.id, id)).returning();
+      const [updated] = await tx.update(hospitals).set(payload).where(eq(hospitals.id, id)).returning();
       await createAuditLog(tx, {
         action: 'UPDATE',
         entityType: 'hospital',
         entityId: id,
         actorId: session.id,
-        details: validated.data,
+        details: payload,
       });
       return { success: true, data: updated };
     });

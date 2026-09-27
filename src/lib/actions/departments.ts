@@ -5,6 +5,7 @@ import { departments, hospitals, devices, serviceTickets, locations, users } fro
 import { requireAuth, requireRole, requireScope } from '@/lib/auth/rbac';
 import { createAuditLog } from '@/lib/audit';
 import { createDepartmentSchema, updateDepartmentSchema } from '@/lib/validators/departments';
+import { DEFAULT_HOSPITAL_DEPARTMENTS } from '@/lib/constants/departments';
 import { eq, and, sql, count } from 'drizzle-orm';
 
 export async function getDepartments(filters?: { hospitalId?: string; organizationId?: string } | string) {
@@ -46,14 +47,18 @@ export async function createDepartment(input: unknown) {
   await requireScope({ organizationId: validated.data.organizationId, hospitalId: validated.data.hospitalId });
 
   try {
+    const dataToInsert = {
+      ...validated.data,
+      managerUserId: validated.data.managerUserId ? validated.data.managerUserId : null,
+    };
     return await db.transaction(async (tx) => {
-      const [newDept] = await tx.insert(departments).values(validated.data).returning();
+      const [newDept] = await tx.insert(departments).values(dataToInsert).returning();
       await createAuditLog(tx, {
         action: 'CREATE',
         entityType: 'department',
         entityId: newDept.id,
         actorId: session.id,
-        details: validated.data,
+        details: dataToInsert,
       });
       return { success: true, data: newDept };
     });
@@ -74,14 +79,21 @@ export async function updateDepartment(id: string, input: unknown) {
     if (!dept) return { success: false, error: 'Department not found' };
     await requireScope({ organizationId: dept.organizationId, hospitalId: dept.hospitalId, departmentId: id });
 
+    const dataToUpdate = {
+      ...validated.data,
+      ...(validated.data.managerUserId !== undefined
+        ? { managerUserId: validated.data.managerUserId ? validated.data.managerUserId : null }
+        : {}),
+    };
+
     return await db.transaction(async (tx) => {
-      const [updated] = await tx.update(departments).set(validated.data).where(eq(departments.id, id)).returning();
+      const [updated] = await tx.update(departments).set(dataToUpdate).where(eq(departments.id, id)).returning();
       await createAuditLog(tx, {
         action: 'UPDATE',
         entityType: 'department',
         entityId: id,
         actorId: session.id,
-        details: validated.data,
+        details: dataToUpdate,
       });
       return { success: true, data: updated };
     });
@@ -290,4 +302,67 @@ export async function getDepartmentDetails(departmentId: string) {
     return { success: false, error: error.message };
   }
 }
+
+// ── Default Clinical Departments ──────────────────────────────────────────────
+
+export async function seedDefaultDepartmentsForHospital(hospitalId: string) {
+  const session = await requireAuth();
+  await requireRole('SYS_ADMIN', 'ORG_ADMIN', 'HOSP_ADMIN');
+
+  try {
+    const hospital = await db.query.hospitals.findFirst({
+      where: eq(hospitals.id, hospitalId),
+    });
+    if (!hospital) return { success: false, error: 'Hospital not found' };
+
+    await requireScope({ organizationId: hospital.organizationId, hospitalId });
+
+    // Fetch existing department codes for this hospital
+    const existing = await db.query.departments.findMany({
+      where: eq(departments.hospitalId, hospitalId),
+      columns: { code: true, name: true },
+    });
+    const existingCodes = new Set(existing.map((d) => d.code.toUpperCase()));
+    const existingNames = new Set(existing.map((d) => d.name.toLowerCase()));
+
+    const toInsert = DEFAULT_HOSPITAL_DEPARTMENTS.filter((dept) => {
+      const nameMatch = existingNames.has(dept.name.toLowerCase());
+      const codeMatch = existingCodes.has(dept.code.toUpperCase());
+      const partialCodeMatch = Array.from(existingCodes).some(
+        (c) => c.startsWith(dept.code) || dept.code.startsWith(c)
+      );
+      const partialNameMatch = Array.from(existingNames).some(
+        (n) => n.includes(dept.departmentType.toLowerCase()) || dept.name.toLowerCase().includes(n)
+      );
+      return !nameMatch && !codeMatch && !partialCodeMatch && !partialNameMatch;
+    });
+
+    if (toInsert.length === 0) {
+      return { success: true, message: 'All default departments already exist', count: 0 };
+    }
+
+    const inserted = await db.transaction(async (tx) => {
+      const records = [];
+      for (const d of toInsert) {
+        const [newDept] = await tx.insert(departments).values({
+          organizationId: hospital.organizationId,
+          hospitalId: hospital.id,
+          name: d.name,
+          code: d.code,
+          departmentType: d.departmentType,
+          status: 'active',
+          managerUserId: session.id,
+          createdByUserId: session.id,
+        }).onConflictDoNothing().returning();
+        if (newDept) records.push(newDept);
+      }
+      return records;
+    });
+
+    return { success: true, count: inserted.length, data: inserted };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 

@@ -5,21 +5,36 @@ import { manufacturers } from '@/lib/db/schema';
 import { requireAuth, requireRole } from '@/lib/auth/rbac';
 import { createAuditLog } from '@/lib/audit';
 import { createManufacturerSchema, updateManufacturerSchema } from '@/lib/validators/devices';
-import { eq, desc } from 'drizzle-orm';
+import { DEFAULT_MANUFACTURERS } from '@/lib/constants/manufacturers';
+import { eq, desc, asc } from 'drizzle-orm';
 
 export async function getManufacturers(organizationId?: string) {
-  await requireAuth();
+  const session = await requireAuth();
   try {
-    if (organizationId) {
-      const data = await db.query.manufacturers.findMany({
-        where: eq(manufacturers.organizationId, organizationId),
-        orderBy: [desc(manufacturers.createdAt)],
-      });
-      return { success: true, data };
-    }
-    const data = await db.query.manufacturers.findMany({
-      orderBy: [desc(manufacturers.createdAt)],
+    const orgId = organizationId || session.organizationId;
+    let data = await db.query.manufacturers.findMany({
+      where: orgId ? eq(manufacturers.organizationId, orgId) : undefined,
+      orderBy: [asc(manufacturers.name)],
     });
+
+    // Auto-seed default global manufacturers if empty for this organization
+    if (data.length === 0 && orgId) {
+      for (const mfr of DEFAULT_MANUFACTURERS) {
+        await db.insert(manufacturers).values({
+          organizationId: orgId,
+          name: mfr.name,
+          code: mfr.code,
+          country: mfr.country,
+          website: mfr.website,
+          createdByUserId: session.id,
+        });
+      }
+      data = await db.query.manufacturers.findMany({
+        where: eq(manufacturers.organizationId, orgId),
+        orderBy: [asc(manufacturers.name)],
+      });
+    }
+
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message };

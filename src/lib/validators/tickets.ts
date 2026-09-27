@@ -49,16 +49,39 @@ export const assignTicketSchema = z.object({
   handoffNote: z.string().max(500).optional(),
 });
 
-export const resolveTicketSchema = z.object({
-  resolutionSummary: z.string().min(10).max(2000),
-  finalDeviceStatusCode: z.enum([
-    'operational', 'operational_with_limitations', 'under_maintenance', 'under_repair',
-    'waiting_for_parts', 'awaiting_release', 'out_of_service', 'standby', 'decommissioned'
+export const acceptTicketSchema = z.object({
+  signaturePassword: z.string().min(1, 'Password is required to sign ticket acceptance'),
+  signatureComments: z.string().max(500).optional(),
+});
+
+export const updateTicketDeviceStatusSchema = z.object({
+  deviceStatusCode: z.enum([
+    'operational', 'operational_with_limitations', 'under_maintenance',
+    'under_repair', 'waiting_for_parts', 'awaiting_release', 'out_of_service', 'standby'
   ]),
+  notes: z.string().min(3, 'Please provide an update note (minimum 3 characters)').max(1000),
+  partName: z.string().max(200).optional(),
+  supplierDetails: z.string().max(500).optional(),
+  limitationsNote: z.string().max(1000).optional(),
+});
+
+export const RESOLUTION_DEVICE_STATUSES = [
+  'operational', 'operational_with_limitations', 'awaiting_release',
+  'standby', 'out_of_service', 'decommissioned'
+] as const;
+
+export const resolveTicketSchema = z.object({
+  resolutionSummary: z.string().min(10, 'Resolution summary must be at least 10 characters').max(2000),
+  finalDeviceStatusCode: z.enum(RESOLUTION_DEVICE_STATUSES),
+  limitationsNote: z.string().max(1000).optional(),
+  signaturePassword: z.string().min(1, 'Password is required to sign ticket resolution').optional(),
+  signatureComments: z.string().max(500).optional(),
 });
 
 export const closeTicketSchema = z.object({
   closureReason: z.string().max(500).optional(),
+  signaturePassword: z.string().min(1, 'Password is required to sign ticket closure').optional(),
+  signatureComments: z.string().max(500).optional(),
 });
 
 export const cancelTicketSchema = z.object({

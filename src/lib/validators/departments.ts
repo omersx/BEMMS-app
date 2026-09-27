@@ -5,8 +5,8 @@ export const createDepartmentSchema = z.object({
   hospitalId: z.string().uuid(),
   name: z.string().min(2).max(100),
   code: z.string().min(2).max(20),
-  departmentType: z.string().optional(),
-  managerUserId: z.string().uuid().optional(),
+  departmentType: z.string().optional().nullable(),
+  managerUserId: z.string().uuid().optional().nullable().or(z.literal('')),
   status: z.enum(['active', 'inactive', 'archived']).default('active'),
 });
 

@@ -1,4 +1,5 @@
 import { TicketStatusBadge, TicketPriorityBadge } from "./ticket-badges"
+import { DeviceStatusBadge } from "@/components/devices/device-badges"
 import { User, Calendar } from "lucide-react"
 
 const eventTypeLabels: Record<string, string> = {
@@ -17,6 +18,36 @@ const eventTypeLabels: Record<string, string> = {
   closed: "Closed",
   cancelled: "Cancelled",
   reopened: "Reopened",
+}
+
+function getEventDotClass(eventType: string): string {
+  switch (eventType) {
+    case 'status_changed':
+      // Amber/Orange for status updates
+      return 'bg-amber-500 ring-4 ring-amber-100 dark:ring-amber-950/60'
+    case 'waiting_for_info':
+      return 'bg-yellow-500 ring-4 ring-yellow-100 dark:ring-yellow-950/60'
+    case 'reopened':
+      return 'bg-orange-500 ring-4 ring-orange-100 dark:ring-orange-950/60'
+    case 'resolved':
+      return 'bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-950/60'
+    case 'closed':
+      return 'bg-slate-600 ring-4 ring-slate-100 dark:ring-slate-800'
+    case 'cancelled':
+      return 'bg-rose-400 ring-4 ring-rose-100 dark:ring-rose-950/60'
+    case 'created':
+      return 'bg-blue-500 ring-4 ring-blue-100 dark:ring-blue-950/60'
+    case 'acknowledged':
+    case 'triaged':
+      return 'bg-sky-500 ring-4 ring-sky-100 dark:ring-sky-950/60'
+    case 'assigned':
+    case 'reassigned':
+      return 'bg-violet-500 ring-4 ring-violet-100 dark:ring-violet-950/60'
+    case 'accepted':
+      return 'bg-indigo-500 ring-4 ring-indigo-100 dark:ring-indigo-950/60'
+    default:
+      return 'bg-amber-500 ring-4 ring-amber-100 dark:ring-amber-950/60'
+  }
 }
 
 interface TimelineEntry {
@@ -41,13 +72,11 @@ export function TicketTimeline({ entries }: { entries: TimelineEntry[] }) {
       <div className="space-y-6">
         {entries.map((entry) => (
           <div key={entry.id} className="relative pl-10">
-            <div className={`absolute left-2.5 top-1.5 w-3 h-3 rounded-full border-2 border-background ${
-              entry.eventType === 'resolved' ? 'bg-green-500' :
-              entry.eventType === 'cancelled' ? 'bg-gray-400' :
-              entry.eventType === 'created' ? 'bg-blue-500' :
-              entry.eventType === 'assigned' || entry.eventType === 'reassigned' ? 'bg-violet-500' :
-              'bg-primary'
-            }`} />
+            <div
+              className={`absolute left-2.5 top-1.5 w-3 h-3 rounded-full border-2 border-background ${getEventDotClass(
+                entry.eventType
+              )}`}
+            />
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-sm">
@@ -63,12 +92,20 @@ export function TicketTimeline({ entries }: { entries: TimelineEntry[] }) {
                 <p className="text-sm text-foreground">{entry.reason}</p>
               )}
               {entry.newValueJsonb && typeof entry.newValueJsonb === 'object' && (
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                   {entry.newValueJsonb.statusCode && (
                     <TicketStatusBadge status={entry.newValueJsonb.statusCode} />
                   )}
+                  {entry.newValueJsonb.deviceStatusCode && (
+                    <DeviceStatusBadge status={entry.newValueJsonb.deviceStatusCode} />
+                  )}
                   {entry.newValueJsonb.priorityCode && (
                     <TicketPriorityBadge priority={entry.newValueJsonb.priorityCode} />
+                  )}
+                  {entry.newValueJsonb.partName && (
+                    <span className="text-xs bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800 px-2 py-0.5 rounded font-medium inline-flex items-center gap-1">
+                      📦 {entry.newValueJsonb.partName}
+                    </span>
                   )}
                 </div>
               )}

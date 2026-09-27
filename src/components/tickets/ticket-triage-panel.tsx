@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export function TicketTriagePanel({ ticketId, currentPriority, engineers }: { ticketId: string, currentPriority: string, engineers: any[] }) {
   const router = useRouter()
@@ -29,9 +30,17 @@ export function TicketTriagePanel({ ticketId, currentPriority, engineers }: { ti
 
     const result = await triageTicket(ticketId, data)
     if (result?.success) {
+      const assigned = !!data.assignedEngineerUserId
+      toast.success(
+        assigned
+          ? "Triage complete — ticket is now In Progress"
+          : "Triage saved — assign an engineer to start work"
+      )
       router.refresh()
     } else {
-      setError((result as any)?.error || "Failed to triage ticket")
+      const errMsg = (result as any)?.error || "Failed to triage ticket"
+      setError(errMsg)
+      toast.error(errMsg)
     }
     setLoading(false)
   }

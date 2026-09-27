@@ -126,3 +126,14 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'task_review_required', 'task_approved', 'task_rejected',
   'device_status_changed', 'sla_warning', 'system_alert'
 ]);
+
+// Phase 9: Electronic Signatures – Events & Policies
+export const signatureEventTypeEnum = pgEnum('signature_event_type', [
+  'created', 'reviewed', 'approved', 'rejected',
+  'amended', 'superseded', 'voided'
+]);
+export const signaturePolicyActionEnum = pgEnum('signature_policy_action', [
+  'complete_corrective', 'complete_pm', 'complete_calibration',
+  'complete_testing', 'release_device', 'change_device_status',
+  'resolve_ticket', 'close_ticket', 'approve_exception'
+]);

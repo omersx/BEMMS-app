@@ -68,43 +68,58 @@ export function Sidebar({ user }: SidebarProps) {
                 (link.href !== '/tickets' && link.href !== '/maintenance' && pathname.startsWith(link.href + '/')) || 
                 (link.href === '/tickets' && pathname.startsWith('/tickets') && !pathname.startsWith('/tickets/triage')) ||
                 (link.href === '/maintenance' && pathname === '/maintenance')
-              return (
-                <Tooltip key={link.href}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href={link.href}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm font-medium",
-                        active ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground hover:text-foreground",
-                        collapsed && "justify-center px-0"
-                      )}
-                    >
-                      <link.icon className={cn("h-5 w-5 shrink-0", active ? "text-primary-foreground" : "")} />
-                      {!collapsed && <span>{link.label}</span>}
-                    </Link>
-                  </TooltipTrigger>
-                  {collapsed && <TooltipContent side="right">{link.label}</TooltipContent>}
-                </Tooltip>
+
+              const navLink = (
+                <Link
+                  href={link.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm font-medium",
+                    active ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                    collapsed && "justify-center px-0"
+                  )}
+                >
+                  <link.icon className={cn("h-5 w-5 shrink-0", active ? "text-primary-foreground" : "")} />
+                  {!collapsed && <span>{link.label}</span>}
+                </Link>
               )
+
+              if (collapsed) {
+                return (
+                  <Tooltip key={link.href}>
+                    <TooltipTrigger asChild>{navLink}</TooltipTrigger>
+                    <TooltipContent side="right">{link.label}</TooltipContent>
+                  </Tooltip>
+                )
+              }
+
+              return <div key={link.href}>{navLink}</div>
             })}
-            {isAdmin && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    href="/admin"
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 mt-4 rounded-md transition-colors text-sm font-medium",
-                      pathname.startsWith('/admin') ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground hover:text-foreground",
-                      collapsed && "justify-center px-0"
-                    )}
-                  >
-                    <Settings className="h-5 w-5 shrink-0" />
-                    {!collapsed && <span>Administration</span>}
-                  </Link>
-                </TooltipTrigger>
-                {collapsed && <TooltipContent side="right">Administration</TooltipContent>}
-              </Tooltip>
-            )}
+            {isAdmin && (() => {
+              const adminLink = (
+                <Link
+                  href="/admin"
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 mt-4 rounded-md transition-colors text-sm font-medium",
+                    pathname.startsWith('/admin') ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground hover:text-foreground",
+                    collapsed && "justify-center px-0"
+                  )}
+                >
+                  <Settings className="h-5 w-5 shrink-0" />
+                  {!collapsed && <span>Administration</span>}
+                </Link>
+              )
+
+              if (collapsed) {
+                return (
+                  <Tooltip>
+                    <TooltipTrigger asChild>{adminLink}</TooltipTrigger>
+                    <TooltipContent side="right">Administration</TooltipContent>
+                  </Tooltip>
+                )
+              }
+
+              return <div>{adminLink}</div>
+            })()}
           </TooltipProvider>
         </nav>
       </ScrollArea>

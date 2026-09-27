@@ -104,7 +104,15 @@ export async function resolveDeviceScan(opaqueReference: string) {
   try {
     const qrLabel = await db.query.deviceQrLabels.findFirst({
       where: eq(deviceQrLabels.opaqueReference, opaqueReference),
-      with: { device: true },
+      with: {
+        device: {
+          with: {
+            hospital: true,
+            department: true,
+            location: true,
+          },
+        },
+      },
     });
 
     if (!qrLabel) {
@@ -122,9 +130,14 @@ export async function resolveDeviceScan(opaqueReference: string) {
       data: {
         deviceId: qrLabel.device.id,
         deviceName: qrLabel.device.name,
+        internalCode: qrLabel.device.internalCode,
         assetNumber: qrLabel.device.assetNumber,
         currentStatus: qrLabel.device.currentStatusCode,
+        statusLimitationsNote: qrLabel.device.statusLimitationsNote,
         organizationId: qrLabel.device.organizationId,
+        hospitalName: qrLabel.device.hospital?.name,
+        departmentName: qrLabel.device.department?.name,
+        locationName: qrLabel.device.location?.name || qrLabel.device.exactLocationDescription,
       },
     };
   } catch (error: any) {

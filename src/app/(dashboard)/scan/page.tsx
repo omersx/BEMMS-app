@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Camera, Search, QrCode } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { QrCameraScanner } from "@/components/devices/qr-camera-scanner"
 
 export default function ScanPage() {
   const router = useRouter()
@@ -33,25 +34,14 @@ export default function ScanPage() {
       />
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Camera className="w-5 h-5" />
-            Camera Scanner
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Camera className="w-5 h-5 text-primary" />
+            Live Camera Scanner
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="aspect-square bg-muted rounded-lg flex flex-col items-center justify-center gap-4 border-2 border-dashed">
-            <QrCode className="w-16 h-16 text-muted-foreground/50" />
-            <p className="text-muted-foreground text-center text-sm px-4">
-              Camera-based QR scanning requires a browser with camera access.
-              <br />
-              Position the QR code within the viewfinder.
-            </p>
-            <Button variant="outline" disabled>
-              <Camera className="w-4 h-4 mr-2" />
-              Enable Camera
-            </Button>
-          </div>
+          <QrCameraScanner />
         </CardContent>
       </Card>
 

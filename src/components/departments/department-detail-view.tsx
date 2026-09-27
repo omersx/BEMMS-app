@@ -19,11 +19,12 @@ import {
   Edit,
   ArrowLeft,
   ChevronRight,
-  Building,
   User,
   AlertTriangle,
   Clock,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { getDepartmentVisuals } from './department-visuals';
 
 interface DepartmentDetailViewProps {
   department: {
@@ -57,6 +58,9 @@ export function DepartmentDetailView({
   stats,
   isAdmin,
 }: DepartmentDetailViewProps) {
+  const visual = getDepartmentVisuals(department.name, department.code, department.departmentType);
+  const DeptIcon = visual.icon;
+
   const [deviceSearch, setDeviceSearch] = useState('');
   const [deviceStatusFilter, setDeviceStatusFilter] = useState<string>('all');
   const [ticketSearch, setTicketSearch] = useState('');
@@ -123,8 +127,8 @@ export function DepartmentDetailView({
         <CardContent className="p-5 sm:p-6 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="p-3 rounded-2xl bg-primary/10 text-primary shrink-0 mt-0.5">
-                <Building className="w-7 h-7" />
+              <div className={cn("p-3 rounded-2xl shrink-0 mt-0.5", visual.detailWrapperClass)}>
+                <DeptIcon className="w-7 h-7" />
               </div>
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -132,11 +136,9 @@ export function DepartmentDetailView({
                   <Badge variant="outline" className="font-mono text-xs">
                     {department.code}
                   </Badge>
-                  {department.departmentType && (
-                    <Badge variant="secondary" className="text-xs">
-                      {department.departmentType}
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className={cn("text-xs font-medium", visual.badgeClass)}>
+                    {department.departmentType || visual.badgeLabel}
+                  </Badge>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs sm:text-sm text-muted-foreground">

@@ -276,3 +276,35 @@ Comprehensive testing, security hardening, and production deployment readiness.
 5. Database backup and restoration verified
 
 ### Status: `COMPLETE`
+
+---
+
+## Phase 9: Electronic Signatures & Traceability for Incident Tickets — `COMPLETE`
+
+### Objective & Business Value
+Extend FDA 21 CFR Part 11 compliant electronic signatures to the helpdesk ticketing workflow. When engineers accept responsibility, resolve reported problems, or close tickets, they must re-authenticate with their password, review legal attestation statements, and cryptographically seal records with SHA-256 hashes. These signatures are permanently recorded in the hash-chained audit trail and automatically surfaced on both the ticket details page and the corresponding medical device profile.
+
+### In-Scope
+- `acceptTicket`, `resolveTicket`, `closeTicket` server actions with password re-authentication (`verifySignatureAuth`)
+- Creation of `recordVersions` snapshot (`ticket_resolution`), `electronicSignatures`, and `signatureEvents`
+- `getTicketSignatures` server action for ticket-specific signature history
+- Extended `getDeviceSignatures` to query and surface ticket sign-offs in the Device Profile Signatures tab
+- `TicketActionButtons` dialogs with attestation statements and password re-authentication
+- `TicketSignaturesPanel` component on the ticket detail page displaying cryptographic audit records
+- Dynamic, disposition-aware Resolution & Closure cards on ticket detail page (operational, limited, unrepairable)
+- Added `updateTicketDeviceStatus` server action & "Update Status" action for ongoing repair tracking without premature resolution
+- Added `reopenTicket` action & "Reopen / Resume Work" dialog with automated device status restoration to `under_repair`
+- Enforced strict validation preventing ticket resolution when device is still under repair or waiting for parts
+
+### Acceptance Criteria
+1. Engineer can accept tickets with password authentication, creating an active signature record
+2. Resolving a ticket requires resolution notes, valid final device status, and password re-authentication
+3. Resolving a ticket is blocked if the device is still under repair or waiting for parts; "Update Status" is used instead
+4. Closing a ticket requires password re-authentication
+5. Reopening a ticket restores the ticket to in-progress and sets the linked device back to `under_repair` with an audit history log
+6. Each signature generates a SHA-256 hash and links to an append-only event chain
+7. All ticket signatures appear on the ticket detail page and the device profile signatures tab
+8. TypeScript compiles with 0 errors and test suite passes (88/88 tests passing)
+
+### Status: `COMPLETE`
+

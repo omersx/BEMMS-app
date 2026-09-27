@@ -237,7 +237,7 @@ export function UserRoleDialog({
         </div>
       ) : (
         <div className="text-center py-8 text-sm text-muted-foreground border border-dashed rounded-lg">
-          No roles assigned yet. Click "Assign Role" above to grant permissions.
+          No roles assigned yet. Click &quot;Assign Role&quot; above to grant permissions.
         </div>
       )}
 

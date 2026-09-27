@@ -167,7 +167,7 @@ export default async function AdminDashboardPage() {
                         </div>
                         {log.changeReason && (
                           <p className="text-xs text-muted-foreground italic truncate">
-                            Reason: "{log.changeReason}"
+                            Reason: &quot;{log.changeReason}&quot;
                           </p>
                         )}
                       </div>

@@ -6,21 +6,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
-  Building,
   Building2,
   Search,
   Monitor,
   AlertTriangle,
   Ticket,
   ChevronRight,
-  HeartPulse,
-  Activity,
-  Microscope,
-  Stethoscope,
-  Radio,
-  Eye,
-  Cross,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { getDepartmentVisuals } from './department-visuals';
 
 interface Hospital {
   id: string;
@@ -58,17 +52,6 @@ interface DepartmentCardsViewProps {
   hospitals: Hospital[];
 }
 
-function getDepartmentIcon(name: string, type?: string | null) {
-  const lower = (name + ' ' + (type || '')).toLowerCase();
-  if (lower.includes('cardio') || lower.includes('heart')) return HeartPulse;
-  if (lower.includes('icu') || lower.includes('intensive') || lower.includes('critical')) return Activity;
-  if (lower.includes('lab') || lower.includes('pathology')) return Microscope;
-  if (lower.includes('radio') || lower.includes('x-ray') || lower.includes('imaging') || lower.includes('mri')) return Radio;
-  if (lower.includes('eye') || lower.includes('ophthal')) return Eye;
-  if (lower.includes('emerg') || lower.includes('trauma') || lower.includes('er')) return Cross;
-  if (lower.includes('surg') || lower.includes('op') || lower.includes('theater')) return Stethoscope;
-  return Building;
-}
 
 export function DepartmentCardsView({ departments, hospitals }: DepartmentCardsViewProps) {
   const [selectedHospitalId, setSelectedHospitalId] = useState<string>('all');
@@ -156,7 +139,8 @@ export function DepartmentCardsView({ departments, hospitals }: DepartmentCardsV
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredDepartments.map((dept) => {
-            const Icon = getDepartmentIcon(dept.name, dept.departmentType);
+            const visual = getDepartmentVisuals(dept.name, dept.code, dept.departmentType);
+            const Icon = visual.icon;
             const { stats } = dept;
             const hasIssues = stats.outOfServiceDevices > 0 || stats.activeTickets > 0;
 
@@ -171,7 +155,7 @@ export function DepartmentCardsView({ departments, hospitals }: DepartmentCardsV
                     {/* Header: Icon, Name, Code */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                        <div className={cn("p-2.5 rounded-xl transition-colors shrink-0", visual.iconWrapperClass)}>
                           <Icon className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">

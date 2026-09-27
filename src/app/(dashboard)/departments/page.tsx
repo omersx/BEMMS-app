@@ -36,7 +36,7 @@ export default async function DepartmentsPage() {
           </Button>
           {isAdmin && (
             <Button asChild className="min-h-[44px]">
-              <Link href="/admin/departments/new">
+              <Link href="/departments/new">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Department
               </Link>
