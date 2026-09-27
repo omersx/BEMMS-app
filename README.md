@@ -13,6 +13,8 @@
 
 It bridges the gap between frontline clinical healthcare workers and biomedical engineering teams—enabling instant equipment triage, QR-based mobile fault reporting, preventive maintenance tracking, and FDA 21 CFR Part 11 compliant cryptographic electronic signatures.
 
+> 📖 **Comprehensive Manual**: For in-depth architectural specs, interactive Mermaid workflows, complete database ERDs, state machines, and operational guidelines, see the **[Full Architecture & Operations Manual (full-readme.md)](full-readme.md)**.
+
 ---
 
 ## 🌟 Key Features

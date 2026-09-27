@@ -37,21 +37,32 @@ In most healthcare facilities:
 ### The BEMMS Solution
 BEMMS establishes an unbroken chain of custody and accountability between frontline clinical teams and specialized biomedical engineers:
 
-```
-[Clinical Staff]               [BEMMS Platform]              [Biomedical Team]
-       │                               │                              │
-       ├─ Scan Device QR Code ────────►│                              │
-       │  (Mobile Camera)              ├─ Instant Device Lookup       │
-       │                               │                              │
-       ├─ Submit Simple Fault ────────►│                              │
-       │  (Clinical Symptoms)          ├─ Alert & Queue Ticket ──────►│
-       │                               │                              ├─ Triage & Prioritize (P1-P4)
-       │                               │                              ├─ Safe Device Isolation
-       │                               │                              ├─ Perform Repair & Checklists
-       │                               │                              ├─ Parts Hold / Resumption
-       │                               │                              ├─ 21 CFR Part 11 e-Signature
-       │◄─ Real-time Notification ─────┼─ Cryptographic Sign-Off ─────┤
-       │   (Device Cleared for Care)   │                              │
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Nurse as 👩‍⚕️ Clinical Staff (Ward)
+    participant QR as 📱 Mobile QR Scanner
+    participant App as 🏥 BEMMS Core
+    actor Biomed as 🛠️ Biomedical Engineer
+    participant Audit as 🔒 21 CFR Part 11 Ledger
+
+    Nurse->>QR: Scans Equipment QR Code
+    QR->>App: Fetches device identity & status
+    App-->>Nurse: Displays Quick Report Form
+    Nurse->>App: Submits Fault (Symptoms & Impact)
+    App->>App: Sets Device to Under Repair
+    App->>Biomed: Enqueues P1-P4 Ticket & Push Alert
+    Biomed->>App: Acknowledges & Triages Work Order
+    opt Waiting for Spare Parts
+        Biomed->>App: Places Ticket on Hold (Part Name & Vendor PO)
+        App->>Nurse: Ward Alert: "Waiting for Parts"
+        Biomed->>App: Parts Received (Resume Work)
+    end
+    Biomed->>App: Executes Repair & IEC 62353 Safety Tests
+    Biomed->>App: Submits Resolution & Re-authenticates Password
+    App->>Audit: Cryptographic SHA-256 Signature Appended
+    App->>App: Sets Device to Operational / Clean QA Release
+    App-->>Nurse: Notification: "Device Safe for Patient Care"
 ```
 
 ### Core Design Principles
@@ -116,13 +127,50 @@ BEMMS is built upon a modern, full-stack TypeScript architecture optimized for h
 ## 3. Healthcare Facility Hierarchy & Multi-Tenancy
 
 To accurately mirror large hospital networks, BEMMS implements a strict 4-tier organizational hierarchy:
+```mermaid
+graph TD
+    Org["🏢 Healthcare Organization (Multi-Hospital Tenant)"]
+    Hosp1["🏥 Central Teaching Hospital"]
+    Hosp2["🏥 Regional Trauma Center"]
+    
+    Org --> Hosp1
+    Org --> Hosp2
+    
+    DeptICU["🩺 Intensive Care Unit (ICU)"]
+    DeptER["🩺 Emergency Department (ED)"]
+    DeptSurg["🩺 Surgical Theatres (OR)"]
+    
+    Hosp1 --> DeptICU
+    Hosp1 --> DeptER
+    Hosp1 --> DeptSurg
+    
+    Loc1["📍 ICU Bay 01 (Bed A)"]
+    Loc2["📍 ICU Bay 02 (Bed B)"]
+    Loc3["📍 Trauma Suite 1"]
+    
+    DeptICU --> Loc1
+    DeptICU --> Loc2
+    DeptER --> Loc3
+    
+    Dev1["🔬 Mindray N12 Patient Monitor"]
+    Dev2["🔬 Dräger Evita V500 Ventilator"]
+    Dev3["🔬 Zoll R-Series Defibrillator"]
+    
+    Loc1 --> Dev1
+    Loc2 --> Dev2
+    Loc3 --> Dev3
 
-```
-🏢 Organization (e.g., National Health Authority / Hospital Group)
- └── 🏥 Hospital / Site (e.g., St. Jude General Hospital)
-      └── 🩺 Department (e.g., Intensive Care Unit, Radiology, Surgery)
-           └── 📍 Location / Room (e.g., ICU Bed 04, Trauma Bay 2, MRI Suite)
-                └── 🔬 Medical Device (e.g., Mindray BeneVision N12 Patient Monitor)
+    classDef org fill:#e0f2fe,stroke:#0284c7,stroke-width:2px;
+    classDef hosp fill:#f0fdf4,stroke:#16a34a,stroke-width:2px;
+    classDef dept fill:#fef3c7,stroke:#d97706,stroke-width:2px;
+    classDef loc fill:#f3e8ff,stroke:#9333ea,stroke-width:2px;
+    classDef dev fill:#ffffff,stroke:#475569,stroke-width:2px;
+
+    class Org org;
+    class Hosp1,Hosp2 hosp;
+    class DeptICU,DeptER,DeptSurg dept;
+    class Loc1,Loc2,Loc3 loc;
+    class Dev1,Dev2,Dev3 dev;
 ```
 
 ### Scope Enforcement Model
@@ -173,28 +221,33 @@ The Medical Device is the core physical asset in BEMMS (`src/lib/db/schema/devic
 
 ### Operational Availability State Machine
 
-```
-              ┌────────────────────────────────────────────────────────┐
-              │                                                        ▼
-┌─────────────┴──────┐     Report Fault     ┌───────────────────┐  Retire   ┌─────────────────┐
-│    OPERATIONAL     ├─────────────────────►│   UNDER REPAIR    ├──────────►│ DECOMMISSIONED  │
-│ (Safe for Patient) │                      │   (Active Work)   │           │ (Retired Asset) │
-└──────▲──────▲──────┘                      └───┬─────────────┬─┘           └─────────────────┘
-       │      │                                 │             │
-       │      │ Clean QA Release                │ Need Parts  │ Declared Dead
-       │      │                                 ▼             ▼
-       │  ┌───┴───────────────┐     ┌──────────────────────┐  ┌─────────────────┐
-       │  │ AWAITING RELEASE  │     │  WAITING FOR PARTS   │  │ OUT OF SERVICE  │
-       │  │ (QA Inspection)   │     │ (Vendor Hold Queue)  │  │ (Unrepairable)  │
-       │  └───▲───────────────┘     └───────────┬──────────┘  └─────────────────┘
-       │      │                                 │
-       │      └─────────────────────────────────┤ Parts Arrive
-       │                                        │ (Resume Work)
-       │ Restored with Constraints              ▼
-       └───────────────────────── ┌───────────────────────────┐
-                                  │ OPERATIONAL W/ LIMITATIONS│
-                                  │ (Active Constraint Note)  │
-                                  └───────────────────────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> operational : Commission & Inspect
+    
+    operational --> under_repair : Report Fault / Breakdown
+    operational --> under_maintenance : Scheduled PM / Calibration
+    operational --> standby : Transferred to Reserve Pool
+    
+    standby --> operational : Deployed to Clinical Ward
+    
+    under_repair --> waiting_for_parts : Order Replacement Board / Sensor
+    waiting_for_parts --> under_repair : Parts Received (Resume Work)
+    
+    under_repair --> awaiting_release : Repair Complete (Pending QA)
+    under_maintenance --> awaiting_release : Service Complete (Pending QA)
+    
+    awaiting_release --> operational : QA Cleared & Certified Safe
+    awaiting_release --> operational_with_limitations : Cleared with Clinical Constraints
+    under_repair --> operational_with_limitations : Repaired with Partial Functions
+    
+    operational_with_limitations --> under_repair : Full Fix Resumed
+    
+    under_repair --> out_of_service : Condemned / Unrepairable
+    operational --> out_of_service : Catastrophic Failure / Biohazard
+    
+    out_of_service --> decommissioned : Salvage Parts & Dispose Asset
+    decommissioned --> [*]
 ```
 
 ### The 9 Device Status Codes
@@ -224,27 +277,38 @@ BEMMS eliminates manual serial number data entry through an integrated QR engine
 ### Role-Aware Scan Landing (`/scan/[code]`)
 When a QR code is scanned:
 
-```
-                                  [QR Code Scanned]
-                                          │
-                                 Is User Logged In?
-                                   /             \
-                             No   /               \  Yes
-                                 ▼                 ▼
-                        ┌────────────────┐    What is the User's Role?
-                        │ Public Safety  │    ┌───────────────────────────┐
-                        │ View           │    │                           │
-                        │ Basic Info &   │    ├─ Clinical Staff:          │
-                        │ Login Required │    │  • Simple Status Badge    │
-                        │ for Actions    │    │  • Direct "Report Fault"  │
-                        └────────────────┘    │  • Active Ticket Tracker  │
-                                              │                           │
-                                              ├─ Biomedical Engineer:     │
-                                              │  • Full Device Profile    │
-                                              │  • Complete Work History  │
-                                              │  • Calibration Records    │
-                                              │  • Diagnostic Actions     │
-                                              └───────────────────────────┘
+```mermaid
+flowchart TD
+    Scan["📷 Frontline User Scans Device QR Code"]
+    AuthCheck{"Is User Logged In?"}
+    
+    Scan --> AuthCheck
+    
+    AuthCheck -->|No| PublicLanding["🌐 Public Safety Landing Page"]
+    PublicLanding --> PubDetails["• Basic Device Name & Asset Tag<br/>• Safety Warning / Availability Banner<br/>• Prompts Login to Report Fault"]
+    
+    AuthCheck -->|Yes| RoleCheck{"What is User's Role & Scope?"}
+    
+    RoleCheck -->|Clinical Staff / Nurse| WardView["🩺 Clinical Ward Interface"]
+    WardView --> WardActions["• Clear Operational / Limitation Banner<br/>• Instant 3-Step Fault Reporting Form<br/>• View Active Department Tickets<br/>• Track Submitted Requests"]
+    
+    RoleCheck -->|Biomedical Engineer| TechView["🛠️ Comprehensive Technical Profile"]
+    TechView --> TechActions["• Full Specification & Schematics<br/>• Complete Ticket & Work Order History<br/>• PM & Calibration Status Checks<br/>• IEC 62353 Electrical Test Logs<br/>• Direct Actions: Change Status / Transfer / Sign"]
+    
+    RoleCheck -->|System / Hospital Admin| AdminView["⚙️ Asset Administration View"]
+    AdminView --> AdminActions["• Edit Master Identity & Serial Numbers<br/>• Inter-Hospital Relocation & Transfer<br/>• Archive / Decommission Asset"]
+
+    classDef start fill:#f8fafc,stroke:#334155,stroke-width:2px;
+    classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px;
+    classDef clinical fill:#ecfdf5,stroke:#059669,stroke-width:2px;
+    classDef biomed fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
+    classDef admin fill:#f5f3ff,stroke:#7c3aed,stroke-width:2px;
+
+    class Scan start;
+    class AuthCheck,RoleCheck decision;
+    class WardView,WardActions clinical;
+    class TechView,TechActions biomed;
+    class AdminView,AdminActions admin;
 ```
 
 ---
@@ -274,6 +338,33 @@ Clinical staff report faults through a guided 3-step form:
 | `resolved` | Resolved | 🟢 Emerald Rail (`border-l-emerald-500`) | Work completed and signed off with cryptographic SHA-256 signature. |
 | `closed` | Closed | 🔘 Slate Rail (`border-l-slate-400`) | Formally signed and archived. |
 | `cancelled` | Cancelled | ⚪ Zinc Rail (`border-l-zinc-300`) | Voided or duplicate request (cancellation reason required). |
+
+```mermaid
+stateDiagram-v2
+    [*] --> new : Ward Staff Reports Fault
+    
+    new --> acknowledged : Biomed Acknowledges Request
+    acknowledged --> in_triage : Begin Clinical Triage (P1-P4)
+    
+    in_triage --> waiting_requester : Request Ward Clarification
+    waiting_requester --> in_triage : Staff Provides Information
+    
+    in_triage --> in_progress : Allocate & Start Repair
+    
+    in_progress --> waiting_parts_vendor : Supply Chain Hold (Order Spare Parts)
+    waiting_parts_vendor --> in_progress : Parts Received (Resume Work)
+    
+    in_progress --> resolved : Resolve & Cryptographic e-Sign
+    waiting_parts_vendor --> resolved : Direct Resolution / Condemn Asset
+    
+    resolved --> closed : Formal Managerial Verification Close
+    
+    resolved --> in_progress : Controlled Reopen / Recurrence
+    closed --> in_progress : Controlled Reopen with Justification
+    
+    new --> cancelled : Voided / Duplicate Request
+    in_triage --> cancelled : Non-Technical Issue Cancelled
+```
 
 ### Cards Grid vs. Table View Switcher (`/tickets`)
 The tickets module features a dual-layout interface:
@@ -340,6 +431,33 @@ A standard browser session is **not** a valid legal signature. When signing an a
    $$\text{Digest} = \text{SHA-256}(\text{Ticket ID} + \text{Device Status} + \text{Summary} + \text{Signer ID} + \text{Timestamp} + \text{Salt})$$
 4. **Audit Chain Linking**: The signature is permanently inserted into `signatures` and `signature_events` tables with actor metadata, IP address, and hash chain.
 
+```mermaid
+flowchart LR
+    subgraph Challenge["1. Signer Challenge"]
+        A1["Biomed Engineer clicks<br/>'Resolve & Sign'"] --> A2["Password Re-Authentication<br/>(Secret Challenge)"]
+        A2 --> A3["Binding Legal Attestation<br/>(21 CFR Part 11)"]
+    end
+
+    subgraph Digest["2. SHA-256 Digest"]
+        A3 --> B1["Render Snapshot Payload:<br/>• Ticket ID<br/>• Resolution Summary<br/>• Final Device Status<br/>• Signer User ID & Role<br/>• Server ISO Timestamp"]
+        B1 --> B2["Generate Deterministic<br/>SHA-256 Cryptographic Hash"]
+    end
+
+    subgraph Chain["3. Hash Chained Audit Ledger"]
+        B2 --> C1["Fetch Previous Event Hash<br/>(Blockchain-style Chaining)"]
+        C1 --> C2["Lock Record in PostgreSQL:<br/>• signatures table<br/>• signature_events table"]
+        C2 --> C3["Immutable Regulatory Proof<br/>(Tamper-Evident)"]
+    end
+
+    classDef action fill:#eff6ff,stroke:#3b82f6,stroke-width:2px;
+    classDef digest fill:#ecfdf5,stroke:#10b981,stroke-width:2px;
+    classDef chain fill:#fef3c7,stroke:#f59e0b,stroke-width:2px;
+
+    class A1,A2,A3 action;
+    class B1,B2 digest;
+    class C1,C2,C3 chain;
+```
+
 ---
 
 ## 11. Reports, Analytics & KPI Dashboards
@@ -364,37 +482,75 @@ All reports support one-click CSV export featuring:
 
 The BEMMS schema is organized into 22 dedicated tables managed via Drizzle ORM:
 
-```
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│  organizations  │◄──────┤    hospitals    │◄──────┤   departments   │
-└────────┬────────┘       └────────┬────────┘       └────────┬────────┘
-         │                         │                         │
-         │                         │                         ▼
-         │                         │                ┌─────────────────┐
-         │                         │                │    locations    │
-         │                         │                └────────┬────────┘
-         │                         │                         │
-         │                         ▼                         ▼
-         │                ┌───────────────────────────────────┐
-         └───────────────►│              devices              │
-                          └──────┬────────────┬───────────────┘
-                                 │            │
-            ┌────────────────────┘            └────────────────────┐
-            ▼                                                      ▼
-┌────────────────────────┐                               ┌────────────────────┐
-│    service_tickets     │                               │ maintenance_plans  │
-└───────────┬────────────┘                               └─────────┬──────────┘
-            │                                                      │
-            ├────────────────────┐                                 ▼
-            ▼                    ▼                       ┌────────────────────┐
-┌───────────────────────┐ ┌──────────────┐               │    occurrences     │
-│   maintenance_tasks   │ │  signatures  │               └─────────┬──────────┘
-└───────────┬───────────┘ └──────┬───────┘                         │
-            │                    │                                 ▼
-            ▼                    ▼                       ┌────────────────────┐
-┌───────────────────────┐ ┌──────────────┐               │ maintenance_tasks  │
-│  maintenance_records  │ │  audit_logs  │               └────────────────────┘
-└───────────────────────┘ └──────────────┘
+```mermaid
+erDiagram
+    ORGANIZATIONS ||--o{ HOSPITALS : contains
+    HOSPITALS ||--o{ DEPARTMENTS : contains
+    DEPARTMENTS ||--o{ LOCATIONS : contains
+    DEPARTMENTS ||--o{ DEVICES : owns
+    LOCATIONS ||--o{ DEVICES : houses
+    MANUFACTURERS ||--o{ DEVICES : produces
+    DEVICE_CATEGORIES ||--o{ DEVICES : classifies
+    
+    DEVICES ||--o{ SERVICE_TICKETS : generates
+    USERS ||--o{ SERVICE_TICKETS : reports
+    USERS ||--o{ SERVICE_TICKETS : assigned_to
+    
+    SERVICE_TICKETS ||--o{ TICKET_COMMENTS : contains
+    SERVICE_TICKETS ||--o{ MAINTENANCE_TASKS : spawns
+    
+    DEVICES ||--o{ MAINTENANCE_SCHEDULE_OCCURRENCES : schedules
+    MAINTENANCE_PLANS ||--o{ MAINTENANCE_SCHEDULE_OCCURRENCES : defines
+    MAINTENANCE_SCHEDULE_OCCURRENCES ||--o{ MAINTENANCE_TASKS : executes
+    
+    MAINTENANCE_TASKS ||--o{ MAINTENANCE_RECORDS : finalizes
+    MAINTENANCE_RECORDS ||--o{ SIGNATURES : seals
+    SERVICE_TICKETS ||--o{ SIGNATURES : seals
+    SIGNATURES ||--o{ SIGNATURE_EVENTS : chains
+
+    ORGANIZATIONS {
+        uuid id PK
+        text name
+        text code
+    }
+    HOSPITALS {
+        uuid id PK
+        uuid organization_id FK
+        text name
+        text code
+    }
+    DEPARTMENTS {
+        uuid id PK
+        uuid hospital_id FK
+        text name
+        text code
+    }
+    DEVICES {
+        uuid id PK
+        text asset_number
+        text serial_number
+        text model_name
+        varchar current_status_code
+        text status_limitations_note
+        varchar risk_classification
+    }
+    SERVICE_TICKETS {
+        uuid id PK
+        text ticket_number
+        varchar status_code
+        varchar priority_code
+        text title
+        text resolution_summary
+        varchar final_device_status_code
+    }
+    SIGNATURES {
+        uuid id PK
+        uuid signer_user_id FK
+        text signer_role
+        text meaning
+        text content_hash
+        timestamp signed_at
+    }
 ```
 
 ### Table Dictionary
