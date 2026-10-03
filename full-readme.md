@@ -9,6 +9,12 @@
 2. [System Architecture & Technology Stack](#2-system-architecture--technology-stack)
 3. [Healthcare Facility Hierarchy & Multi-Tenancy](#3-healthcare-facility-hierarchy--multi-tenancy)
 4. [User Roles, Permissions & Separation of Duties](#4-user-roles-permissions--separation-of-duties)
+   - [4.3 End-to-End User Journeys & Role Workflows](#43-end-to-end-user-journeys--role-workflows)
+     - [Journey 1: Frontline Clinical Staff (Doctor & Nurse)](#-journey-1-frontline-clinical-staff-doctor-nurse-ward-specialist)
+     - [Journey 2: Department Manager / Ward Sister](#-journey-2-department-manager--ward-sister-nurse-head)
+     - [Journey 3: Biomedical Engineer / Technician](#-journey-3-biomedical-engineer--technician-repair--maintenance-specialist)
+     - [Journey 4: Biomedical Manager / Quality Lead](#-journey-4-biomedical-manager--quality-assurance-lead)
+     - [Journey 5: Hospital Administrator / Auditor](#-journey-5-hospital-administrator--quality-auditor)
 5. [Medical Equipment Inventory & Device Lifecycle](#5-medical-equipment-inventory--device-lifecycle)
 6. [QR Code Engine & Mobile Field Access](#6-qr-code-engine--mobile-field-access)
 7. [Helpdesk Fault Reporting & Ticket Lifecycle](#7-helpdesk-fault-reporting--ticket-lifecycle)
@@ -203,6 +209,195 @@ BEMMS enforces a **Multi-Role RBAC Matrix** defined in `src/lib/auth/rbac.ts` an
 To prevent conflicts of interest and regulatory non-compliance:
 1. **Performer $\ne$ Reviewer**: An engineer who executes a repair or calibration cannot approve their own review gate when an independent review policy is enabled.
 2. **Technical Authority Isolation**: An administrator cannot sign a clinical release or declare a medical device operational unless explicitly holding a certified biomedical role.
+
+### 4.3 End-to-End User Journeys & Role Workflows
+
+BEMMS is architected around the distinct daily realities of clinical wards, biomedical engineering workshops, and hospital executive management. Below are the five canonical end-to-end user workflows:
+
+---
+
+#### 🩺 Journey 1: Frontline Clinical Staff (Doctor, Nurse, Ward Specialist)
+
+The clinical user's primary goal is rapid fault reporting with zero administrative friction, ensuring faulty devices are safely quarantined and bedside care can continue without delay.
+
+```mermaid
+flowchart TD
+    Bedside["🏥 Bedside Equipment Issue<br/>(Unit stops functioning or displays error code)"] --> ScanQR["📱 Step 1: Scan Device QR Code<br/>(Camera app or in-app scanner)"]
+    
+    ScanQR --> CheckStatus{"Step 2: Check Safety Status<br/>on Mobile Landing Page"}
+    
+    CheckStatus -->|Already Flagged| ViewTicket["📋 Step 2A: View Active Ticket<br/>(Check engineer progress & ETA)"]
+    CheckStatus -->|Device Broken| ReportForm["📝 Step 2B: Tap 'Report Problem'<br/>(Asset tag & department pre-selected)"]
+    
+    ReportForm --> ImpactSelect["⚡ Step 3: Select Clinical Impact:<br/>• Device Not Usable<br/>• Degraded Function<br/>• Safety Hazard / Sparks"]
+    
+    ImpactSelect --> SymptomSelect["🔍 Step 4: Pick Symptom & Enter Note:<br/>• Display / Power / Probe / Physical Damage<br/>• Brief clinical context"]
+    
+    SymptomSelect --> Submit["🚀 Step 5: Submit Fault Ticket<br/>(Instant ticket number generated)"]
+    
+    Submit --> SafeIsolation["🛑 Step 6: Quarantine Equipment<br/>(Tag unit & move to clean holding bay)"]
+    
+    SafeIsolation --> Notification["🔔 Step 7: Push Notification Received<br/>('Device Restored: Safe for Clinical Use')"]
+    
+    Notification --> BedsideReturn["✅ Step 8: Return Unit to Patient Bedside"]
+
+    classDef clinical fill:#ecfdf5,stroke:#059669,stroke-width:2px;
+    classDef action fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
+    classDef alert fill:#fef2f2,stroke:#dc2626,stroke-width:2px;
+
+    class Bedside,SafeIsolation alert;
+    class ScanQR,CheckStatus,ReportForm,ImpactSelect,SymptomSelect,Submit action;
+    class ViewTicket,Notification,BedsideReturn clinical;
+```
+
+**Step-by-Step Clinical Walkthrough**:
+1. **Bedside Fault**: An infusion pump in the ICU starts beeping with an unrecoverable occlusion error.
+2. **Instant Scan**: The nurse scans the QR code label on the front of the pump using their smartphone camera or the `/scan` mobile scanner.
+3. **Safety Status Check (`/scan/[code]`)**: The page reveals real-time status. If already reported, the active ticket number and engineer progress are shown. If new, the nurse taps **"Report Problem"**.
+4. **Fast 3-Step Report Form (`/tickets/create`)**:
+   - Device (*Alaris GH Syringe Pump*), department (*ICU*), and asset number (*PUMP-00412*) are auto-filled.
+   - Nurse selects `Device Not Usable` and symptom `Fluid Occlusion Sensor`.
+   - Adds note: *"Alarm sounds continuously even with new syringe line installed."*
+5. **Instant Confirmation**: System creates Ticket `TKT-202609-0012` and dispatches a high-priority push alert to the biomedical engineering workshop queue.
+6. **Restoration Notification**: Once repaired, certified, and electronically signed by biomedical engineering, the nurse receives a notification that the unit is cleared for bedside deployment.
+
+---
+
+#### 👩‍💼 Journey 2: Department Manager / Ward Sister (Nurse Head)
+
+The department manager monitors equipment availability across their ward, ensures critical device quotas are maintained, and manages ward equipment transfers.
+
+```mermaid
+flowchart TD
+    Dashboard["📊 Step 1: Open Department Dashboard<br/>(/departments/[deptId])"] --> Monitor["👀 Step 2: Monitor Real-Time Availability<br/>• Operational Count vs. Quotas<br/>• Quarantined & Out of Service Units"]
+    
+    Monitor --> Limitations{"Step 3: Review Operating Limitations"}
+    
+    Limitations -->|Active Limitation| AlertWard["⚠️ Step 3A: Brief Nursing Shift<br/>(e.g., 'Ventilator 02: Adult Modes Only')"]
+    Limitations -->|Critical Shortage| RequestLoan["🔄 Step 3B: Request Inter-Ward Loan<br/>(Borrow reserve unit from Standby Pool)"]
+    
+    Monitor --> TrackTickets["🎫 Step 4: Track Department Ticket Pipeline<br/>• Awaiting Engineer Triage<br/>• Waiting for Vendor Spare Parts"]
+    
+    TrackTickets --> Clarify["💬 Step 5: Answer Engineer Inquiries<br/>(Provide ward context via Requester Comments)"]
+    
+    Clarify --> ConfirmDelivery["📦 Step 6: Verify Equipment Return<br/>(Confirm repaired unit delivered back to ward)"]
+
+    classDef mgr fill:#fef3c7,stroke:#d97706,stroke-width:2px;
+    classDef alert fill:#fef2f2,stroke:#dc2626,stroke-width:2px;
+    classDef action fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
+
+    class Dashboard,Monitor,TrackTickets,ConfirmDelivery mgr;
+    class Limitations,AlertWard alert;
+    class RequestLoan,Clarify action;
+```
+
+---
+
+#### 🛠️ Journey 3: Biomedical Engineer / Technician (Repair & Maintenance Specialist)
+
+The biomedical engineer performs triage assessment, diagnostic isolation, spare parts management, safety testing, and regulatory sign-off.
+
+```mermaid
+flowchart TD
+    Queue["📥 Step 1: Open Triage Queue (/tickets)<br/>(Filter by P1 Critical / P2 High urgency)"] --> Accept["✍️ Step 2: Click 'Accept & Sign'<br/>(Password Re-Authentication for Part 11 Attestation)"]
+    
+    Accept --> InProgress["🔧 Step 3: Ticket becomes 'In Progress'<br/>(Device marked 'Under Repair' across all hospital views)"]
+    
+    InProgress --> BenchWork["🔬 Step 4: Bench Disassembly & Diagnostic Isolation"]
+    
+    BenchWork --> NeedsParts{"Do we need replacement parts?"}
+    
+    NeedsParts -->|Yes| HoldParts["📦 Step 5A: Click 'Update Status' -> 'Waiting for Parts'<br/>• Enter Part Name (e.g. Power Supply Board)<br/>• Enter Supplier / PO Tracking Details<br/>• Ticket becomes 'waiting_parts_vendor'"]
+    
+    HoldParts --> WaitForVendor["⏳ Amber Spare Parts Hold Card Active on Ticket & Ward"]
+    
+    WaitForVendor --> PartsArrive["▶️ Step 5B: Click 'Parts Received (Resume)'<br/>(Hold cleared; Ticket returned to 'In Progress')"]
+    
+    PartsArrive --> ExecuteRepair["⚙️ Step 6: Install Part & Run Calibration"]
+    NeedsParts -->|No| ExecuteRepair
+    
+    ExecuteRepair --> SafetyTests["⚡ Step 7: IEC 62353 Electrical Safety Testing<br/>(Earth Resistance <= 0.2 Ohm, Leakage Current)"]
+    
+    SafetyTests --> ResolveSign["🔏 Step 8: Click 'Resolve & Sign'"]
+    
+    ResolveSign --> OutcomeSelect{"Select Final Device Clinical Status:"}
+    
+    OutcomeSelect -->|Safe for Care| OperStatus["✅ Operational (Safe for Clinical Use)"]
+    OutcomeSelect -->|Partial Function| LimitStatus["⚠️ Operational with Limitations<br/>(Enter clinical restriction notice)"]
+    OutcomeSelect -->|QA Verification Needed| QAHold["⏳ Awaiting Release (Biomed QA Hold)"]
+    OutcomeSelect -->|Beyond Repair| OutOfServ["🚫 Out of Service (Equipment Condemned)"]
+    OutcomeSelect -->|Reserve Pool| StandbyStatus["💤 Standby (Transferred to Equipment Pool)"]
+    
+    OperStatus & LimitStatus & QAHold & OutOfServ & StandbyStatus --> FinalSign["🔐 Step 9: Re-enter Password Challenge<br/>(Generates SHA-256 Tamper-Evident Digest)"]
+    
+    FinalSign --> ClosedAudit["📋 Step 10: Ticket Resolved & Audit Ledger Sealed"]
+
+    classDef biomed fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
+    classDef hold fill:#fffbeb,stroke:#f59e0b,stroke-width:2px;
+    classDef test fill:#fdf4ff,stroke:#c026d3,stroke-width:2px;
+    classDef sign fill:#ecfdf5,stroke:#059669,stroke-width:2px;
+
+    class Queue,Accept,InProgress,BenchWork biomed;
+    class NeedsParts,HoldParts,WaitForVendor,PartsArrive hold;
+    class ExecuteRepair,SafetyTests test;
+    class ResolveSign,OutcomeSelect,OperStatus,LimitStatus,QAHold,OutOfServ,StandbyStatus,FinalSign,ClosedAudit sign;
+```
+
+---
+
+#### 👨‍🔬 Journey 4: Biomedical Manager / Quality Assurance Lead
+
+The biomedical manager supervises department SLAs, assigns complex work orders, audits PM compliance, and signs independent QA clinical release gates.
+
+```mermaid
+flowchart TD
+    MorningReview["📋 Step 1: Morning Triage Review<br/>(Inspect incoming P1-P4 tickets across facility)"] --> AllocateWork["👥 Step 2: Assign Specialist Engineers<br/>(Match specialist to equipment modality)"]
+    
+    AllocateWork --> MonitorSLA["⏱️ Step 3: Monitor Live SLA Backlog<br/>(Track P1 Critical <= 4h resolution targets)"]
+    
+    MonitorSLA --> QAReleaseGate{"Step 4: Inspect 'Awaiting Release' Units<br/>(High-Risk Life-Support Devices)"}
+    
+    QAReleaseGate --> AuditProof["🔍 Step 4A: Verify IEC 62353 Safety Records<br/>and Performer's Calibration Data"]
+    
+    AuditProof --> ReleaseSign["🔏 Step 4B: Sign Independent Release Attestation<br/>(Device transitioned to 'Operational')"]
+    
+    MonitorSLA --> PMCompliance["📅 Step 5: Oversee Preventive Maintenance<br/>• Track PM Compliance Rate (% Target: >= 95%)<br/>• Resolve Overdue Calibration Alerts"]
+    
+    PMCompliance --> AuditReady["📜 Step 6: Export Compliance Inspection Dossier<br/>(Joint Commission / ISO 13485 Audit)"]
+
+    classDef mgr fill:#f0fdf4,stroke:#16a34a,stroke-width:2px;
+    classDef gate fill:#fef3c7,stroke:#d97706,stroke-width:2px;
+    classDef audit fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
+
+    class MorningReview,AllocateWork,MonitorSLA mgr;
+    class QAReleaseGate,AuditProof,ReleaseSign gate;
+    class PMCompliance,AuditReady audit;
+```
+
+---
+
+#### 🏛️ Journey 5: Hospital Administrator / Quality Auditor
+
+The system administrator and auditor govern multi-hospital tenant boundaries, provision user accounts, mass-produce QR labels, and verify data integrity.
+
+```mermaid
+flowchart TD
+    SetupFacility["🏥 Step 1: Onboard Hospital & Wards<br/>(Organizations -> Hospitals -> Departments -> Rooms)"] --> IntakeDevices["🔬 Step 2: Master Device Intake<br/>(Batch CSV import or /devices/new registration)"]
+    
+    IntakeDevices --> PrintLabels["🏷️ Step 3: Batch QR Label Printing<br/>(Print durable 300 DPI labels for ward deployment)"]
+    
+    SetupFacility --> ProvisionUsers["👤 Step 4: User Provisioning & Invitations<br/>• Assign RBAC Roles with strict Scopes<br/>• Enforce Separation of Duties Policies"]
+    
+    ProvisionUsers --> MonitorHealth["📈 Step 5: System Telemetry & Health Panel<br/>(Monitor DB connection pool, errors, SSE alerts)"]
+    
+    MonitorHealth --> AuditInspection["🔒 Step 6: Cryptographic Audit Ledger Inspection<br/>• Inspect SHA-256 hash chains on /admin/audit-logs<br/>• Export Tamper-Evident Regulatory CSV Files"]
+
+    classDef admin fill:#f5f3ff,stroke:#7c3aed,stroke-width:2px;
+    classDef audit fill:#f8fafc,stroke:#475569,stroke-width:2px;
+
+    class SetupFacility,IntakeDevices,PrintLabels,ProvisionUsers,MonitorHealth admin;
+    class AuditInspection audit;
+```
 
 ---
 
