@@ -1,55 +1,168 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Download, UploadCloud, FileText, CheckCircle2, AlertTriangle, XCircle, Loader2, ArrowRight, RotateCcw } from 'lucide-react';
+import { 
+  Download, 
+  UploadCloud, 
+  FileText, 
+  FileSpreadsheet, 
+  CheckCircle2, 
+  AlertTriangle, 
+  XCircle, 
+  Loader2, 
+  ArrowRight, 
+  ArrowLeft, 
+  RotateCcw, 
+  Layers, 
+  Building2 
+} from 'lucide-react';
 import { toast } from 'sonner';
-import { validateDeviceImport, executeDeviceImport } from '@/lib/actions/data-management';
-import { getDeviceImportTemplateCSV } from '@/lib/utils/csv-parser';
+import * as XLSX from 'xlsx';
+
+// Next lines are ignored if they don't exist yet, per instructions they will be added later
+import { 
+  validateDeviceImport, 
+  executeDeviceImport,
+  validateDepartmentImport,
+  executeDepartmentImport
+} from '@/lib/actions/data-management';
+
+import { 
+  getDeviceImportTemplateCSV,
+  getDepartmentImportTemplateCSV
+} from '@/lib/utils/csv-parser';
+
 import type { DeviceImportValidationResult } from '@/lib/validators/data-management';
 
+type EntityType = 'devices' | 'departments';
+
+interface ValidationData {
+  totalRows: number;
+  validCount: number;
+  warningCount: number;
+  errorCount: number;
+  rows: any[]; // any to accommodate both devices and departments
+}
+
 export function ImportWizard() {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [entity, setEntity] = useState<EntityType>('devices');
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [validating, setValidating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [validationData, setValidationData] = useState<{
-    totalRows: number;
-    validCount: number;
-    warningCount: number;
-    errorCount: number;
-    rows: DeviceImportValidationResult[];
-  } | null>(null);
+  const [validationData, setValidationData] = useState<ValidationData | null>(null);
+  const [importedCount, setImportedCount] = useState<number>(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDownloadTemplate = () => {
-    const csvContent = getDeviceImportTemplateCSV();
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'bemms_device_import_template.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success('Downloaded sample CSV import template');
+  const handleDownloadTemplate = (format: 'csv' | 'excel') => {
+    try {
+      const csvContent = entity === 'devices' 
+        ? getDeviceImportTemplateCSV() 
+        : getDepartmentImportTemplateCSV();
+
+      if (format === 'excel') {
+        const wb = XLSX.read(csvContent, { type: 'string' });
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `bemms_${entity}_template.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success(`Downloaded ${entity} Excel template (.xlsx)`);
+      } else {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `bemms_${entity}_template.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success(`Downloaded ${entity} CSV template (.csv)`);
+      }
+    } catch (error) {
+      toast.error('Failed to download template');
+    }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
+  const parseFileToCsv = async (fileToParse: File): Promise<string> => {
+    if (fileToParse.name.endsWith('.csv')) {
+      return await fileToParse.text();
+    } else if (fileToParse.name.endsWith('.xlsx') || fileToParse.name.endsWith('.xls')) {
+      const data = await fileToParse.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      return XLSX.utils.sheet_to_csv(sheet);
+    }
+    throw new Error('Unsupported file format');
+  };
 
-    setFile(selectedFile);
+  const handleFileSet = (selectedFile: File) => {
+    if (selectedFile.name.endsWith('.csv') || selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls')) {
+      setFile(selectedFile);
+    } else {
+      toast.error('Please upload a .csv, .xlsx, or .xls file');
+    }
+  };
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      handleFileSet(droppedFile);
+    }
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      handleFileSet(selectedFile);
+    }
+  };
+
+  const handleValidate = async () => {
+    if (!file) return;
+    
     setValidating(true);
     setValidationData(null);
 
     try {
-      const text = await selectedFile.text();
-      const res = await validateDeviceImport(text);
+      const csvText = await parseFileToCsv(file);
+      
+      let res;
+      if (entity === 'devices') {
+        res = await validateDeviceImport(csvText);
+      } else {
+        res = await validateDepartmentImport(csvText);
+      }
 
       if (res.success) {
         setValidationData({
@@ -59,11 +172,12 @@ export function ImportWizard() {
           errorCount: res.errorCount,
           rows: res.rows,
         });
-        toast.info(`Validated ${res.totalRows} rows from CSV`);
+        toast.info(`Validated ${res.totalRows} rows`);
+        setStep(2);
       } else {
-        toast.error(res.error || 'Failed to validate CSV');
+        toast.error(res.error || 'Failed to validate file');
       }
-    } catch {
+    } catch (error) {
       toast.error('Could not read or parse the selected file');
     } finally {
       setValidating(false);
@@ -75,13 +189,17 @@ export function ImportWizard() {
     setImporting(true);
 
     try {
-      const res = await executeDeviceImport(validationData.rows);
+      let res;
+      if (entity === 'devices') {
+        res = await executeDeviceImport(validationData.rows);
+      } else {
+        res = await executeDepartmentImport(validationData.rows);
+      }
+      
       if (res.success) {
-        toast.success(`Successfully imported ${res.importedCount} medical equipment records!`);
-        // Reset state
-        setFile(null);
-        setValidationData(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        toast.success(`Successfully imported ${res.importedCount} records!`);
+        setImportedCount(res.importedCount);
+        setStep(3);
       } else {
         toast.error(res.error || 'Failed to complete import');
       }
@@ -95,6 +213,7 @@ export function ImportWizard() {
   const handleReset = () => {
     setFile(null);
     setValidationData(null);
+    setStep(1);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -102,61 +221,163 @@ export function ImportWizard() {
 
   return (
     <div className="space-y-6">
+      {/* 1. Entity Type Selector */}
+      {step === 1 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card 
+            className={`cursor-pointer transition-all hover:border-primary/50 ${entity === 'devices' ? 'border-primary ring-1 ring-primary' : ''}`}
+            onClick={() => setEntity('devices')}
+          >
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className={`p-2 rounded-full ${entity === 'devices' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                <Layers className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-medium text-base">Medical Devices</h3>
+                <p className="text-sm text-muted-foreground">Import equipment and assets</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card 
+            className={`cursor-pointer transition-all hover:border-primary/50 ${entity === 'departments' ? 'border-primary ring-1 ring-primary' : ''}`}
+            onClick={() => setEntity('departments')}
+          >
+            <CardContent className="flex items-center gap-4 p-4">
+              <div className={`p-2 rounded-full ${entity === 'departments' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                <Building2 className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-medium text-base">Departments</h3>
+                <p className="text-sm text-muted-foreground">Import hospital departments</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col space-y-4">
             <div>
               <CardTitle className="text-xl flex items-center gap-2">
                 <UploadCloud className="h-5 w-5 text-primary" />
-                Bulk Medical Equipment Import
+                Data Import Wizard
               </CardTitle>
               <CardDescription>
-                Import medical devices from spreadsheets with automatic categorization and dry-run validation.
+                Follow the steps to import data into the system
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={handleDownloadTemplate} className="gap-2 shrink-0">
-              <Download className="h-4 w-4" />
-              Download Template CSV
-            </Button>
+            
+            {/* 2. Three-Step Visual Stepper */}
+            <div className="relative py-4">
+              <div className="absolute top-1/2 left-0 w-full h-0.5 bg-muted -translate-y-1/2"></div>
+              <div className="relative flex justify-between">
+                <div className="flex flex-col items-center gap-2 bg-card px-2">
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${step >= 1 ? 'border-primary bg-primary text-primary-foreground' : 'border-muted bg-muted text-muted-foreground'}`}>
+                    {step > 1 ? <CheckCircle2 className="h-5 w-5" /> : '1'}
+                  </div>
+                  <span className="text-xs font-medium">Upload</span>
+                </div>
+                <div className="flex flex-col items-center gap-2 bg-card px-2">
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${step >= 2 ? 'border-primary bg-primary text-primary-foreground' : 'border-muted bg-muted text-muted-foreground'}`}>
+                    {step > 2 ? <CheckCircle2 className="h-5 w-5" /> : '2'}
+                  </div>
+                  <span className="text-xs font-medium">Preview</span>
+                </div>
+                <div className="flex flex-col items-center gap-2 bg-card px-2">
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${step >= 3 ? 'border-primary bg-primary text-primary-foreground' : 'border-muted bg-muted text-muted-foreground'}`}>
+                    {step > 3 ? <CheckCircle2 className="h-5 w-5" /> : '3'}
+                  </div>
+                  <span className="text-xs font-medium">Results</span>
+                </div>
+              </div>
+            </div>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          {/* Step 1: File Dropzone */}
-          {!validationData && (
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed rounded-xl p-8 sm:p-12 text-center hover:border-primary/60 hover:bg-muted/30 transition-all cursor-pointer space-y-4"
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
-                {validating ? (
-                  <Loader2 className="h-6 w-6 animate-spin" />
+        <CardContent className="space-y-6 pt-4">
+          {/* Step 1: Upload Zone */}
+          {step === 1 && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button variant="outline" onClick={() => handleDownloadTemplate('csv')} className="flex-1 gap-2">
+                  <FileText className="h-4 w-4" />
+                  Download CSV Template
+                </Button>
+                <Button variant="outline" onClick={() => handleDownloadTemplate('excel')} className="flex-1 gap-2">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Download Excel Template
+                </Button>
+              </div>
+              
+              <div
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-xl min-h-[200px] p-8 text-center transition-all flex flex-col items-center justify-center space-y-4 ${
+                  isDragging 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-muted-foreground/25 hover:border-primary/50'
+                }`}
+              >
+                {!file ? (
+                  <>
+                    <UploadCloud className="h-12 w-12 text-muted-foreground" />
+                    <div className="space-y-1">
+                      <p className="font-bold text-lg">Drop your file here</p>
+                      <p className="text-sm text-muted-foreground">
+                        Supports CSV and Excel (.xlsx, .xls) files
+                      </p>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv, .xlsx, .xls"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                    <Button onClick={() => fileInputRef.current?.click()}>
+                      Browse Files
+                    </Button>
+                  </>
                 ) : (
-                  <UploadCloud className="h-6 w-6" />
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="flex items-center gap-3 bg-muted p-4 rounded-lg">
+                      {file.name.endsWith('.csv') ? (
+                        <FileText className="h-8 w-8 text-primary" />
+                      ) : (
+                        <FileSpreadsheet className="h-8 w-8 text-emerald-600" />
+                      )}
+                      <div className="text-left text-sm">
+                        <p className="font-medium truncate max-w-[200px]">{file.name}</p>
+                        <p className="text-muted-foreground">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => setFile(null)} className="ml-2">
+                        <XCircle className="h-5 w-5 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
-              <div className="space-y-1">
-                <p className="font-semibold text-base">
-                  {validating ? 'Validating CSV File...' : 'Click or drop your CSV file here'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Supports .csv files with standard BEMMS device headers (Asset Tag, Name, Category, Dept)
-                </p>
-              </div>
+              
+              {file && (
+                <div className="flex justify-end">
+                  <Button onClick={handleValidate} disabled={validating} className="w-full sm:w-auto">
+                    {validating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Validate & Preview
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Step 2: Validation Preview Table */}
-          {validationData && (
+          {/* Step 2: Preview (Validation Results) */}
+          {step === 2 && validationData && (
             <div className="space-y-4">
-              {/* Summary Stats Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-muted/40 rounded-lg border">
                 <div>
                   <span className="text-xs text-muted-foreground">Total Rows</span>
@@ -169,33 +390,43 @@ export function ImportWizard() {
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Warnings (Auto-Create)</span>
+                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Warnings</span>
                   <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
                     {validationData.warningCount}
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs text-destructive font-medium">Errors (Skipped)</span>
+                  <span className="text-xs text-destructive font-medium">Errors</span>
                   <div className="text-xl font-bold text-destructive">{validationData.errorCount}</div>
                 </div>
               </div>
 
-              {/* Data Table */}
               <div className="border rounded-lg overflow-x-auto max-h-[380px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-16">Row</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Asset Tag</TableHead>
-                      <TableHead>Device Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Notes & Alerts</TableHead>
+                      {entity === 'devices' ? (
+                        <>
+                          <TableHead>Asset Tag</TableHead>
+                          <TableHead>Device Name</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Department</TableHead>
+                        </>
+                      ) : (
+                        <>
+                          <TableHead>Department Name</TableHead>
+                          <TableHead>Code</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Hospital</TableHead>
+                        </>
+                      )}
+                      <TableHead>Notes</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {validationData.rows.map((row) => (
+                    {validationData.rows.map((row: any) => (
                       <TableRow key={row.rowNumber} className={row.status === 'error' ? 'bg-destructive/5' : ''}>
                         <TableCell className="font-mono text-xs text-muted-foreground">{row.rowNumber}</TableCell>
                         <TableCell>
@@ -218,12 +449,23 @@ export function ImportWizard() {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="font-mono text-xs font-semibold">{row.data.assetNumber || '—'}</TableCell>
-                        <TableCell className="font-medium text-xs">{row.data.name || '—'}</TableCell>
-                        <TableCell className="text-xs">{row.data.categoryName || '—'}</TableCell>
-                        <TableCell className="text-xs">{row.data.departmentName || '—'}</TableCell>
+                        {entity === 'devices' ? (
+                          <>
+                            <TableCell className="font-mono text-xs font-semibold">{row.data.assetNumber || '—'}</TableCell>
+                            <TableCell className="font-medium text-xs">{row.data.name || '—'}</TableCell>
+                            <TableCell className="text-xs">{row.data.categoryName || '—'}</TableCell>
+                            <TableCell className="text-xs">{row.data.departmentName || '—'}</TableCell>
+                          </>
+                        ) : (
+                          <>
+                            <TableCell className="font-medium text-xs">{row.data.name || '—'}</TableCell>
+                            <TableCell className="font-mono text-xs">{row.data.code || '—'}</TableCell>
+                            <TableCell className="text-xs">{row.data.departmentType || '—'}</TableCell>
+                            <TableCell className="text-xs">{row.data.hospitalName || '—'}</TableCell>
+                          </>
+                        )}
                         <TableCell className="text-xs text-muted-foreground max-w-xs">
-                          {row.messages.length > 0 ? row.messages.join(' • ') : 'Ready to import'}
+                          {row.messages?.length > 0 ? row.messages.join(' • ') : 'Ready to import'}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -232,30 +474,37 @@ export function ImportWizard() {
               </div>
             </div>
           )}
+
+          {/* Step 3: Results */}
+          {step === 3 && (
+            <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
+              <CheckCircle2 className="h-16 w-16 text-emerald-500" />
+              <h2 className="text-2xl font-bold">Import Completed Successfully</h2>
+              <p className="text-muted-foreground">
+                {importedCount} records imported into the system
+              </p>
+              <Button onClick={handleReset} variant="outline" className="mt-4 gap-2">
+                <RotateCcw className="h-4 w-4" />
+                Import Another File
+              </Button>
+            </div>
+          )}
         </CardContent>
 
-        {validationData && (
+        {step === 2 && (
           <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t pt-4 gap-3">
-            <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
-              <RotateCcw className="h-4 w-4" />
-              Choose Another File
+            <Button variant="ghost" size="sm" onClick={() => setStep(1)} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Upload
             </Button>
             <Button
               onClick={handleExecuteImport}
               disabled={importing || importableCount === 0}
               className="gap-2 w-full sm:w-auto"
             >
-              {importing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Importing Devices...
-                </>
-              ) : (
-                <>
-                  <ArrowRight className="h-4 w-4" />
-                  Confirm Import ({importableCount} Devices)
-                </>
-              )}
+              {importing && <Loader2 className="h-4 w-4 animate-spin" />}
+              {!importing && <ArrowRight className="h-4 w-4" />}
+              Confirm Import ({importableCount} Records)
             </Button>
           </CardFooter>
         )}

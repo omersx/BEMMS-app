@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, requireRole } from '@/lib/auth/rbac';
 import { db } from '@/lib/db';
 import { generateCSV } from '@/lib/utils/export';
+import * as XLSX from 'xlsx';
 
 export async function GET(req: NextRequest) {
   try {
@@ -65,8 +66,90 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // CSV format: Default to devices if multiple or specific entity
-    if (selectedEntities.includes('devices') || selectedEntities.length === 1) {
+    if (format === 'xlsx') {
+      const wb = XLSX.utils.book_new();
+
+      if (selectedEntities.includes('devices')) {
+        const rawDevices = await db.query.devices.findMany({
+          with: { deviceCategory: true, manufacturer: true, department: true },
+        });
+        const formatted = rawDevices.map((d) => ({
+          'Asset Number': d.assetNumber,
+          'Device Name': d.name,
+          'Model': d.modelNameFree || '',
+          'Serial Number': d.serialNumber || '',
+          'Category': d.deviceCategory?.name || '',
+          'Manufacturer': d.manufacturer?.name || '',
+          'Department': d.department?.name || '',
+          'Location': d.exactLocationDescription || '',
+          'Status': d.currentStatusCode,
+          'Criticality': d.criticalityLevel || 'medium',
+          'Risk Class': d.riskClassification || '',
+        }));
+        const ws = XLSX.utils.json_to_sheet(formatted);
+        XLSX.utils.book_append_sheet(wb, ws, 'Devices');
+      }
+
+      if (selectedEntities.includes('departments')) {
+        const rawDeps = await db.query.departments.findMany({
+          with: { hospital: true },
+        });
+        const formatted = rawDeps.map((d) => ({
+          'Department Name': d.name,
+          'Code': d.code,
+          'Department Type': d.departmentType,
+          'Hospital Name': d.hospital?.name || '',
+          'Status': d.status || 'active',
+          'Created At': d.createdAt?.toISOString() || '',
+        }));
+        const ws = XLSX.utils.json_to_sheet(formatted);
+        XLSX.utils.book_append_sheet(wb, ws, 'Departments');
+      }
+
+      const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+      return new NextResponse(buf, {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': `attachment; filename="bemms_export_${timestamp}.xlsx"`,
+        },
+      });
+    }
+
+    if (format === 'csv') {
+      if (selectedEntities.includes('departments') && !selectedEntities.includes('devices')) {
+        const rawDeps = await db.query.departments.findMany({
+          with: { hospital: true },
+        });
+
+        const formatted = rawDeps.map((d) => ({
+          name: d.name,
+          code: d.code,
+          type: d.departmentType,
+          hospital: d.hospital?.name || '',
+          status: d.status || 'active',
+          createdAt: d.createdAt?.toISOString() || '',
+        }));
+
+        const columns = [
+          { key: 'name', header: 'Department Name' },
+          { key: 'code', header: 'Code' },
+          { key: 'type', header: 'Department Type' },
+          { key: 'hospital', header: 'Hospital Name' },
+          { key: 'status', header: 'Status' },
+          { key: 'createdAt', header: 'Created At' },
+        ];
+
+        const csvContent = generateCSV(formatted, columns);
+
+        return new NextResponse(csvContent, {
+          headers: {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': `attachment; filename="bemms_departments_${timestamp}.csv"`,
+          },
+        });
+      }
+
+      // Default to devices
       const rawDevices = await db.query.devices.findMany({
         with: {
           deviceCategory: true,
@@ -113,7 +196,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Default fallback
     return new NextResponse('Export complete', { status: 200 });
   } catch (error: any) {
     return new NextResponse(JSON.stringify({ error: error.message || 'Export failed' }), {

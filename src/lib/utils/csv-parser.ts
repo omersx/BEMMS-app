@@ -137,3 +137,24 @@ export function getDeviceImportTemplateCSV(): string {
 
   return `${BOM}${headers}\n${samples}\n`;
 }
+
+/**
+ * Returns a ready-to-use CSV template string with BOM and sample rows for departments.
+ */
+export function getDepartmentImportTemplateCSV(): string {
+  const BOM = '\uFEFF';
+  const headers = [
+    'name',
+    'code',
+    'department_type',
+    'hospital_name',
+  ].join(',');
+
+  const samples = [
+    ['Emergency Department', 'ED', 'emergency', 'Central Teaching Hospital'].join(','),
+    ['Intensive Care Unit', 'ICU', 'critical_care', 'Central Teaching Hospital'].join(','),
+    ['Radiology Department', 'RAD', 'diagnostic', 'Central Teaching Hospital'].join(','),
+  ].join('\n');
+
+  return `${BOM}${headers}\n${samples}\n`;
+}

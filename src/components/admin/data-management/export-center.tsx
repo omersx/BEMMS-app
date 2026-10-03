@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, FileSpreadsheet, FileJson, CheckSquare, Layers, ShieldCheck, Wrench, Building2, HardDrive } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, FileJson, CheckSquare, Layers, ShieldCheck, Wrench, Building2, HardDrive } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ExportCenterProps {
@@ -22,7 +22,7 @@ interface ExportCenterProps {
 
 export function ExportCenter({ summary }: ExportCenterProps) {
   const [selectedEntities, setSelectedEntities] = useState<string[]>(['devices', 'departments']);
-  const [format, setFormat] = useState<'csv' | 'json'>('csv');
+  const [format, setFormat] = useState<'xlsx' | 'csv' | 'json'>('xlsx');
   const [downloading, setDownloading] = useState(false);
 
   const toggleEntity = (entity: string) => {
@@ -212,18 +212,33 @@ export function ExportCenter({ summary }: ExportCenterProps) {
           {/* Format Selection */}
           <div className="space-y-3 pt-4 border-t">
             <Label className="text-sm font-semibold">Choose Export Format</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div
+                onClick={() => setFormat('xlsx')}
+                className={`p-4 rounded-lg border flex items-center gap-3 cursor-pointer transition-colors ${
+                  format === 'xlsx' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/40'
+                }`}
+              >
+                <FileSpreadsheet className="h-6 w-6 text-emerald-600 shrink-0" />
+                <div>
+                  <h6 className="font-semibold text-sm">Microsoft Excel (.xlsx)</h6>
+                  <p className="text-xs text-muted-foreground">
+                    Native multi-sheet workbook with columns and styling.
+                  </p>
+                </div>
+              </div>
+
               <div
                 onClick={() => setFormat('csv')}
                 className={`p-4 rounded-lg border flex items-center gap-3 cursor-pointer transition-colors ${
                   format === 'csv' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/40'
                 }`}
               >
-                <FileSpreadsheet className="h-6 w-6 text-emerald-600" />
+                <FileText className="h-6 w-6 text-blue-600 shrink-0" />
                 <div>
-                  <h6 className="font-semibold text-sm">Microsoft Excel / CSV (.csv)</h6>
+                  <h6 className="font-semibold text-sm">Standard CSV (.csv)</h6>
                   <p className="text-xs text-muted-foreground">
-                    Includes UTF-8 BOM for full English & Arabic character support in Excel.
+                    Includes UTF-8 BOM for full English & Arabic character support.
                   </p>
                 </div>
               </div>
@@ -234,11 +249,11 @@ export function ExportCenter({ summary }: ExportCenterProps) {
                   format === 'json' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/40'
                 }`}
               >
-                <FileJson className="h-6 w-6 text-indigo-600" />
+                <FileJson className="h-6 w-6 text-indigo-600 shrink-0" />
                 <div>
                   <h6 className="font-semibold text-sm">Structured JSON (.json)</h6>
                   <p className="text-xs text-muted-foreground">
-                    Complete nested data format for developer backups and system migrations.
+                    Complete nested data format for developer backups and migrations.
                   </p>
                 </div>
               </div>

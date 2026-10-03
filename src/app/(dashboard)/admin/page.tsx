@@ -18,6 +18,7 @@ import {
   History,
   ArrowRight,
   Activity,
+  UploadCloud,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -224,6 +225,17 @@ export default async function AdminDashboardPage() {
               <div className="space-y-0.5">
                 <div className="text-sm font-medium">General & Master Data</div>
                 <div className="text-xs text-muted-foreground">Health system, hospitals & device catalogs</div>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/data"
+              className="flex items-start gap-3 p-3 rounded-lg border border-border/60 hover:border-primary/50 hover:bg-muted/30 transition-colors"
+            >
+              <UploadCloud className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium">Export & Import Center</div>
+                <div className="text-xs text-muted-foreground">Bulk CSV/Excel import and dataset backup</div>
               </div>
             </Link>
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { parseCSV, getDeviceImportTemplateCSV } from '@/lib/utils/csv-parser';
-import { deviceImportRowSchema, purgeDataSchema } from '../data-management';
+import { parseCSV, getDeviceImportTemplateCSV, getDepartmentImportTemplateCSV } from '@/lib/utils/csv-parser';
+import { deviceImportRowSchema, departmentImportRowSchema, purgeDataSchema } from '../data-management';
 
 describe('CSV Parser Utility', () => {
   it('parses simple CSV text into structured records', () => {
@@ -48,6 +48,43 @@ describe('getDeviceImportTemplateCSV', () => {
 
     const parsed = parseCSV(template);
     expect(parsed.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('getDepartmentImportTemplateCSV', () => {
+  it('generates a valid CSV with BOM and department headers', () => {
+    const template = getDepartmentImportTemplateCSV();
+    expect(template.startsWith('\uFEFF')).toBe(true);
+    expect(template).toContain('name');
+    expect(template).toContain('code');
+    expect(template).toContain('hospital_name');
+
+    const parsed = parseCSV(template);
+    expect(parsed.length).toBeGreaterThanOrEqual(2);
+    expect(parsed[0]).toHaveProperty('name');
+    expect(parsed[0]).toHaveProperty('code');
+    expect(parsed[0]).toHaveProperty('hospital_name');
+  });
+});
+
+describe('departmentImportRowSchema', () => {
+  it('validates a correct department row', () => {
+    const result = departmentImportRowSchema.safeParse({
+      name: 'Intensive Care Unit',
+      code: 'ICU',
+      departmentType: 'critical_care',
+      hospitalName: 'Central Teaching Hospital',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects rows missing required fields', () => {
+    const result = departmentImportRowSchema.safeParse({
+      name: '',
+      code: '',
+      hospitalName: '',
+    });
+    expect(result.success).toBe(false);
   });
 });
 

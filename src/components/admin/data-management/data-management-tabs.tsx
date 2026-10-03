@@ -21,9 +21,9 @@ export function DataManagementTabs({ summary }: DataManagementTabsProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Data Management</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Export & Import Center</h1>
         <p className="text-sm text-muted-foreground">
-          Bulk import medical equipment, export clinical datasets, and manage test data lifecycles.
+          Bulk import medical equipment and departments, export datasets in Excel or CSV, and manage data lifecycle.
         </p>
       </div>
 

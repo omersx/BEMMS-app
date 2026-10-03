@@ -27,6 +27,23 @@ export interface DeviceImportValidationResult {
   willCreateManufacturer?: boolean;
 }
 
+export const departmentImportRowSchema = z.object({
+  name: z.string().min(1, 'Department name is required').trim(),
+  code: z.string().min(1, 'Department code is required').trim(),
+  departmentType: z.string().optional().default(''),
+  hospitalName: z.string().min(1, 'Hospital name is required').trim(),
+});
+
+export type DepartmentImportRow = z.infer<typeof departmentImportRowSchema>;
+
+export interface DepartmentImportValidationResult {
+  rowNumber: number;
+  data: DepartmentImportRow;
+  status: 'valid' | 'warning' | 'error';
+  messages: string[];
+  resolvedHospitalId?: string;
+}
+
 export const purgeDataSchema = z.object({
   scope: z.enum(['test_transactions', 'factory_reset']),
   confirmText: z.string().min(1, 'Confirmation phrase is required'),
@@ -38,7 +55,7 @@ export type PurgeDataPayload = z.infer<typeof purgeDataSchema>;
 
 export const exportRequestSchema = z.object({
   entities: z.array(z.enum(['devices', 'departments', 'catalogs', 'tickets', 'audit_logs'])).min(1, 'Select at least one entity'),
-  format: z.enum(['csv', 'json']).default('csv'),
+  format: z.enum(['csv', 'json', 'xlsx']).default('csv'),
 });
 
 export type ExportRequest = z.infer<typeof exportRequestSchema>;

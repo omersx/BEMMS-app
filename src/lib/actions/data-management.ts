@@ -22,6 +22,8 @@ import { parseCSV } from '@/lib/utils/csv-parser';
 import {
   deviceImportRowSchema,
   type DeviceImportValidationResult,
+  departmentImportRowSchema,
+  type DepartmentImportValidationResult,
   type PurgeDataPayload,
   purgeDataSchema,
 } from '@/lib/validators/data-management';
@@ -481,5 +483,206 @@ export async function purgeData(payload: PurgeDataPayload): Promise<{
     });
   } catch (error: any) {
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Validates a batch of department records from raw CSV content.
+ */
+export async function validateDepartmentImport(csvContent: string): Promise<{
+  success: boolean;
+  totalRows: number;
+  validCount: number;
+  warningCount: number;
+  errorCount: number;
+  rows: DepartmentImportValidationResult[];
+  error?: string;
+}> {
+  await requireAuth();
+  await requireRole('SYS_ADMIN', 'ORG_ADMIN', 'BIOMED_MGR');
+
+  try {
+    const rawRecords = parseCSV(csvContent);
+    if (rawRecords.length === 0) {
+      return {
+        success: false,
+        totalRows: 0,
+        validCount: 0,
+        warningCount: 0,
+        errorCount: 0,
+        rows: [],
+        error: 'No valid data rows found in CSV. Please ensure the file includes column headers.',
+      };
+    }
+
+    const [existingDepartments, existingHospitals] = await Promise.all([
+      db.query.departments.findMany({
+        columns: { code: true },
+      }),
+      db.query.hospitals.findMany(),
+    ]);
+
+    const existingCodes = new Set(existingDepartments.map((d) => d.code.toLowerCase().trim()));
+    const hospitalMap = new Map(existingHospitals.map((h) => [h.name.toLowerCase().trim(), h]));
+
+    const results: DepartmentImportValidationResult[] = [];
+    let validCount = 0;
+    let warningCount = 0;
+    let errorCount = 0;
+
+    const currentBatchCodes = new Set<string>();
+
+    for (let i = 0; i < rawRecords.length; i++) {
+      const row = rawRecords[i];
+      const rowNumber = i + 2;
+
+      const mappedRow = {
+        name: row.name || row.department_name || '',
+        code: row.code || row.department_code || '',
+        departmentType: row.department_type || row.type || '',
+        hospitalName: row.hospital_name || row.hospital || '',
+      };
+
+      const parseResult = departmentImportRowSchema.safeParse(mappedRow);
+      const messages: string[] = [];
+      let status: 'valid' | 'warning' | 'error' = 'valid';
+
+      if (!parseResult.success) {
+        status = 'error';
+        parseResult.error.errors.forEach((err) => messages.push(err.message));
+      }
+
+      const validData = parseResult.success ? parseResult.data : mappedRow;
+      const cleanCode = validData.code.toLowerCase().trim();
+
+      if (cleanCode) {
+        if (existingCodes.has(cleanCode)) {
+          status = 'error';
+          messages.push(`Department code "${validData.code}" already exists in the database.`);
+        } else if (currentBatchCodes.has(cleanCode)) {
+          status = 'error';
+          messages.push(`Duplicate department code "${validData.code}" within this CSV file.`);
+        } else {
+          currentBatchCodes.add(cleanCode);
+        }
+      }
+
+      let resolvedHospitalId: string | undefined;
+      const cleanHosp = validData.hospitalName.toLowerCase().trim();
+      const matchedHosp = hospitalMap.get(cleanHosp);
+
+      if (matchedHosp) {
+        resolvedHospitalId = matchedHosp.id;
+      } else {
+        status = 'error';
+        messages.push(`Hospital "${validData.hospitalName}" not found.`);
+      }
+
+      if (!validData.departmentType && status !== 'error') {
+        status = 'warning';
+        messages.push('Department type unspecified; defaulted to "general".');
+      }
+
+      if (status === 'error') {
+        errorCount++;
+      } else if (status === 'warning') {
+        warningCount++;
+      } else {
+        validCount++;
+      }
+
+      results.push({
+        rowNumber,
+        data: validData as any,
+        status,
+        messages,
+        resolvedHospitalId,
+      });
+    }
+
+    return {
+      success: true,
+      totalRows: rawRecords.length,
+      validCount,
+      warningCount,
+      errorCount,
+      rows: results,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      totalRows: 0,
+      validCount: 0,
+      warningCount: 0,
+      errorCount: 0,
+      rows: [],
+      error: error.message || 'Failed to parse and validate CSV file.',
+    };
+  }
+}
+
+/**
+ * Commits pre-validated department records to the database.
+ */
+export async function executeDepartmentImport(rows: DepartmentImportValidationResult[]): Promise<{
+  success: boolean;
+  importedCount: number;
+  error?: string;
+}> {
+  const session = await requireAuth();
+  await requireRole('SYS_ADMIN', 'ORG_ADMIN', 'BIOMED_MGR');
+
+  const importableRows = rows.filter((r) => r.status === 'valid' || r.status === 'warning');
+  if (importableRows.length === 0) {
+    return { success: false, importedCount: 0, error: 'No valid rows available to import.' };
+  }
+
+  let org = await db.query.organizations.findFirst();
+  if (session.organizationId) {
+    const foundOrg = await db.query.organizations.findFirst({
+      where: eq(organizations.id, session.organizationId),
+    });
+    if (foundOrg) org = foundOrg;
+  }
+
+  if (!org) {
+    return { success: false, importedCount: 0, error: 'Organization not found.' };
+  }
+
+  try {
+    return await db.transaction(async (tx) => {
+      let importedCount = 0;
+
+      for (const rowItem of importableRows) {
+        const { data } = rowItem;
+
+        await tx.insert(departments).values({
+          organizationId: org.id,
+          hospitalId: rowItem.resolvedHospitalId!,
+          name: data.name,
+          code: data.code,
+          departmentType: data.departmentType || 'general',
+          status: 'active',
+        });
+
+        importedCount++;
+      }
+
+      await createAuditLog(tx, {
+        action: 'BULK_IMPORT',
+        entityType: 'departments',
+        entityId: org.id,
+        actorUserId: session.id,
+        organizationId: org.id,
+        details: {
+          importedCount,
+        },
+        changeReason: `Bulk imported ${importedCount} departments from CSV`,
+      });
+
+      return { success: true, importedCount };
+    });
+  } catch (error: any) {
+    return { success: false, importedCount: 0, error: error.message };
   }
 }
