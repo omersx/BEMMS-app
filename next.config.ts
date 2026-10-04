@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Standalone output enabled in Docker / production environments (avoids Windows symlink EPERM)
   output: process.env.BUILD_STANDALONE === "true" ? "standalone" : undefined,
-  serverExternalPackages: ["pg"],
+  serverExternalPackages: ["pg", "xlsx"],
   redirects: async () => [
     {
       source: "/tickets/report",

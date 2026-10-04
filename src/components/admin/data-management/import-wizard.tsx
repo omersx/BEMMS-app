@@ -22,7 +22,6 @@ import {
   Info 
 } from 'lucide-react';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
 
 // Next lines are ignored if they don't exist yet, per instructions they will be added later
 import { 
@@ -61,13 +60,14 @@ export function ImportWizard() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDownloadTemplate = (format: 'csv' | 'excel') => {
+  const handleDownloadTemplate = async (format: 'csv' | 'excel') => {
     try {
       const csvContent = entity === 'devices' 
         ? getDeviceImportTemplateCSV() 
         : getDepartmentImportTemplateCSV();
 
       if (format === 'excel') {
+        const XLSX = await import('xlsx');
         const wb = XLSX.read(csvContent, { type: 'string' });
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -101,6 +101,7 @@ export function ImportWizard() {
     if (fileToParse.name.endsWith('.csv')) {
       return await fileToParse.text();
     } else if (fileToParse.name.endsWith('.xlsx') || fileToParse.name.endsWith('.xls')) {
+      const XLSX = await import('xlsx');
       const data = await fileToParse.arrayBuffer();
       const workbook = XLSX.read(data, { type: 'array' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
