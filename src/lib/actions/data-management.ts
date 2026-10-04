@@ -12,7 +12,10 @@ import {
   serviceTickets,
   maintenanceTasks,
   maintenanceScheduleOccurrences,
+  maintenancePlans,
   maintenanceRecords,
+  maintenanceParts,
+  maintenanceCosts,
   auditLogs,
 } from '@/lib/db/schema';
 import { requireAuth, requireRole } from '@/lib/auth/rbac';
@@ -421,12 +424,13 @@ export async function purgeData(payload: PurgeDataPayload): Promise<{
 
   const { scope, confirmText, password, reason } = validated.data;
 
-  // 1. Verify confirmation phrase
+  // 1. Verify confirmation phrase (flexible: case-insensitive, accepts underscores or spaces)
+  const normalizePhrase = (s: string) => s.trim().toUpperCase().replace(/[_-\s]+/g, ' ');
   const expectedPhrase = scope === 'test_transactions' ? 'PURGE TEST DATA' : 'RESET ALL DATA';
-  if (confirmText.trim() !== expectedPhrase) {
+  if (normalizePhrase(confirmText) !== expectedPhrase) {
     return {
       success: false,
-      error: `Confirmation phrase must exactly match "${expectedPhrase}".`,
+      error: `Confirmation phrase must match "${expectedPhrase}".`,
     };
   }
 
@@ -446,11 +450,14 @@ export async function purgeData(payload: PurgeDataPayload): Promise<{
 
   try {
     return await db.transaction(async (tx) => {
+      // Delete in proper reverse foreign-key dependency order
+      await tx.delete(maintenanceParts);
+      await tx.delete(maintenanceCosts);
+      await tx.delete(maintenanceRecords);
+      await tx.delete(maintenanceTasks);
+      await tx.delete(maintenanceScheduleOccurrences);
+
       if (scope === 'test_transactions') {
-        // Delete transactional records while preserving inventory and organizational setup
-        await tx.delete(maintenanceRecords);
-        await tx.delete(maintenanceTasks);
-        await tx.delete(maintenanceScheduleOccurrences);
         await tx.delete(serviceTickets);
 
         await createAuditLog(tx, {
@@ -467,10 +474,8 @@ export async function purgeData(payload: PurgeDataPayload): Promise<{
           message: 'Transactional test data (tickets, work orders, maintenance logs) purged successfully.',
         };
       } else {
-        // Factory Reset: Purge devices, tasks, tickets, but keep core admin and system roles
-        await tx.delete(maintenanceRecords);
-        await tx.delete(maintenanceTasks);
-        await tx.delete(maintenanceScheduleOccurrences);
+        // Factory Reset: Purge plans, tickets, devices, and logs
+        await tx.delete(maintenancePlans);
         await tx.delete(serviceTickets);
         await tx.delete(devices);
         await tx.delete(auditLogs);

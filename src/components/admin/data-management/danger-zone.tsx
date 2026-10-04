@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { AlertTriangle, Trash2, RotateCcw, ShieldAlert, Lock, Loader2 } from 'lucide-react';
+import { AlertTriangle, Trash2, RotateCcw, ShieldAlert, Lock, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { purgeData } from '@/lib/actions/data-management';
 
@@ -27,6 +27,9 @@ export function DangerZone() {
 
   const expectedPhrase = selectedScope === 'test_transactions' ? 'PURGE TEST DATA' : 'RESET ALL DATA';
 
+  const normalizePhrase = (s: string) => s.trim().toUpperCase().replace(/[_-\s]+/g, ' ');
+  const isPhraseMatch = normalizePhrase(confirmText) === normalizePhrase(expectedPhrase);
+
   const handleOpenDialog = (scope: 'test_transactions' | 'factory_reset') => {
     setSelectedScope(scope);
     setConfirmText('');
@@ -38,8 +41,8 @@ export function DangerZone() {
   const handleConfirmPurge = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (confirmText.trim() !== expectedPhrase) {
-      toast.error(`Confirmation phrase must match "${expectedPhrase}" exactly`);
+    if (!isPhraseMatch) {
+      toast.error(`Confirmation phrase must match "${expectedPhrase}"`);
       return;
     }
 
@@ -53,7 +56,7 @@ export function DangerZone() {
     try {
       const res = await purgeData({
         scope: selectedScope,
-        confirmText,
+        confirmText: expectedPhrase,
         password,
         reason: reason.trim() || undefined,
       });
@@ -176,17 +179,53 @@ export function DangerZone() {
             <div className="space-y-4 py-4">
               {/* Step 1: Confirmation Phrase */}
               <div className="space-y-2">
-                <Label htmlFor="confirmPhrase" className="text-xs font-semibold">
-                  1. Type <span className="font-mono text-destructive underline">{expectedPhrase}</span> to confirm:
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="confirmPhrase" className="text-xs font-semibold">
+                    1. Type confirmation phrase:
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmText(expectedPhrase)}
+                    className="text-[11px] text-primary hover:underline cursor-pointer font-medium"
+                  >
+                    Auto-fill
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmText(expectedPhrase)}
+                    className="cursor-pointer inline-flex items-center gap-1 font-mono text-xs font-bold px-2 py-0.5 rounded bg-destructive/15 text-destructive border border-destructive/30 hover:bg-destructive/25 transition-colors"
+                    title="Click to auto-fill"
+                  >
+                    {expectedPhrase}
+                  </button>
+                  <span className="text-[11px] text-muted-foreground">(click to fill or type)</span>
+                </div>
                 <Input
                   id="confirmPhrase"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
                   placeholder={expectedPhrase}
-                  className="font-mono text-xs"
+                  className={`font-mono text-xs transition-colors ${
+                    isPhraseMatch
+                      ? 'border-emerald-500 ring-1 ring-emerald-500 bg-emerald-500/5'
+                      : confirmText.length > 0
+                      ? 'border-amber-500 ring-1 ring-amber-500/30'
+                      : ''
+                  }`}
                   autoComplete="off"
                 />
+                {isPhraseMatch ? (
+                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Confirmation phrase matched
+                  </p>
+                ) : confirmText.length > 0 ? (
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                    Type &quot;{expectedPhrase}&quot; (spaces or underscores, case-insensitive)
+                  </p>
+                ) : null}
               </div>
 
               {/* Step 2: Password Re-Authentication */}
@@ -231,7 +270,7 @@ export function DangerZone() {
               <Button
                 type="submit"
                 variant="destructive"
-                disabled={purging || confirmText.trim() !== expectedPhrase || !password}
+                disabled={purging || !isPhraseMatch || !password}
                 className="gap-2"
               >
                 {purging ? (
