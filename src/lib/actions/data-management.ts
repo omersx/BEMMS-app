@@ -426,11 +426,15 @@ export async function purgeData(payload: PurgeDataPayload): Promise<{
 
   // 1. Verify confirmation phrase (flexible: case-insensitive, accepts underscores or spaces)
   const normalizePhrase = (s: string) => s.trim().toUpperCase().replace(/[_-\s]+/g, ' ');
-  const expectedPhrase = scope === 'test_transactions' ? 'PURGE TEST DATA' : 'RESET ALL DATA';
-  if (normalizePhrase(confirmText) !== expectedPhrase) {
+  const isMatch = scope === 'test_transactions'
+    ? normalizePhrase(confirmText) === 'CLEAR TEST DATA' || normalizePhrase(confirmText) === 'PURGE TEST DATA'
+    : normalizePhrase(confirmText) === 'RESET ALL DATA';
+
+  if (!isMatch) {
+    const expected = scope === 'test_transactions' ? 'CLEAR TEST DATA' : 'RESET ALL DATA';
     return {
       success: false,
-      error: `Confirmation phrase must match "${expectedPhrase}".`,
+      error: `Confirmation phrase must match "${expected}".`,
     };
   }
 

@@ -25,10 +25,12 @@ export function DangerZone() {
   const [reason, setReason] = useState('');
   const [purging, setPurging] = useState(false);
 
-  const expectedPhrase = selectedScope === 'test_transactions' ? 'PURGE TEST DATA' : 'RESET ALL DATA';
+  const expectedPhrase = selectedScope === 'test_transactions' ? 'CLEAR TEST DATA' : 'RESET ALL DATA';
 
   const normalizePhrase = (s: string) => s.trim().toUpperCase().replace(/[_-\s]+/g, ' ');
-  const isPhraseMatch = normalizePhrase(confirmText) === normalizePhrase(expectedPhrase);
+  const isPhraseMatch = selectedScope === 'test_transactions'
+    ? normalizePhrase(confirmText) === 'CLEAR TEST DATA' || normalizePhrase(confirmText) === 'PURGE TEST DATA'
+    : normalizePhrase(confirmText) === 'RESET ALL DATA';
 
   const handleOpenDialog = (scope: 'test_transactions' | 'factory_reset') => {
     setSelectedScope(scope);
@@ -88,22 +90,22 @@ export function DangerZone() {
             </div>
             <div>
               <CardTitle className="text-xl text-destructive flex items-center gap-2">
-                Danger Zone & Data Purge
+                Danger Zone & Data Reset
               </CardTitle>
               <CardDescription>
-                High-friction administrative tools for purging test datasets or resetting the environment prior to clinical launch.
+                High-friction administrative tools for clearing test records or resetting the environment prior to clinical launch.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Action 1: Purge Test Data */}
+          {/* Action 1: Clear Test Data */}
           <div className="p-5 border rounded-lg bg-background flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <h5 className="font-semibold text-base flex items-center gap-2">
                 <Trash2 className="h-4 w-4 text-destructive" />
-                Purge Test & Transactional Records
+                Clear Test & Transactional Records
               </h5>
               <p className="text-xs text-muted-foreground max-w-xl">
                 Deletes all service tickets, sample work orders, and test maintenance logs generated during user training.
@@ -118,7 +120,7 @@ export function DangerZone() {
               className="shrink-0 gap-2"
             >
               <Trash2 className="h-4 w-4" />
-              Purge Test Data
+              Clear Test Data
             </Button>
           </div>
 
@@ -168,7 +170,7 @@ export function DangerZone() {
               <DialogTitle className="flex items-center gap-2 text-destructive">
                 <AlertTriangle className="h-5 w-5" />
                 {selectedScope === 'test_transactions'
-                  ? 'Confirm Test Data Purge'
+                  ? 'Confirm Clear Test Data'
                   : 'Confirm Full Factory Reset'}
               </DialogTitle>
               <DialogDescription className="text-xs">
@@ -276,12 +278,12 @@ export function DangerZone() {
                 {purging ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {selectedScope === 'test_transactions' ? 'Purging Test Data...' : 'Resetting System...'}
+                    {selectedScope === 'test_transactions' ? 'Clearing Test Data...' : 'Resetting System...'}
                   </>
                 ) : selectedScope === 'test_transactions' ? (
                   <>
                     <Trash2 className="h-4 w-4" />
-                    Purge Test Data
+                    Clear Test Data
                   </>
                 ) : (
                   <>
