@@ -103,7 +103,11 @@ export async function validateDeviceImport(csvContent: string): Promise<{
 
     const categoryMap = new Map(existingCategories.map((c) => [c.name.toLowerCase().trim(), c]));
     const manufacturerMap = new Map(existingManufacturers.map((m) => [m.name.toLowerCase().trim(), m]));
-    const departmentMap = new Map(existingDepartments.map((d) => [d.name.toLowerCase().trim(), d]));
+    const departmentMap = new Map<string, any>();
+    existingDepartments.forEach((d) => {
+      departmentMap.set(d.name.toLowerCase().trim(), d);
+      if (d.code) departmentMap.set(d.code.toLowerCase().trim(), d);
+    });
 
     const results: DeviceImportValidationResult[] = [];
     let validCount = 0;
