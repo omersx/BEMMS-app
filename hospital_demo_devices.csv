@@ -19,7 +19,7 @@ HOSP-RAD-002,Digital Radiography X-Ray System,Ysio Max,XRAY-33291,X-Ray System,S
 HOSP-RAD-003,Premium Diagnostic Ultrasound,EPIQ 7,US-77102,Ultrasound Scanner,Philips Healthcare,Radiology & Medical Imaging,Ultrasound Suite,class_iia,medium
 HOSP-RAD-004,Mobile Motorized X-Ray Unit,MobileDaRt Evolution,MOB-44918,Mobile X-Ray,Shimadzu,Radiology & Medical Imaging,Mobile Fleet Bay,class_iib,high
 HOSP-LAB-001,Automated Clinical Chemistry Analyzer,Cobas c 311,COB-66291,Chemistry Analyzer,Roche Diagnostics,Clinical Laboratory,Main Lab Bench A,class_iia,high
-HOSP-LAB-002,5-Part Differential Hematology Analyzer,XN-550,HEM-88210,Hematology Analyzer,Sysmex,Clinical Laboratory,Hematology Section,class_iia,high
+HOSP-LAB-002,Automated CBC Blood Analyzer (Hematology),XN-550,HEM-88210,CBC Analyzer,Sysmex,Clinical Laboratory,Hematology Section,class_iia,high
 HOSP-LAB-003,Refrigerated Benchtop Centrifuge,5810 R,CENT-11029,Laboratory Centrifuge,Eppendorf,Clinical Laboratory,Processing Area,class_i,medium
 HOSP-LAB-004,Class II Biological Safety Cabinet,Herasafe 2030i,BSC-44192,Biosafety Cabinet,Thermo Fisher Scientific,Clinical Laboratory,Microbiology Room,class_iia,high
 HOSP-PED-001,Neonatal Intensive Care Incubator,Isolette 8000 Plus,INC-77109,Infant Incubator,Dräger,Pediatrics,NICU Bay 1,class_iib,high
