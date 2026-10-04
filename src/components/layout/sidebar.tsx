@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, QrCode, Monitor, TicketCheck, Wrench, BarChart3,
   Bell, Settings, Activity, ChevronLeft, ChevronRight, AlertTriangle,
-  ClipboardList, Calendar, CheckSquare, Building2
+  ClipboardList, Calendar, CheckSquare, Building2, UsersRound
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ const SIDEBAR_LINKS = [
   { href: '/scan', label: 'Scan QR', icon: QrCode },
   { href: '/devices', label: 'Devices', icon: Monitor },
   { href: '/departments', label: 'Departments', icon: Building2 },
+  { href: '/team', label: 'Engineering Team', icon: UsersRound },
   { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck },
   { href: '/tickets/triage', label: 'Triage Queue', icon: AlertTriangle },
   { href: '/maintenance', label: 'Maintenance', icon: Wrench },
