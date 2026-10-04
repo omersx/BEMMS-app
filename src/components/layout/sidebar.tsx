@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, QrCode, Monitor, TicketCheck, Wrench, BarChart3,
   Bell, Settings, Activity, ChevronLeft, ChevronRight, AlertTriangle,
@@ -36,6 +36,11 @@ const SIDEBAR_LINKS = [
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   const isAdmin = user.role.toLowerCase().includes('admin')
 
   return (
@@ -83,16 +88,18 @@ export function Sidebar({ user }: SidebarProps) {
                 </Link>
               )
 
-              if (collapsed) {
-                return (
-                  <Tooltip key={link.href}>
-                    <TooltipTrigger asChild>{navLink}</TooltipTrigger>
-                    <TooltipContent side="right">{link.label}</TooltipContent>
-                  </Tooltip>
-                )
-              }
-
-              return <div key={link.href}>{navLink}</div>
+              return (
+                <div key={link.href}>
+                  {mounted && collapsed ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>{navLink}</TooltipTrigger>
+                      <TooltipContent side="right">{link.label}</TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    navLink
+                  )}
+                </div>
+              )
             })}
             {isAdmin && (() => {
               const adminLink = (
@@ -109,16 +116,18 @@ export function Sidebar({ user }: SidebarProps) {
                 </Link>
               )
 
-              if (collapsed) {
-                return (
-                  <Tooltip>
-                    <TooltipTrigger asChild>{adminLink}</TooltipTrigger>
-                    <TooltipContent side="right">Administration</TooltipContent>
-                  </Tooltip>
-                )
-              }
-
-              return <div>{adminLink}</div>
+              return (
+                <div key="/admin">
+                  {mounted && collapsed ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>{adminLink}</TooltipTrigger>
+                      <TooltipContent side="right">Administration</TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    adminLink
+                  )}
+                </div>
+              )
             })()}
           </TooltipProvider>
         </nav>

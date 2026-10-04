@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import { toast } from 'sonner';
 import { purgeData } from '@/lib/actions/data-management';
 
 export function DangerZone() {
+  const router = useRouter();
   const [selectedScope, setSelectedScope] = useState<'test_transactions' | 'factory_reset'>('test_transactions');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
@@ -66,10 +68,7 @@ export function DangerZone() {
       if (res.success) {
         toast.success(res.message || 'Operation executed successfully');
         setDialogOpen(false);
-        // Refresh page after a brief delay
-        setTimeout(() => {
-          window.location.reload();
-        }, 1200);
+        router.refresh();
       } else {
         toast.error(res.error || 'Failed to execute data reset');
       }
