@@ -94,6 +94,11 @@ export function getDeviceImportTemplateCSV(): string {
     'location',
     'risk_classification',
     'criticality',
+    'purchase_date',
+    'purchase_cost',
+    'installation_date',
+    'warranty_start_date',
+    'warranty_end_date',
   ].join(',');
 
   const samples = [
@@ -108,6 +113,11 @@ export function getDeviceImportTemplateCSV(): string {
       'Room 102 - Trauma Bay',
       'class_iib',
       'high',
+      '2023-01-15',
+      '3500.00',
+      '2023-02-01',
+      '2023-02-01',
+      '2025-02-01',
     ].join(','),
     [
       'BEMMS-DEV-002',
@@ -120,6 +130,11 @@ export function getDeviceImportTemplateCSV(): string {
       'Bed 04',
       'class_iib',
       'high',
+      '2023-03-10',
+      '12500.00',
+      '2023-03-25',
+      '2023-03-25',
+      '2026-03-25',
     ].join(','),
     [
       'BEMMS-DEV-003',
@@ -132,6 +147,11 @@ export function getDeviceImportTemplateCSV(): string {
       'Bench 3',
       'class_i',
       'low',
+      '2023-05-20',
+      '4800.00',
+      '2023-06-01',
+      '2023-06-01',
+      '2025-06-01',
     ].join(','),
   ].join('\n');
 

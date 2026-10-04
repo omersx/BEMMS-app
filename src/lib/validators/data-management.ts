@@ -11,6 +11,11 @@ export const deviceImportRowSchema = z.object({
   locationDescription: z.string().optional().default(''),
   riskClassification: z.enum(['class_i', 'class_iia', 'class_iib', 'class_iii']).default('class_i'),
   criticalityLevel: z.enum(['low', 'medium', 'high']).default('medium'),
+  purchaseDate: z.string().optional().default(''),
+  purchaseCost: z.string().optional().default(''),
+  installationDate: z.string().optional().default(''),
+  warrantyStartDate: z.string().optional().default(''),
+  warrantyEndDate: z.string().optional().default(''),
 });
 
 export type DeviceImportRow = z.infer<typeof deviceImportRowSchema>;

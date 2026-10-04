@@ -132,6 +132,11 @@ export async function validateDeviceImport(csvContent: string): Promise<{
         locationDescription: row.location || row.location_description || row.room || '',
         riskClassification: (row.risk_classification || row.risk || 'class_i') as any,
         criticalityLevel: (row.criticality || row.criticality_level || 'medium') as any,
+        purchaseDate: row.purchase_date || row.purchasedate || '',
+        purchaseCost: row.purchase_cost || row.cost || row.price || '',
+        installationDate: row.installation_date || row.install_date || '',
+        warrantyStartDate: row.warranty_start_date || row.warranty_start || '',
+        warrantyEndDate: row.warranty_end_date || row.warranty_end || '',
       };
 
       const parseResult = deviceImportRowSchema.safeParse(mappedRow);
@@ -347,6 +352,11 @@ export async function executeDeviceImport(rows: DeviceImportValidationResult[]):
           exactLocationDescription: data.locationDescription || null,
           criticalityLevel: data.criticalityLevel as any,
           riskClassification: data.riskClassification as any,
+          purchaseDate: data.purchaseDate || null,
+          purchaseCost: data.purchaseCost ? String(data.purchaseCost) : null,
+          installationDate: data.installationDate || null,
+          warrantyStartDate: data.warrantyStartDate || null,
+          warrantyEndDate: data.warrantyEndDate || null,
           currentStatusCode: 'operational',
         });
 

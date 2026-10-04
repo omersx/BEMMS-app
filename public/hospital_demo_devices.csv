@@ -1,31 +1,31 @@
-asset_number,name,model,serial_number,category,manufacturer,department,location,risk_classification,criticality
-HOSP-ICU-001,Mechanical Ventilator,Puritan Bennett 980,PB980-88412,Ventilator,Medtronic,Intensive Care Unit (ICU),ICU Bed 01,class_iib,high
-HOSP-ICU-002,Patient Monitor IntelliVue,MX750,MX75-99210,Patient Monitor,Philips Healthcare,Intensive Care Unit (ICU),ICU Bed 01,class_iib,high
-HOSP-ICU-003,Volumetric Infusion Pump,Infusomat Space,INF-43209,Infusion Pump,B. Braun,Intensive Care Unit (ICU),ICU Bed 02,class_iib,high
-HOSP-ICU-004,Syringe Driver Pump,Perfusor Space,PRF-88124,Syringe Pump,B. Braun,Intensive Care Unit (ICU),ICU Bed 02,class_iib,high
-HOSP-ICU-005,Blood Gas Analyzer,ABL90 FLEX,ABL-77401,Laboratory Analyzer,Radiometer,Intensive Care Unit (ICU),Stat Lab Station,class_iia,high
-HOSP-EM-001,Crash Cart Biphasic Defibrillator,R Series Plus,R-992481,Defibrillator,Zoll Medical,Emergency Department,Resuscitation Bay 1,class_iib,high
-HOSP-EM-002,12-Lead Diagnostic ECG,MAC 2000,MAC-55201,Electrocardiograph,GE Healthcare,Emergency Department,Triage Assessment Room,class_iia,high
-HOSP-EM-003,Vital Signs Spot Monitor,Connex Spot 7100,CS-11849,Vital Signs Monitor,Welch Allyn,Emergency Department,Observation Ward,class_iia,medium
-HOSP-EM-004,Point-of-Care Ultrasound,Sonosite Edge II,EDGE-44910,Ultrasound Scanner,Fujifilm Sonosite,Emergency Department,Trauma Bay 2,class_iia,medium
-HOSP-EM-005,Portable Emergency Suction,LSU 4000,LSU-33109,Suction Unit,Laerdal Medical,Emergency Department,Crash Cart 2,class_iia,high
-HOSP-OR-001,Anesthesia Workstation,Perseus A500,ANES-77192,Anesthesia Machine,Dräger,Surgery & Operating Theatre,OR Suite 1,class_iib,high
-HOSP-OR-002,Advanced Electrosurgical Unit,Valleylab FT10,ESU-88231,Electrosurgical Unit,Medtronic,Surgery & Operating Theatre,OR Suite 1,class_iib,high
-HOSP-OR-003,Electro-Hydraulic Operating Table,Alphamaquet 1150,OT-44109,Surgical Table,Maquet Getinge,Surgery & Operating Theatre,OR Suite 2,class_i,high
-HOSP-OR-004,Dual LED Surgical Ceiling Light,Polaris 600,LT-66281,Surgical Light,Dräger,Surgery & Operating Theatre,OR Suite 1,class_i,medium
-HOSP-OR-005,HD Laparoscopy Video Tower,IMAGE1 S,LAP-22019,Endoscopy System,Karl Storz,Surgery & Operating Theatre,OR Suite 2,class_iia,medium
-HOSP-RAD-001,Mobile Digital C-Arm System,Cios Alpha,CARM-99120,Fluoroscopy System,Siemens Healthineers,Radiology & Medical Imaging,Special Procedures Room,class_iib,high
-HOSP-RAD-002,Digital Radiography X-Ray System,Ysio Max,XRAY-33291,X-Ray System,Siemens Healthineers,Radiology & Medical Imaging,X-Ray Room 1,class_iib,high
-HOSP-RAD-003,Premium Diagnostic Ultrasound,EPIQ 7,US-77102,Ultrasound Scanner,Philips Healthcare,Radiology & Medical Imaging,Ultrasound Suite,class_iia,medium
-HOSP-RAD-004,Mobile Motorized X-Ray Unit,MobileDaRt Evolution,MOB-44918,Mobile X-Ray,Shimadzu,Radiology & Medical Imaging,Mobile Fleet Bay,class_iib,high
-HOSP-LAB-001,Automated Clinical Chemistry Analyzer,Cobas c 311,COB-66291,Chemistry Analyzer,Roche Diagnostics,Clinical Laboratory,Main Lab Bench A,class_iia,high
-HOSP-LAB-002,Automated CBC Blood Analyzer (Hematology),XN-550,HEM-88210,CBC Analyzer,Sysmex,Clinical Laboratory,Hematology Section,class_iia,high
-HOSP-LAB-003,Refrigerated Benchtop Centrifuge,5810 R,CENT-11029,Laboratory Centrifuge,Eppendorf,Clinical Laboratory,Processing Area,class_i,medium
-HOSP-LAB-004,Class II Biological Safety Cabinet,Herasafe 2030i,BSC-44192,Biosafety Cabinet,Thermo Fisher Scientific,Clinical Laboratory,Microbiology Room,class_iia,high
-HOSP-PED-001,Neonatal Intensive Care Incubator,Isolette 8000 Plus,INC-77109,Infant Incubator,Dräger,Pediatrics,NICU Bay 1,class_iib,high
-HOSP-PED-002,Infant Radiant Warmer,Giraffe Warmer,GWRM-33218,Infant Warmer,GE Healthcare,Pediatrics,Delivery Room 1,class_iib,high
-HOSP-PED-003,LED Phototherapy Treatment System,neoBLUE LED,PHT-55410,Phototherapy Unit,Natus Medical,Pediatrics,Nursery Room 2,class_iia,medium
-HOSP-PED-004,Infant Bubble CPAP System,Bubble CPAP BC100,CPAP-88129,Respiratory Support,Fisher & Paykel,Pediatrics,Step-down Nursery,class_iib,high
-HOSP-DENT-001,Comprehensive Dental Operating Unit,Intego Pro,DNT-11920,Dental Chair Unit,Dentsply Sirona,Dental Clinic,Operatory 1,class_iia,high
-HOSP-DENT-002,High-Frequency Intraoral X-Ray,Planmeca ProX,DXR-44129,Dental X-Ray,Planmeca,Dental Clinic,Operatory 1,class_iib,high
-HOSP-DENT-003,Class B Dental Vacuum Autoclave,Lisa 500,AUTO-77218,Steam Sterilizer,W&H Dental,Dental Clinic,Sterilization Room,class_iia,high
+asset_number,name,model,serial_number,category,manufacturer,department,location,risk_classification,criticality,purchase_date,purchase_cost,installation_date,warranty_start_date,warranty_end_date
+HOSP-ICU-001,Mechanical Ventilator,Puritan Bennett 980,PB980-88412,Ventilator,Medtronic,Intensive Care Unit (ICU),ICU Bed 01,class_iib,high,2023-03-15,38500.00,2023-04-01,2023-04-01,2026-04-01
+HOSP-ICU-002,Patient Monitor IntelliVue,MX750,MX75-99210,Patient Monitor,Philips Healthcare,Intensive Care Unit (ICU),ICU Bed 01,class_iib,high,2023-03-15,14500.00,2023-04-01,2023-04-01,2026-04-01
+HOSP-ICU-003,Volumetric Infusion Pump,Infusomat Space,INF-43209,Infusion Pump,B. Braun,Intensive Care Unit (ICU),ICU Bed 02,class_iib,high,2023-05-10,3200.00,2023-05-20,2023-05-20,2025-05-20
+HOSP-ICU-004,Syringe Driver Pump,Perfusor Space,PRF-88124,Syringe Pump,B. Braun,Intensive Care Unit (ICU),ICU Bed 02,class_iib,high,2023-05-10,2800.00,2023-05-20,2023-05-20,2025-05-20
+HOSP-ICU-005,Blood Gas Analyzer,ABL90 FLEX,ABL-77401,Laboratory Analyzer,Radiometer,Intensive Care Unit (ICU),Stat Lab Station,class_iia,high,2023-02-18,22000.00,2023-03-01,2023-03-01,2026-03-01
+HOSP-EM-001,Crash Cart Biphasic Defibrillator,R Series Plus,R-992481,Defibrillator,Zoll Medical,Emergency Department,Resuscitation Bay 1,class_iib,high,2023-01-10,16800.00,2023-01-25,2023-01-25,2026-01-25
+HOSP-EM-002,12-Lead Diagnostic ECG,MAC 2000,MAC-55201,Electrocardiograph,GE Healthcare,Emergency Department,Triage Assessment Room,class_iia,high,2023-02-05,8500.00,2023-02-15,2023-02-15,2025-02-15
+HOSP-EM-003,Vital Signs Spot Monitor,Connex Spot 7100,CS-11849,Vital Signs Monitor,Welch Allyn,Emergency Department,Observation Ward,class_iia,medium,2023-04-12,4200.00,2023-04-20,2023-04-20,2025-04-20
+HOSP-EM-004,Point-of-Care Ultrasound,Sonosite Edge II,EDGE-44910,Ultrasound Scanner,Fujifilm Sonosite,Emergency Department,Trauma Bay 2,class_iia,medium,2023-06-01,29000.00,2023-06-15,2023-06-15,2026-06-15
+HOSP-EM-005,Portable Emergency Suction,LSU 4000,LSU-33109,Suction Unit,Laerdal Medical,Emergency Department,Crash Cart 2,class_iia,high,2023-01-15,1850.00,2023-01-25,2023-01-25,2025-01-25
+HOSP-OR-001,Anesthesia Workstation,Perseus A500,ANES-77192,Anesthesia Machine,Dräger,Surgery & Operating Theatre,OR Suite 1,class_iib,high,2022-11-20,68000.00,2022-12-05,2022-12-05,2025-12-05
+HOSP-OR-002,Advanced Electrosurgical Unit,Valleylab FT10,ESU-88231,Electrosurgical Unit,Medtronic,Surgery & Operating Theatre,OR Suite 1,class_iib,high,2023-04-18,24500.00,2023-05-02,2023-05-02,2026-05-02
+HOSP-OR-003,Electro-Hydraulic Operating Table,Alphamaquet 1150,OT-44109,Surgical Table,Maquet Getinge,Surgery & Operating Theatre,OR Suite 2,class_i,high,2022-10-15,42000.00,2022-11-01,2022-11-01,2025-11-01
+HOSP-OR-004,Dual LED Surgical Ceiling Light,Polaris 600,LT-66281,Surgical Light,Dräger,Surgery & Operating Theatre,OR Suite 1,class_i,medium,2022-10-20,18000.00,2022-11-05,2022-11-05,2025-11-05
+HOSP-OR-005,HD Laparoscopy Video Tower,IMAGE1 S,LAP-22019,Endoscopy System,Karl Storz,Surgery & Operating Theatre,OR Suite 2,class_iia,medium,2023-03-08,55000.00,2023-03-25,2023-03-25,2026-03-25
+HOSP-RAD-001,Mobile Digital C-Arm System,Cios Alpha,CARM-99120,Fluoroscopy System,Siemens Healthineers,Radiology & Medical Imaging,Special Procedures Room,class_iib,high,2022-09-10,95000.00,2022-10-01,2022-10-01,2025-10-01
+HOSP-RAD-002,Digital Radiography X-Ray System,Ysio Max,XRAY-33291,X-Ray System,Siemens Healthineers,Radiology & Medical Imaging,X-Ray Room 1,class_iib,high,2022-08-15,120000.00,2022-09-01,2022-09-01,2025-09-01
+HOSP-RAD-003,Premium Diagnostic Ultrasound,EPIQ 7,US-77102,Ultrasound Scanner,Philips Healthcare,Radiology & Medical Imaging,Ultrasound Suite,class_iia,medium,2023-02-12,72000.00,2023-03-01,2023-03-01,2026-03-01
+HOSP-RAD-004,Mobile Motorized X-Ray Unit,MobileDaRt Evolution,MOB-44918,Mobile X-Ray,Shimadzu,Radiology & Medical Imaging,Mobile Fleet Bay,class_iib,high,2023-05-20,62000.00,2023-06-05,2023-06-05,2026-06-05
+HOSP-LAB-001,Automated Clinical Chemistry Analyzer,Cobas c 311,COB-66291,Chemistry Analyzer,Roche Diagnostics,Clinical Laboratory,Main Lab Bench A,class_iia,high,2023-01-15,48000.00,2023-02-01,2023-02-01,2026-02-01
+HOSP-LAB-002,Automated CBC Blood Analyzer (Hematology),XN-550,HEM-88210,CBC Analyzer,Sysmex,Clinical Laboratory,Hematology Section,class_iia,high,2023-01-15,36000.00,2023-02-01,2023-02-01,2026-02-01
+HOSP-LAB-003,Refrigerated Benchtop Centrifuge,5810 R,CENT-11029,Laboratory Centrifuge,Eppendorf,Clinical Laboratory,Processing Area,class_i,medium,2023-04-10,9200.00,2023-04-22,2023-04-22,2025-04-22
+HOSP-LAB-004,Class II Biological Safety Cabinet,Herasafe 2030i,BSC-44192,Biosafety Cabinet,Thermo Fisher Scientific,Clinical Laboratory,Microbiology Room,class_iia,high,2023-03-01,13500.00,2023-03-15,2023-03-15,2026-03-15
+HOSP-PED-001,Neonatal Intensive Care Incubator,Isolette 8000 Plus,INC-77109,Infant Incubator,Dräger,Pediatrics,NICU Bay 1,class_iib,high,2023-02-25,28000.00,2023-03-10,2023-03-10,2026-03-10
+HOSP-PED-002,Infant Radiant Warmer,Giraffe Warmer,GWRM-33218,Infant Warmer,GE Healthcare,Pediatrics,Delivery Room 1,class_iib,high,2023-02-25,19500.00,2023-03-10,2023-03-10,2026-03-10
+HOSP-PED-003,LED Phototherapy Treatment System,neoBLUE LED,PHT-55410,Phototherapy Unit,Natus Medical,Pediatrics,Nursery Room 2,class_iia,medium,2023-05-05,5800.00,2023-05-18,2023-05-18,2025-05-18
+HOSP-PED-004,Infant Bubble CPAP System,Bubble CPAP BC100,CPAP-88129,Respiratory Support,Fisher & Paykel,Pediatrics,Step-down Nursery,class_iib,high,2023-06-12,8900.00,2023-06-25,2023-06-25,2026-06-25
+HOSP-DENT-001,Comprehensive Dental Operating Unit,Intego Pro,DNT-11920,Dental Chair Unit,Dentsply Sirona,Dental Clinic,Operatory 1,class_iia,high,2023-01-20,32000.00,2023-02-10,2023-02-10,2026-02-10
+HOSP-DENT-002,High-Frequency Intraoral X-Ray,Planmeca ProX,DXR-44129,Dental X-Ray,Planmeca,Dental Clinic,Operatory 1,class_iib,high,2023-01-20,11500.00,2023-02-10,2023-02-10,2026-02-10
+HOSP-DENT-003,Class B Dental Vacuum Autoclave,Lisa 500,AUTO-77218,Steam Sterilizer,W&H Dental,Dental Clinic,Sterilization Room,class_iia,high,2023-02-15,8200.00,2023-03-01,2023-03-01,2025-03-01
