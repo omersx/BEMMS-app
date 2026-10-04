@@ -429,17 +429,17 @@ export function ImportWizard() {
                 <div>
                   <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Ready to Import</span>
                   <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                    {validationData.validCount}
+                    {importableCount}
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Warnings</span>
+                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Auto-Create Notices</span>
                   <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
                     {validationData.warningCount}
                   </div>
                 </div>
                 <div>
-                  <span className="text-xs text-destructive font-medium">Errors</span>
+                  <span className="text-xs text-destructive font-medium">Blocking Errors</span>
                   <div className="text-xl font-bold text-destructive">{validationData.errorCount}</div>
                 </div>
               </div>
