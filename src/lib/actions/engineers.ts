@@ -69,7 +69,7 @@ export async function getEngineersTeam(): Promise<{
       .where(
         and(
           inArray(serviceTickets.assignedEngineerUserId, userIds),
-          inArray(serviceTickets.statusCode, ['assigned', 'in_progress', 'waiting_for_parts'])
+          inArray(serviceTickets.statusCode, ['assigned', 'in_progress', 'waiting_for_parts'] as any)
         )
       )
       .groupBy(serviceTickets.assignedEngineerUserId) : [];
@@ -86,7 +86,7 @@ export async function getEngineersTeam(): Promise<{
       .where(
         and(
           inArray(maintenanceTasks.assignedEngineerUserId, userIds),
-          inArray(maintenanceTasks.statusCode, ['assigned', 'in_progress', 'waiting_for_parts', 'awaiting_review'])
+          inArray(maintenanceTasks.statusCode, ['assigned', 'in_progress', 'waiting_for_parts', 'awaiting_review'] as any)
         )
       )
       .groupBy(maintenanceTasks.assignedEngineerUserId) : [];
