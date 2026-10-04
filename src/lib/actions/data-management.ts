@@ -355,7 +355,7 @@ export async function executeDeviceImport(rows: DeviceImportValidationResult[]):
 
       // Log immutable audit trail entry
       await createAuditLog(tx, {
-        action: 'BULK_IMPORT',
+        action: 'CREATE',
         entityType: 'devices',
         entityId: org.id,
         actorUserId: session.id,
@@ -469,7 +469,7 @@ export async function purgeData(payload: PurgeDataPayload): Promise<{
         await tx.delete(serviceTickets);
 
         await createAuditLog(tx, {
-          action: 'PURGE_TEST_DATA',
+          action: 'PURGE',
           entityType: 'system',
           entityId: session.id,
           actorUserId: session.id,
@@ -682,7 +682,7 @@ export async function executeDepartmentImport(rows: DepartmentImportValidationRe
       }
 
       await createAuditLog(tx, {
-        action: 'BULK_IMPORT',
+        action: 'CREATE',
         entityType: 'departments',
         entityId: org.id,
         actorUserId: session.id,

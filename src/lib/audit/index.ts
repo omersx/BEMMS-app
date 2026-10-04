@@ -18,6 +18,23 @@ export interface AuditLogEntry {
   sessionId?: string;
 }
 
+const VALID_AUDIT_ACTIONS = new Set([
+  'CREATE', 'UPDATE', 'DEACTIVATE', 'ARCHIVE', 'TRANSFER', 'PURGE', 'SIGN', 'POLICY_CHANGE', 'LOGIN', 'LOGOUT', 'FAILED_LOGIN'
+]);
+
+function normalizeAuditAction(action?: string): string {
+  if (!action) return 'CREATE';
+  const upper = String(action).toUpperCase();
+  if (VALID_AUDIT_ACTIONS.has(upper)) return upper;
+  if (upper.includes('IMPORT') || upper.includes('INSERT') || upper.includes('INVITE') || upper.includes('ASSIGN')) return 'CREATE';
+  if (upper.includes('PURGE') || upper.includes('RESET') || upper.includes('CLEAR')) return 'PURGE';
+  if (upper.includes('DEACTIVATE') || upper.includes('DELETE') || upper.includes('REMOVE') || upper.includes('REVOKE')) return 'DEACTIVATE';
+  if (upper.includes('ARCHIVE')) return 'ARCHIVE';
+  if (upper.includes('TRANSFER')) return 'TRANSFER';
+  if (upper.includes('SIGN')) return 'SIGN';
+  return 'UPDATE';
+}
+
 export async function createAuditLog(arg1: any, arg2?: any) {
   let entry: AuditLogEntry;
   let tx: any;
@@ -33,7 +50,7 @@ export async function createAuditLog(arg1: any, arg2?: any) {
   if (!entry) return;
 
   const dbClient = tx || db;
-  const actionType = (entry.actionType || entry.action || 'CREATE') as any;
+  const actionType = normalizeAuditAction(entry.actionType || entry.action) as any;
   const actorUserId = entry.actorUserId || entry.actorId || null;
   const newState = entry.newState !== undefined ? entry.newState : entry.details;
 
