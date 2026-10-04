@@ -18,7 +18,8 @@ import {
   ArrowLeft, 
   RotateCcw, 
   Layers, 
-  Building2 
+  Building2,
+  Info 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
@@ -223,7 +224,8 @@ export function ImportWizard() {
     <div className="space-y-6">
       {/* 1. Entity Type Selector */}
       {step === 1 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card 
             className={`cursor-pointer transition-all hover:border-primary/50 ${entity === 'devices' ? 'border-primary ring-1 ring-primary' : ''}`}
             onClick={() => setEntity('devices')}
@@ -254,6 +256,46 @@ export function ImportWizard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Relationship Workflow Guidance */}
+        {entity === 'devices' ? (
+          <div className="flex items-start gap-3 rounded-lg border border-blue-500/20 bg-blue-500/10 p-3 text-sm text-blue-900 dark:text-blue-200">
+            <Info className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div className="space-y-1">
+              <span className="font-semibold text-xs uppercase tracking-wider text-blue-700 dark:text-blue-300">Recommended Sequence</span>
+              <p className="text-xs text-blue-800/90 dark:text-blue-200">
+                Medical devices are associated with hospital departments. If your facility has new or unlisted wards,{' '}
+                <button
+                  type="button"
+                  onClick={() => setEntity('departments')}
+                  className="font-semibold underline underline-offset-2 hover:text-blue-600 dark:hover:text-blue-100"
+                >
+                  import departments first
+                </button>
+                , then import devices referencing those department names.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-start gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-900 dark:text-emerald-200">
+            <Info className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+            <div className="space-y-1">
+              <span className="font-semibold text-xs uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Organizational Hierarchy</span>
+              <p className="text-xs text-emerald-800/90 dark:text-emerald-200">
+                Importing departments registers hospital clinical areas (e.g. ICU, Radiology, Emergency). Once imported, you can immediately switch to{' '}
+                <button
+                  type="button"
+                  onClick={() => setEntity('devices')}
+                  className="font-semibold underline underline-offset-2 hover:text-emerald-600 dark:hover:text-emerald-100"
+                >
+                  importing medical devices
+                </button>{' '}
+                to assign assets to them.
+              </p>
+            </div>
+          </div>
+        )}
+      </>
       )}
 
       <Card>
