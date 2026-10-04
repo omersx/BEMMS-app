@@ -276,12 +276,17 @@ export function DangerZone() {
                 {purging ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Executing Purge...
+                    {selectedScope === 'test_transactions' ? 'Purging Test Data...' : 'Resetting System...'}
+                  </>
+                ) : selectedScope === 'test_transactions' ? (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Purge Test Data
                   </>
                 ) : (
                   <>
-                    <Trash2 className="h-4 w-4" />
-                    Execute Purge
+                    <RotateCcw className="h-4 w-4" />
+                    Execute Factory Reset
                   </>
                 )}
               </Button>
