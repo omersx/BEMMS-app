@@ -39,13 +39,18 @@ describe('inviteUserSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects invalid email', () => {
+  it('validates user invitation payload with optional hospital, department and specialization', () => {
     const result = inviteUserSchema.safeParse({
-      fullName: 'Nurse Layla',
-      email: 'not-an-email',
+      fullName: 'Eng. Khalid Al-Otaibi',
+      email: 'khalid@hospital.org',
+      jobTitle: 'Senior Biomedical Engineer',
       organizationId: '123e4567-e89b-12d3-a456-426614174000',
       roleIds: ['123e4567-e89b-12d3-a456-426614174001'],
+      hospitalId: '123e4567-e89b-12d3-a456-426614174002',
+      departmentId: '123e4567-e89b-12d3-a456-426614174003',
+      specialization: 'ICU & Ventilators',
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });
+

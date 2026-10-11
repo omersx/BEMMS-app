@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { users, userRoleAssignments, userAccessScopes, serviceTickets, engineerProfiles } from '@/lib/db/schema';
+import { users, userRoleAssignments, userAccessScopes, serviceTickets, engineerProfiles, roles } from '@/lib/db/schema';
 import { requireAuth, requireRole, requireScope } from '@/lib/auth/rbac';
 import { createAuditLog } from '@/lib/audit';
 import { inviteUserSchema, updateUserProfileSchema, assignRoleSchema, assignScopeSchema } from '@/lib/validators/users';
@@ -93,6 +93,41 @@ export async function inviteUser(input: unknown) {
         });
       }
 
+      // 1. Assign Hospital and Department Access Scopes if provided
+      if (validated.data.hospitalId || validated.data.departmentId) {
+        await tx.insert(userAccessScopes).values({
+          userId: newUser.id,
+          organizationId: validated.data.organizationId,
+          scopeType: validated.data.departmentId ? 'department' : 'hospital',
+          hospitalId: validated.data.hospitalId || null,
+          departmentId: validated.data.departmentId || null,
+          createdByUserId: session.id,
+        });
+      }
+
+      // 2. Automatically create Engineer Profile if an engineering role is assigned
+      const assignedRoles = await tx.query.roles.findMany({
+        where: inArray(roles.id, validated.data.roleIds),
+      });
+      const roleCodes = assignedRoles.map((r) => r.code);
+      const isEngineer = roleCodes.some((code) =>
+        ['BIOMED_ENG', 'BIOMED_TECH', 'BIOMED_MGR'].includes(code)
+      );
+
+      if (isEngineer) {
+        await tx.insert(engineerProfiles).values({
+          userId: newUser.id,
+          organizationId: validated.data.organizationId,
+          hospitalId: validated.data.hospitalId || null,
+          jobTitle: validated.data.jobTitle || 'Biomedical Engineer',
+          specialization: validated.data.specialization || 'General Biomedical Engineering',
+          extension: validated.data.employeeIdentifier || null,
+          mobileNumber: validated.data.phone || null,
+          dutyStatus: 'on_duty',
+          coveredDepartmentIds: validated.data.departmentId ? [validated.data.departmentId] : [],
+        });
+      }
+
       await createAuditLog(tx, {
         action: 'INVITE',
         entityType: 'user',
@@ -101,6 +136,8 @@ export async function inviteUser(input: unknown) {
         details: validated.data,
       });
 
+      revalidatePath('/admin/users');
+      revalidatePath('/team');
       return { success: true, data: newUser };
     });
   } catch (error: any) {

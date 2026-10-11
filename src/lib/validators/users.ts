@@ -8,6 +8,9 @@ export const inviteUserSchema = z.object({
   phone: z.string().optional(),
   organizationId: z.string().uuid(),
   roleIds: z.array(z.string().uuid()),
+  hospitalId: z.string().uuid().optional().nullable(),
+  departmentId: z.string().uuid().optional().nullable(),
+  specialization: z.string().optional().nullable(),
 });
 
 export const updateUserProfileSchema = z.object({
