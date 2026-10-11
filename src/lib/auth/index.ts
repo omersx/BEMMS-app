@@ -5,6 +5,10 @@ import { db } from '@/lib/db';
 import { users, accounts, sessions, userRoleAssignments, roles } from '@/lib/db/schema';
 import { verifyPassword } from '@/lib/auth/password';
 import { eq, or, ilike } from 'drizzle-orm';
+import { getLogger } from '@/lib/logger';
+import { createAuditLog } from '@/lib/audit';
+
+const log = getLogger('auth');
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -37,15 +41,47 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             ),
           });
         } catch (dbError: any) {
-          console.error('[Auth] Database connection error during login:', dbError.message);
+          log.error('Database connection error during login', dbError);
           throw new Error('DATABASE_CONNECTION_ERROR');
         }
 
         if (!userResult || !userResult.passwordHash) {
+          log.warn('Failed login attempt', { identifier });
+          try {
+            await createAuditLog({
+              entityType: 'user_session',
+              entityId: identifier,
+              actionType: 'FAILED_LOGIN',
+              newState: {
+                attemptedIdentifier: identifier,
+                reason: 'user_not_found',
+                attemptedAt: new Date().toISOString(),
+              },
+            });
+          } catch (auditErr) {
+            log.error('Failed to create failed-login audit log', auditErr);
+          }
           return null;
         }
 
         if (userResult.accountStatus !== 'active') {
+          log.warn('Failed login attempt', { identifier });
+          try {
+            await createAuditLog({
+              actorUserId: userResult.id,
+              organizationId: userResult.organizationId,
+              entityType: 'user_session',
+              entityId: userResult.id,
+              actionType: 'FAILED_LOGIN',
+              newState: {
+                attemptedIdentifier: identifier,
+                reason: 'account_inactive',
+                attemptedAt: new Date().toISOString(),
+              },
+            });
+          } catch (auditErr) {
+            log.error('Failed to create failed-login audit log', auditErr);
+          }
           return null;
         }
 
@@ -55,6 +91,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         );
 
         if (!isPasswordValid) {
+          log.warn('Failed login attempt', { identifier });
+          try {
+            await createAuditLog({
+              actorUserId: userResult.id,
+              organizationId: userResult.organizationId,
+              entityType: 'user_session',
+              entityId: userResult.id,
+              actionType: 'FAILED_LOGIN',
+              newState: {
+                attemptedIdentifier: identifier,
+                reason: 'invalid_credentials',
+                attemptedAt: new Date().toISOString(),
+              },
+            });
+          } catch (auditErr) {
+            log.error('Failed to create failed-login audit log', auditErr);
+          }
           return null;
         }
 
@@ -69,6 +122,60 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
+  events: {
+    async signIn({ user, account }) {
+      // Log successful login
+      log.info('User signed in', { userId: user.id, email: user.email });
+
+      // Create audit log entry for LOGIN
+      try {
+        await createAuditLog({
+          actorUserId: user.id,
+          organizationId: (user as any).organizationId || null,
+          entityType: 'user_session',
+          entityId: user.id || 'unknown',
+          actionType: 'LOGIN',
+          newState: {
+            email: user.email,
+            fullName: (user as any).fullName,
+            loginAt: new Date().toISOString(),
+            provider: account?.provider || 'credentials',
+          },
+        });
+      } catch (err) {
+        log.error('Failed to create login audit log', err);
+      }
+
+      // Update lastLoginAt on the user record
+      try {
+        await db
+          .update(users)
+          .set({ lastLoginAt: new Date() })
+          .where(eq(users.id, user.id as string));
+      } catch (err) {
+        log.error('Failed to update lastLoginAt', err);
+      }
+    },
+    async signOut({ token }: any) {
+      // Log sign out
+      const userId = (token as any)?.id || (token as any)?.sub;
+      log.info('User signed out', { userId });
+
+      try {
+        await createAuditLog({
+          actorUserId: userId || null,
+          entityType: 'user_session',
+          entityId: userId || 'unknown',
+          actionType: 'LOGOUT',
+          newState: {
+            logoutAt: new Date().toISOString(),
+          },
+        });
+      } catch (err) {
+        log.error('Failed to create logout audit log', err);
+      }
+    },
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -86,7 +193,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           token.roles = assignments.map((a: any) => a.code);
         } catch (e) {
-          console.error('[Auth] Failed to load user roles:', e);
+          log.error('Failed to load user roles', e);
           token.roles = [];
         }
       }

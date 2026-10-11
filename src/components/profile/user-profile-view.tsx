@@ -31,11 +31,13 @@ import {
   Radio,
   Moon,
   Edit,
+  LogOut,
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { updateEngineerDutyStatus } from '@/lib/actions/engineers';
 import { EditEngineerDialog } from '@/components/team/edit-engineer-dialog';
+import { SignOutButton } from '@/components/shared/sign-out-button';
 
 interface UserProfileViewProps {
   profile: DepartmentStaffProfile;
@@ -596,6 +598,27 @@ export function UserProfileView({ profile }: UserProfileViewProps) {
           <Button asChild size="sm" className="shrink-0">
             <Link href="/tickets">View My Tickets</Link>
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* ── 5. Account Session & Sign Out Card ────────────────────────── */}
+      <Card className="border shadow-sm border-destructive/20 bg-destructive/5 dark:bg-destructive/10">
+        <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
+              <LogOut className="w-4 h-4 text-destructive" />
+              Sign Out of Session
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              End your active session on this device. You will need to enter your credentials again to log back in.
+            </p>
+          </div>
+          <SignOutButton
+            variant="destructive"
+            size="sm"
+            label="Log out"
+            className="shrink-0"
+          />
         </CardContent>
       </Card>
     </div>

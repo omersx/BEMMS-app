@@ -7,8 +7,9 @@ import {
   LayoutDashboard, QrCode, Monitor, TicketCheck, Wrench, BarChart3,
   Bell, Settings, Activity, ChevronLeft, ChevronRight, AlertTriangle,
   ClipboardList, Calendar, CheckSquare, Building2, UsersRound, PlusCircle,
-  Inbox
+  Inbox, LogOut
 } from 'lucide-react'
+import { signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -194,27 +195,76 @@ export function Sidebar({ user }: SidebarProps) {
         </nav>
       </ScrollArea>
 
-      <div className="border-t border-border p-4">
-        <Link
-          href="/profile"
-          className={cn(
-            "flex items-center gap-3 hover:opacity-80 transition rounded-lg p-1 -m-1 hover:bg-muted/50",
-            collapsed && "justify-center"
-          )}
-          title="View My Profile"
-        >
-          <Avatar className="h-9 w-9 shrink-0">
-            <AvatarFallback className="bg-primary/10 text-primary">
-              {user.name.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          {!collapsed && (
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-sm font-medium truncate">{user.name}</span>
-              <span className="text-xs text-muted-foreground truncate">{user.role}</span>
-            </div>
-          )}
-        </Link>
+      <div className="border-t border-border p-3">
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-2">
+            <Link
+              href="/profile"
+              className="hover:opacity-80 transition rounded-lg p-1 hover:bg-muted/50"
+              title="View My Profile"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                  {user.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+            {mounted && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => signOut({ callbackUrl: '/login' })}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="sr-only">Log out</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Log out</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-2">
+            <Link
+              href="/profile"
+              className="flex items-center gap-3 hover:opacity-80 transition rounded-lg p-1.5 -m-1 hover:bg-muted/50 flex-1 min-w-0"
+              title="View My Profile"
+            >
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                  {user.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-sm font-medium truncate leading-tight">{user.name}</span>
+                <span className="text-[11px] text-muted-foreground truncate leading-tight">{user.role}</span>
+              </div>
+            </Link>
+            {mounted && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                      onClick={() => signOut({ callbackUrl: '/login' })}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="sr-only">Log out</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Log out</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        )}
       </div>
     </aside>
   )

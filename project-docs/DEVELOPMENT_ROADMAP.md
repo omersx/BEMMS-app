@@ -6,8 +6,8 @@
 
 - **Repository:** Production Ready
 - **Technology:** Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, PostgreSQL, Auth.js, Docker Compose, Vitest, Caddy
-- **Current Phase:** All Phases Complete (Phases 1-8 `COMPLETE`)
-- **Last Updated:** 2026-09-09
+- **Current Phase:** All Phases Complete (Phases 1-12 `COMPLETE`)
+- **Last Updated:** 2026-10-11
 
 ---
 
@@ -354,4 +354,48 @@ Establish a real-time hospital dispatch mechanism for incoming incident reports 
 7. TypeScript compiles with 0 errors and test suite passes 103/103 tests
 
 ### Status: `COMPLETE`
+
+---
+
+## Phase 12: Production Logging & Comprehensive Audit Trail System — `COMPLETE`
+
+### Objective and Business Value
+Establish a centralized, production-grade application logging infrastructure and complete security audit trail. Replaces ad-hoc console statements with a zero-dependency structured logger, captures critical authentication lifecycle events (`LOGIN`, `LOGOUT`, `FAILED_LOGIN`), tracks `lastLoginAt`, and provides hospital system administrators with an administrative audit dashboard featuring multi-facet filtering, JSON state inspection dialogs, and CSV data export for regulatory compliance and operational traceability.
+
+### In-Scope Modules & Features
+- Zero-dependency structured logger (`src/lib/logger/`):
+  - Strict log levels: `debug`, `info`, `warn`, `error`, `fatal` with environment-aware thresholding (`NODE_ENV` and `LOG_LEVEL`)
+  - Machine-parseable JSON output for production; ANSI-colorized pretty format with timestamps and module tags for local development
+  - Safe error serialization (name, message, stack) and circular-reference / BigInt resilience
+  - Contextual child loggers with inheritance (`child({ module, context })`) and root/module convenience getters (`logger`, `getLogger`)
+- Authentication event audit integration (`src/lib/auth/index.ts`):
+  - NextAuth `events.signIn` capturing user ID, email, provider, timestamp, and updating `lastLoginAt`
+  - NextAuth `events.signOut` recording logout audit trail
+  - NextAuth `authorize` failed login capture recording specific failure reasons (`invalid_credentials`, `user_not_found`, `account_inactive`)
+  - Fail-safe execution: audit errors are trapped and logged without breaking core login/logout workflows
+- Enhanced Audit Actions API (`src/lib/actions/audit-logs.ts`):
+  - `getAuditLogs`: Multi-column search (`entityId`, `changeReason`), action type, entity type, actor, date range filtering with parallel `count()` pagination metadata
+  - `getAuditLogEntityTypes`: Distinct entity type querying for dynamic filter options
+  - `getAuditLogActors`: Distinct actor lookup with user profile join
+  - `getAuditLogStats`: Real-time KPI metrics (`totalLogs`, `last24h`, `last7d`, `failedLogins24h`)
+  - `exportAuditLogs`: Unpaginated export query (up to 10,000 records) formatted for report extraction
+- Comprehensive Administrative Audit UI (`src/app/(dashboard)/admin/audit-logs/page.tsx` & components):
+  - Top KPI stat cards (Total Logs, Last 24 Hours, Last 7 Days, and alert-highlighted Failed Logins)
+  - Interactive filter toolbar (`audit-log-filters.tsx`) with search debounce, action types, entity types, actor dropdown, date pickers, and URL search param synchronization
+  - Enriched data table (`audit-log-table.tsx`) with color-coded action badges, localized date formatting, and inspect dialog displaying full JSON diffs (`previousState` & `newState`)
+  - CSV Export tool (`audit-log-export.tsx`) generating downloadable comma-separated audit files client-side
+- Comprehensive unit test suite (`src/lib/logger/__tests__/logger.test.ts`) covering all log levels, child logger context inheritance, JSON formatting, circular references, and ANSI output
+
+### Acceptance Criteria
+1. Server-side logs use structured format with appropriate log levels and module tags
+2. All login successes, logouts, and failed authentication attempts are persisted to `audit_logs`
+3. Audit logging failures never interrupt primary user workflows
+4. Admin audit logs page supports search, filtering by action, actor, entity type, date range, and pagination
+5. Detail modal displays previous and new state JSON cleanly
+6. Audit logs can be exported directly to CSV
+7. `npx tsc --noEmit` passes with 0 errors
+8. `npm test` passes all tests (116/116 passing across 13 test suites)
+
+### Status: `COMPLETE`
+
 

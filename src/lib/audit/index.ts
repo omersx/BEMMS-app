@@ -1,5 +1,8 @@
 import { db } from '@/lib/db';
 import { auditLogs } from '@/lib/db/schema';
+import { getLogger } from '@/lib/logger';
+
+const log = getLogger('audit');
 
 export interface AuditLogEntry {
   actorUserId?: string | null;
@@ -35,6 +38,10 @@ function normalizeAuditAction(action?: string): string {
   return 'UPDATE';
 }
 
+/**
+ * Creates an audit log entry in the database.
+ * Never throws an error — fails gracefully and logs errors to prevent disrupting application flow.
+ */
 export async function createAuditLog(arg1: any, arg2?: any) {
   let entry: AuditLogEntry;
   let tx: any;
@@ -54,21 +61,31 @@ export async function createAuditLog(arg1: any, arg2?: any) {
   const actorUserId = entry.actorUserId || entry.actorId || null;
   const newState = entry.newState !== undefined ? entry.newState : entry.details;
 
-  return dbClient.insert(auditLogs).values({
-    actorUserId,
-    organizationId: entry.organizationId || null,
-    hospitalId: entry.hospitalId || null,
-    entityType: entry.entityType,
-    entityId: entry.entityId,
-    actionType,
-    previousState: entry.previousState ? JSON.stringify(entry.previousState) : null,
-    newState: newState ? JSON.stringify(newState) : null,
-    changeReason: entry.changeReason || null,
-    ipAddress: entry.ipAddress || null,
-    sessionId: entry.sessionId || null,
-  });
+  try {
+    const result = await dbClient.insert(auditLogs).values({
+      actorUserId,
+      organizationId: entry.organizationId || null,
+      hospitalId: entry.hospitalId || null,
+      entityType: entry.entityType,
+      entityId: entry.entityId,
+      actionType,
+      previousState: entry.previousState ? JSON.stringify(entry.previousState) : null,
+      newState: newState ? JSON.stringify(newState) : null,
+      changeReason: entry.changeReason || null,
+      ipAddress: entry.ipAddress || null,
+      sessionId: entry.sessionId || null,
+    });
+    log.debug('Audit log created', { entityType: entry.entityType, entityId: entry.entityId, action: actionType });
+    return result;
+  } catch (err) {
+    log.error('Failed to create audit log', err, { entityType: entry.entityType, entityId: entry.entityId });
+    // Don't throw — audit logging should never break the main flow
+  }
 }
 
+/**
+ * Creates an audit log entry, automatically extracting IP address from request headers if available.
+ */
 export async function createAuditLogFromRequest(entry: AuditLogEntry, request?: Request) {
   let ipAddress = entry.ipAddress;
   
@@ -84,4 +101,3 @@ export async function createAuditLogFromRequest(entry: AuditLogEntry, request?: 
     ipAddress,
   });
 }
-

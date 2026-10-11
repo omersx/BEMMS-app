@@ -24,6 +24,7 @@ import {
   ChevronRight,
   User,
 } from 'lucide-react';
+import { SignOutButton } from '@/components/shared/sign-out-button';
 
 export default async function MorePage() {
   const session = await auth();
@@ -266,6 +267,15 @@ export default async function MorePage() {
           </div>
         </div>
       ))}
+
+      {/* Account Session & Sign Out */}
+      <div className="pt-2">
+        <SignOutButton
+          variant="outline"
+          className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20 h-11 text-sm font-medium"
+          label="Sign Out of Account"
+        />
+      </div>
     </div>
   );
 }
