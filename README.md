@@ -62,6 +62,12 @@ It bridges the gap between frontline clinical healthcare workers and biomedical 
   - `BIOMED_ENG` / `BIOMED_TECH`: Active repair execution, electronic signatures, and parts tracking.
   - `DEPT_MGR` / `CLINICAL_STAFF`: Equipment scanning, department availability tracking, and fault reporting.
 
+### 8. 🚨 Real-Time Ticket Dispatch & Native Push Notifications
+- **Instant Engineering Broadcast**: Submitting a ticket triggers native VAPID Web Push notifications and real-time SSE in-app alerts to all scoped biomedical engineers.
+- **Waiting-for-Engineer Indicators**: Clear live wait durations and visual urgency markers ("⏳ Waiting for engineer to accept").
+- **1-Click Responsibility Acceptance**: Engineers can accept ticket responsibility with 21 CFR Part 11 signatures directly from the dispatch alert.
+- **Clinical Reporter Updates**: Instant confirmation notifications sent to ward staff when an engineer takes ownership.
+
 ---
 
 ## 🛠️ Architecture & Tech Stack
