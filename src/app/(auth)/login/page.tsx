@@ -44,21 +44,21 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full shadow-lg border-border/40">
+    <Card className="w-full shadow-lg border-border/40" suppressHydrationWarning>
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>
           Enter your username or email and password to access your account
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+      <form onSubmit={handleSubmit} suppressHydrationWarning>
+        <CardContent className="space-y-4" suppressHydrationWarning>
           {error && (
             <div className="p-3 text-sm text-destructive-foreground bg-destructive/90 rounded-md">
               {error}
             </div>
           )}
-          <div className="space-y-2">
+          <div className="space-y-2" suppressHydrationWarning>
             <Label htmlFor="email">Username or Email</Label>
             <Input
               id="email"
@@ -69,17 +69,19 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              suppressHydrationWarning
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2" suppressHydrationWarning>
             <Label htmlFor="password">Password</Label>
-            <div className="relative">
+            <div className="relative" suppressHydrationWarning>
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                suppressHydrationWarning
               />
               <Button
                 type="button"
