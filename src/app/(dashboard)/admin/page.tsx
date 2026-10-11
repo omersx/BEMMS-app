@@ -85,9 +85,9 @@ export default async function AdminDashboardPage() {
         description="System configuration, security governance, and operational health"
       >
         <Button variant="outline" asChild>
-          <Link href="/admin/users/invite">
+          <Link href="/admin/users/new">
             <UserPlus className="w-4 h-4 mr-2" />
-            Invite User
+            Add User
           </Link>
         </Button>
         <Button asChild>

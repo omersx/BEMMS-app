@@ -52,5 +52,29 @@ describe('inviteUserSchema', () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it('validates addUser with initial password and dutyStatus', () => {
+    const result = inviteUserSchema.safeParse({
+      fullName: 'Eng. Omar',
+      email: 'omar@hospital.org',
+      organizationId: '123e4567-e89b-12d3-a456-426614174000',
+      roleIds: ['123e4567-e89b-12d3-a456-426614174001'],
+      password: 'SecurePassword123!',
+      dutyStatus: 'on_duty',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects password shorter than 6 characters if provided', () => {
+    const result = inviteUserSchema.safeParse({
+      fullName: 'Eng. Omar',
+      email: 'omar@hospital.org',
+      organizationId: '123e4567-e89b-12d3-a456-426614174000',
+      roleIds: ['123e4567-e89b-12d3-a456-426614174001'],
+      password: '123',
+    });
+    expect(result.success).toBe(false);
+  });
 });
+
 

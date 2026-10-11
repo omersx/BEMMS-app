@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { users, userRoleAssignments, userAccessScopes, serviceTickets, engineerProfiles, roles } from '@/lib/db/schema';
 import { requireAuth, requireRole, requireScope } from '@/lib/auth/rbac';
 import { createAuditLog } from '@/lib/audit';
+import { hashPassword } from '@/lib/auth/password';
 import { inviteUserSchema, updateUserProfileSchema, assignRoleSchema, assignScopeSchema } from '@/lib/validators/users';
 import { eq, and, sql, not, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
@@ -75,6 +76,11 @@ export async function inviteUser(input: unknown) {
 
   try {
     return await db.transaction(async (tx) => {
+      const passwordHash = validated.data.password
+        ? await hashPassword(validated.data.password)
+        : null;
+      const accountStatus = passwordHash ? 'active' : 'invited';
+
       const [newUser] = await tx.insert(users).values({
         email: validated.data.email,
         fullName: validated.data.fullName,
@@ -82,7 +88,8 @@ export async function inviteUser(input: unknown) {
         jobTitle: validated.data.jobTitle,
         employeeIdentifier: validated.data.employeeIdentifier,
         phone: validated.data.phone,
-        accountStatus: 'invited',
+        passwordHash,
+        accountStatus,
       }).returning();
 
       for (const roleId of validated.data.roleIds) {
@@ -123,7 +130,7 @@ export async function inviteUser(input: unknown) {
           specialization: validated.data.specialization || 'General Biomedical Engineering',
           extension: validated.data.employeeIdentifier || null,
           mobileNumber: validated.data.phone || null,
-          dutyStatus: 'on_duty',
+          dutyStatus: validated.data.dutyStatus || 'on_duty',
           coveredDepartmentIds: validated.data.departmentId ? [validated.data.departmentId] : [],
         });
       }
@@ -144,6 +151,8 @@ export async function inviteUser(input: unknown) {
     return { success: false, error: error.message };
   }
 }
+
+export const addUser = inviteUser;
 
 export async function updateUserProfile(id: string, input: unknown) {
   const session = await requireAuth();

@@ -69,9 +69,9 @@ export default async function UsersPage() {
     <div className="space-y-6">
       <PageHeader title="Users" description="Manage system users and access">
         <Button asChild>
-          <Link href="/admin/users/invite">
+          <Link href="/admin/users/new">
             <Plus className="w-4 h-4 mr-2" />
-            Invite User
+            Add User
           </Link>
         </Button>
       </PageHeader>

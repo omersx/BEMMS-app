@@ -6,12 +6,16 @@ export const inviteUserSchema = z.object({
   jobTitle: z.string().optional(),
   employeeIdentifier: z.string().optional(),
   phone: z.string().optional(),
+  password: z.string().min(6).optional().nullable(),
   organizationId: z.string().uuid(),
   roleIds: z.array(z.string().uuid()),
   hospitalId: z.string().uuid().optional().nullable(),
   departmentId: z.string().uuid().optional().nullable(),
   specialization: z.string().optional().nullable(),
+  dutyStatus: z.enum(['on_duty', 'on_call', 'in_maintenance', 'off_duty']).optional().nullable(),
 });
+
+export const addUserSchema = inviteUserSchema;
 
 export const updateUserProfileSchema = z.object({
   fullName: z.string().min(2).max(100).optional(),
