@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const inviteUserSchema = z.object({
   fullName: z.string().min(2).max(100),
   email: z.string().email(),
+  username: z.string().min(2).max(50).optional().nullable(),
   jobTitle: z.string().optional(),
   employeeIdentifier: z.string().optional(),
   phone: z.string().optional(),

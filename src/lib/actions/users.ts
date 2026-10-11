@@ -76,17 +76,37 @@ export async function inviteUser(input: unknown) {
 
   try {
     return await db.transaction(async (tx) => {
+      // Check if email already exists
+      const normalizedEmail = validated.data.email.toLowerCase().trim();
+      const existingEmail = await tx.query.users.findFirst({
+        where: eq(users.email, normalizedEmail),
+      });
+      if (existingEmail) {
+        return { success: false, error: `A user with email "${validated.data.email}" already exists.` };
+      }
+
+      // Check if username already exists if provided
+      const finalUsername = (validated.data.username || validated.data.employeeIdentifier)?.trim() || null;
+      if (finalUsername) {
+        const existingUsername = await tx.query.users.findFirst({
+          where: eq(users.employeeIdentifier, finalUsername),
+        });
+        if (existingUsername) {
+          return { success: false, error: `Username "${finalUsername}" is already in use.` };
+        }
+      }
+
       const passwordHash = validated.data.password
         ? await hashPassword(validated.data.password)
         : null;
       const accountStatus = passwordHash ? 'active' : 'invited';
 
       const [newUser] = await tx.insert(users).values({
-        email: validated.data.email.toLowerCase().trim(),
+        email: normalizedEmail,
         fullName: validated.data.fullName.trim(),
         organizationId: validated.data.organizationId,
         jobTitle: validated.data.jobTitle?.trim() || null,
-        employeeIdentifier: validated.data.employeeIdentifier?.trim() || null,
+        employeeIdentifier: finalUsername,
         phone: validated.data.phone?.trim() || null,
         passwordHash,
         accountStatus,

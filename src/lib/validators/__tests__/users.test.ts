@@ -65,6 +65,18 @@ describe('inviteUserSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('validates addUser with explicit username', () => {
+    const result = inviteUserSchema.safeParse({
+      fullName: 'Eng. Omar',
+      email: 'omar@hospital.org',
+      username: 'eng.omar',
+      organizationId: '123e4567-e89b-12d3-a456-426614174000',
+      roleIds: ['123e4567-e89b-12d3-a456-426614174001'],
+      password: 'SecurePassword123!',
+    });
+    expect(result.success).toBe(true);
+  });
+
   it('rejects password shorter than 6 characters if provided', () => {
     const result = inviteUserSchema.safeParse({
       fullName: 'Eng. Omar',

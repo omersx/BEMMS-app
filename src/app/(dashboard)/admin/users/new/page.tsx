@@ -29,6 +29,8 @@ import {
   Radio,
   Eye,
   EyeOff,
+  Sparkles,
+  Lock,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -120,6 +122,17 @@ export default function AddUserPage() {
     ["STAFF", "DEPT_MGR"].includes(code)
   )
 
+  const generateRandomPassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$"
+    let pwd = "Bemms@"
+    for (let i = 0; i < 4; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    setValue("password", pwd)
+    setShowPassword(true)
+    toast.info(`Generated temporary password: ${pwd}`)
+  }
+
   const onSubmit = async (data: any) => {
     if (selectedRoleIds.length === 0) {
       toast.error("Please assign at least one role to the user.")
@@ -138,12 +151,15 @@ export default function AddUserPage() {
 
     setLoading(true)
     try {
+      const finalUsername = data.username?.trim() || data.employeeIdentifier?.trim() || undefined
+
       const res = await addUser({
         fullName: data.fullName,
         email: data.email,
+        username: finalUsername,
+        employeeIdentifier: finalUsername,
         phone: data.phone || undefined,
         jobTitle: data.jobTitle || undefined,
-        employeeIdentifier: data.employeeIdentifier || undefined,
         password: data.password?.trim() ? data.password.trim() : null,
         organizationId: selectedOrgId,
         roleIds: selectedRoleIds,
@@ -179,17 +195,17 @@ export default function AddUserPage() {
 
       <PageHeader
         title="Add User"
-        description="Create and provision biomedical engineers, clinical department staff, or system administrators"
+        description="Set up and activate biomedical engineers, clinical staff, or system administrators"
       />
 
       <Card className="border shadow-sm">
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* 1. Basic User Information & Password */}
+            {/* 1. Basic User Identity */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 border-b pb-2">
                 <UserPlus className="w-4 h-4 text-primary" />
-                User Identity &amp; Credentials
+                User Identity &amp; Profile
               </h3>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -216,66 +232,14 @@ export default function AddUserPage() {
                 </div>
               </div>
 
-              {/* Password option */}
-              <div className="space-y-1.5 p-3 rounded-lg border bg-muted/20">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs font-semibold flex items-center gap-1.5">
-                    <KeyRound className="w-3.5 h-3.5 text-primary" />
-                    Initial Password (Optional)
-                  </Label>
-                  <span className="text-[11px] text-muted-foreground">
-                    Min 6 characters
-                  </span>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter password to activate immediately, or leave empty to send invite"
-                    className="pr-10"
-                    {...register("password")}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    <span className="sr-only">Toggle password visibility</span>
-                  </Button>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  If set, the user is marked <strong>Active</strong> immediately and can log in at <code>/login</code> using either their <strong>Official Email</strong> or <strong>Username / Staff ID</strong>.
-                </p>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="employeeIdentifier" className="text-xs font-semibold">
-                    Username / Staff ID
-                  </Label>
-                  <Input
-                    id="employeeIdentifier"
-                    placeholder="e.g. eng.tariq or EMP-4011"
-                    {...register("employeeIdentifier")}
-                  />
-                  <span className="text-[10px] text-muted-foreground block truncate">
-                    Login username alongside email
-                  </span>
-                </div>
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="jobTitle" className="text-xs font-semibold">
                     Job Title / Clinical Title
                   </Label>
                   <Input
                     id="jobTitle"
-                    placeholder="e.g. Biomedical Engineer or ICU Nurse"
+                    placeholder="e.g. Biomedical Engineer, ICU Head Nurse"
                     {...register("jobTitle")}
                   />
                 </div>
@@ -292,7 +256,82 @@ export default function AddUserPage() {
               </div>
             </div>
 
-            {/* 2. Facility & Department Scope Assignment */}
+            {/* 2. Login Credentials: Username & Password */}
+            <div className="space-y-4 p-4 rounded-xl border border-primary/20 bg-primary/5">
+              <div className="flex items-center justify-between border-b border-primary/20 pb-2">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-primary" />
+                  Login Credentials (Username &amp; Password)
+                </h3>
+                <span className="text-[11px] text-muted-foreground font-medium">
+                  Direct Login Setup
+                </span>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Username */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="username" className="text-xs font-semibold">
+                    Login Username (Optional)
+                  </Label>
+                  <Input
+                    id="username"
+                    placeholder="e.g. eng.tariq, EMP-4011, nurse.sarah"
+                    className="bg-background"
+                    {...register("username")}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    The user can log in with this <strong>Username</strong> or their <strong>Official Email</strong>.
+                  </p>
+                </div>
+
+                {/* Password */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-xs font-semibold flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5 text-primary" />
+                      Initial Password
+                    </Label>
+                    <button
+                      type="button"
+                      onClick={generateRandomPassword}
+                      className="text-[11px] text-primary hover:underline flex items-center gap-1 cursor-pointer font-medium"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Generate
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter password (min 6 chars)"
+                      className="bg-background pr-10"
+                      {...register("password")}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <span className="sr-only">Toggle password visibility</span>
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Sets account to <strong>Active</strong> immediately for instant login at <code>/login</code>.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Facility & Department Scope Assignment */}
             <div className="space-y-4 pt-2">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 border-b pb-2">
                 <Building2 className="w-4 h-4 text-primary" />
@@ -378,7 +417,7 @@ export default function AddUserPage() {
               )}
             </div>
 
-            {/* 3. Role Assignment & System Privileges */}
+            {/* 4. Role Assignment & System Privileges */}
             <div className="space-y-3 pt-2">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 border-b pb-2">
                 <ShieldCheck className="w-4 h-4 text-primary" />
@@ -436,7 +475,7 @@ export default function AddUserPage() {
               )}
             </div>
 
-            {/* 4. Engineer-Specific Fields */}
+            {/* 5. Engineer-Specific Fields */}
             {isEngineerRole && (
               <div className="space-y-4 pt-2 border-t">
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
