@@ -28,7 +28,11 @@ export default function LoginPage() {
         redirect: false
       })
       if (res?.error) {
-        setError('Login failed: Database is unreachable or unseeded. Please ensure PostgreSQL is running and run "pnpm db:seed".')
+        if (res.error.includes('DATABASE_CONNECTION_ERROR')) {
+          setError('Database connection error. Please verify the database service is running.')
+        } else {
+          setError('Invalid username, email, or password. Please verify your credentials.')
+        }
       } else {
         router.push('/dashboard')
       }

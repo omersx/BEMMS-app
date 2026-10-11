@@ -4,7 +4,7 @@ import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import { db } from '@/lib/db';
 import { users, accounts, sessions, userRoleAssignments, roles } from '@/lib/db/schema';
 import { verifyPassword } from '@/lib/auth/password';
-import { eq, or } from 'drizzle-orm';
+import { eq, or, ilike } from 'drizzle-orm';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -31,9 +31,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         try {
           userResult = await db.query.users.findFirst({
             where: or(
-              eq(users.email, identifier),
-              eq(users.email, `${identifier}@bemms.local`),
-              eq(users.employeeIdentifier, identifier)
+              ilike(users.email, identifier),
+              ilike(users.email, `${identifier}@bemms.local`),
+              ilike(users.employeeIdentifier, identifier)
             ),
           });
         } catch (dbError: any) {

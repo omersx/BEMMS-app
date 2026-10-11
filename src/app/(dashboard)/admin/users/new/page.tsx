@@ -27,6 +27,8 @@ import {
   ArrowLeft,
   KeyRound,
   Radio,
+  Eye,
+  EyeOff,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -38,6 +40,7 @@ export default function AddUserPage() {
   const [roles, setRoles] = useState<any[]>([])
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const [selectedOrgId, setSelectedOrgId] = useState<string>("")
   const [selectedHospitalId, setSelectedHospitalId] = useState<string>("")
@@ -224,27 +227,47 @@ export default function AddUserPage() {
                     Min 6 characters
                   </span>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter password to activate immediately, or leave empty to send invite"
-                  {...register("password")}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter password to activate immediately, or leave empty to send invite"
+                    className="pr-10"
+                    {...register("password")}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">Toggle password visibility</span>
+                  </Button>
+                </div>
                 <p className="text-[11px] text-muted-foreground">
-                  If set, user account is marked <strong>Active</strong> right away and they can log in immediately.
+                  If set, the user is marked <strong>Active</strong> immediately and can log in at <code>/login</code> using either their <strong>Official Email</strong> or <strong>Username / Staff ID</strong>.
                 </p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="phone" className="text-xs font-semibold">
-                    Direct Phone / Mobile
+                  <Label htmlFor="employeeIdentifier" className="text-xs font-semibold">
+                    Username / Staff ID
                   </Label>
                   <Input
-                    id="phone"
-                    placeholder="+966 50 123 4567"
-                    {...register("phone")}
+                    id="employeeIdentifier"
+                    placeholder="e.g. eng.tariq or EMP-4011"
+                    {...register("employeeIdentifier")}
                   />
+                  <span className="text-[10px] text-muted-foreground block truncate">
+                    Login username alongside email
+                  </span>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="jobTitle" className="text-xs font-semibold">
@@ -257,13 +280,13 @@ export default function AddUserPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="employeeIdentifier" className="text-xs font-semibold">
-                    Staff ID / Extension
+                  <Label htmlFor="phone" className="text-xs font-semibold">
+                    Direct Phone / Mobile
                   </Label>
                   <Input
-                    id="employeeIdentifier"
-                    placeholder="e.g. EMP-4011 / Ext. 3120"
-                    {...register("employeeIdentifier")}
+                    id="phone"
+                    placeholder="+966 50 123 4567"
+                    {...register("phone")}
                   />
                 </div>
               </div>

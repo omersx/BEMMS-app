@@ -82,12 +82,12 @@ export async function inviteUser(input: unknown) {
       const accountStatus = passwordHash ? 'active' : 'invited';
 
       const [newUser] = await tx.insert(users).values({
-        email: validated.data.email,
-        fullName: validated.data.fullName,
+        email: validated.data.email.toLowerCase().trim(),
+        fullName: validated.data.fullName.trim(),
         organizationId: validated.data.organizationId,
-        jobTitle: validated.data.jobTitle,
-        employeeIdentifier: validated.data.employeeIdentifier,
-        phone: validated.data.phone,
+        jobTitle: validated.data.jobTitle?.trim() || null,
+        employeeIdentifier: validated.data.employeeIdentifier?.trim() || null,
+        phone: validated.data.phone?.trim() || null,
         passwordHash,
         accountStatus,
       }).returning();
