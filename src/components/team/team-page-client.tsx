@@ -11,6 +11,7 @@ import { EngineerCard } from './engineer-card';
 import { ScheduleCalendar } from './schedule-calendar';
 import { DepartmentCoverage } from './department-coverage';
 import { EditEngineerDialog } from './edit-engineer-dialog';
+import { EngineerDetailsDialog } from './engineer-details-dialog';
 import { EngineerTeamMember } from '@/lib/actions/engineers';
 import { useRouter } from 'next/navigation';
 
@@ -38,7 +39,9 @@ export function TeamPageClient({ initialMembers, stats, coverage }: TeamPageClie
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedEngineer, setSelectedEngineer] = useState<EngineerTeamMember | null>(null);
+  const [viewEngineer, setViewEngineer] = useState<EngineerTeamMember | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const filteredMembers = initialMembers.filter((m) => {
     const matchesSearch =
@@ -57,6 +60,11 @@ export function TeamPageClient({ initialMembers, stats, coverage }: TeamPageClie
   const handleEdit = (engineer: EngineerTeamMember) => {
     setSelectedEngineer(engineer);
     setIsEditDialogOpen(true);
+  };
+
+  const handleCardClick = (engineer: EngineerTeamMember) => {
+    setViewEngineer(engineer);
+    setIsDetailsOpen(true);
   };
 
   return (
@@ -148,9 +156,14 @@ export function TeamPageClient({ initialMembers, stats, coverage }: TeamPageClie
 
           {/* Engineers Cards Grid */}
           {filteredMembers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredMembers.map((member) => (
-                <EngineerCard key={member.id} engineer={member} onEdit={handleEdit} />
+                <EngineerCard
+                  key={member.id}
+                  engineer={member}
+                  onClick={handleCardClick}
+                  onEdit={handleEdit}
+                />
               ))}
             </div>
           ) : (
@@ -175,6 +188,15 @@ export function TeamPageClient({ initialMembers, stats, coverage }: TeamPageClie
           <DepartmentCoverage coverage={coverage} />
         </TabsContent>
       </Tabs>
+
+      {/* Full Engineer Details Dialog */}
+      <EngineerDetailsDialog
+        engineer={viewEngineer}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        onEdit={handleEdit}
+        onStatusUpdated={() => router.refresh()}
+      />
 
       {/* Edit Engineer Dialog */}
       <EditEngineerDialog
