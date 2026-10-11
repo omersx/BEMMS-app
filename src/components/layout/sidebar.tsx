@@ -45,6 +45,7 @@ const ENGINEER_LINKS: SidebarLink[] = [
   { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck },
   { href: '/devices', label: 'Devices', icon: Monitor },
   { href: '/departments', label: 'Departments', icon: Building2 },
+  { href: '/team', label: 'Engineering Team', icon: UsersRound },
   { href: '/maintenance', label: 'Maintenance', icon: Wrench },
   { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList },
   { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar },

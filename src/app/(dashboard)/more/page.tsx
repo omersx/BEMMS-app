@@ -109,6 +109,13 @@ export default async function MorePage() {
         ...(isBiomed || isAdmin
           ? [
               {
+                label: 'Engineering Team',
+                description: 'Biomedical engineering duty roster, shifts, and on-call schedules',
+                href: '/team',
+                icon: Users,
+                color: 'text-purple-500 bg-purple-50 dark:bg-purple-950',
+              },
+              {
                 label: 'Triage Queue',
                 description: 'Review, prioritize, and assign new incoming tickets',
                 href: '/tickets/triage',
