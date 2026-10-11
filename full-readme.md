@@ -567,6 +567,12 @@ The tickets module features a dual-layout interface:
 - **Data Table View**: Dense, column-sorted desktop table for bulk ticket processing.
 - **Filter Pills**: One-click quick filters (All, New/Unassigned, In Progress, Waiting Parts, Resolved, Closed) with live ticket counters.
 
+### Real-Time Incident Dispatch & Push Notifications
+- **VAPID Web Push Broadcast**: Submitting a ticket immediately alerts all in-scope biomedical engineers via native push notifications and real-time SSE stream.
+- **Waiting-for-Engineer Indicator**: Live wait duration counters and pulsing indicators alert team members to unaccepted service requests.
+- **1-Click Responsibility Acceptance**: Engineers can accept ticket responsibility with cryptographic electronic signatures directly from the dispatch banner.
+- **Clinical Reporter Notifications**: Automated progress confirmations notify clinical staff when their ticket is accepted and when status transitions occur.
+
 ---
 
 ## 8. Biomedical Engineer Triage & Work Orders
