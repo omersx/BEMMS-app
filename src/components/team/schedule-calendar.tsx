@@ -52,7 +52,7 @@ export function ScheduleCalendar({ engineers }: ScheduleCalendarProps) {
       </Card>
 
       {/* Day Selector Pills */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
         {DAYS_OF_WEEK.map((day) => {
           const isToday = day.key === todayKey;
           const isSelected = day.key === selectedDay;

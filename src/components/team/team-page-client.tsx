@@ -96,8 +96,8 @@ export function TeamPageClient({ initialMembers, stats, coverage }: TeamPageClie
         {/* Tab 1: Directory */}
         <TabsContent value="directory" className="space-y-4 m-0">
           {/* Filters Bar */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div className="relative w-full md:max-w-md">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search engineer by name, title, specialization, or extension..."
@@ -107,7 +107,7 @@ export function TeamPageClient({ initialMembers, stats, coverage }: TeamPageClie
               />
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 shrink-0">
               <Button
                 variant={statusFilter === 'all' ? 'secondary' : 'ghost'}
                 size="sm"
@@ -148,7 +148,7 @@ export function TeamPageClient({ initialMembers, stats, coverage }: TeamPageClie
 
           {/* Engineers Cards Grid */}
           {filteredMembers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {filteredMembers.map((member) => (
                 <EngineerCard key={member.id} engineer={member} onEdit={handleEdit} />
               ))}
