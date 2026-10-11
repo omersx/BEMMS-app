@@ -3,7 +3,7 @@
 import { db } from '@/lib/db';
 import { engineerProfiles, users, departments, devices, serviceTickets, maintenanceTasks, hospitals } from '@/lib/db/schema';
 import { requireAuth, requireRole } from '@/lib/auth/rbac';
-import { eq, and, sql, inArray } from 'drizzle-orm';
+import { eq, and, not, sql, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { EngineerDutyStatus } from '@/lib/db/schema/engineer-profiles';
 
@@ -47,12 +47,14 @@ export async function getEngineersTeam(): Promise<{
   await requireAuth();
 
   try {
-    const profiles = await db.query.engineerProfiles.findMany({
+    const rawProfiles = await db.query.engineerProfiles.findMany({
       with: {
         user: true,
         hospital: true,
       },
     });
+
+    const profiles = rawProfiles.filter((p) => Boolean(p.user));
 
     const allDepts = await db.query.departments.findMany();
     const deptMap = new Map(allDepts.map((d) => [d.id, { id: d.id, name: d.name, code: d.code }]));
@@ -69,7 +71,7 @@ export async function getEngineersTeam(): Promise<{
       .where(
         and(
           inArray(serviceTickets.assignedEngineerUserId, userIds),
-          inArray(serviceTickets.statusCode, ['assigned', 'in_progress', 'waiting_for_parts'] as any)
+          not(inArray(serviceTickets.statusCode, ['resolved', 'closed', 'cancelled']))
         )
       )
       .groupBy(serviceTickets.assignedEngineerUserId) : [];
@@ -86,7 +88,7 @@ export async function getEngineersTeam(): Promise<{
       .where(
         and(
           inArray(maintenanceTasks.assignedEngineerUserId, userIds),
-          inArray(maintenanceTasks.statusCode, ['assigned', 'in_progress', 'waiting_for_parts', 'awaiting_review'] as any)
+          not(inArray(maintenanceTasks.statusCode, ['closed', 'cancelled']))
         )
       )
       .groupBy(maintenanceTasks.assignedEngineerUserId) : [];
@@ -112,9 +114,9 @@ export async function getEngineersTeam(): Promise<{
       return {
         id: p.id,
         userId: p.userId,
-        fullName: p.user.fullName,
-        email: p.user.email,
-        avatarUrl: p.user.avatarUrl,
+        fullName: p.user?.fullName || 'Biomedical Engineer',
+        email: p.user?.email || '',
+        avatarUrl: p.user?.avatarUrl || null,
         jobTitle: p.jobTitle,
         specialization: p.specialization,
         extension: p.extension,
@@ -265,10 +267,10 @@ export async function getDepartmentCoverageMatrix(): Promise<{
         primaryEngineer: eng
           ? {
               id: eng.id,
-              fullName: eng.user.fullName,
+              fullName: eng.user?.fullName || 'Biomedical Engineer',
               jobTitle: eng.jobTitle,
               extension: eng.extension,
-              mobileNumber: eng.mobileNumber || eng.user.phone,
+              mobileNumber: eng.mobileNumber || eng.user?.phone || null,
               dutyStatus: eng.dutyStatus as EngineerDutyStatus,
             }
           : null,

@@ -3,6 +3,8 @@ import { getEngineersTeam, getDepartmentCoverageMatrix } from '@/lib/actions/eng
 import { TeamPageClient } from '@/components/team/team-page-client';
 import { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Engineering Team & Duty Schedule | BEMMS',
   description: 'Hospital biomedical engineering roster, on-call schedules, and department coverage.',
