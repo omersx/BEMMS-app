@@ -4,7 +4,7 @@ import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import { db } from '@/lib/db';
 import { users, accounts, sessions, userRoleAssignments, roles } from '@/lib/db/schema';
 import { verifyPassword } from '@/lib/auth/password';
-import { eq, or, ilike } from 'drizzle-orm';
+import { eq, and, or, ilike } from 'drizzle-orm';
 import { getLogger } from '@/lib/logger';
 import { createAuditLog } from '@/lib/audit';
 
