@@ -183,20 +183,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.fullName = (user as any).fullName;
         token.organizationId = (user as any).organizationId;
         token.avatarUrl = (user as any).avatarUrl;
+      }
 
+      // Dynamically load active roles from database so role updates apply immediately
+      const userId = (token.id as string) || (token.sub as string) || (user?.id as string);
+      if (userId) {
         try {
           const assignments = await db
             .select({ code: roles.code })
             .from(userRoleAssignments)
             .innerJoin(roles, eq(userRoleAssignments.roleId, roles.id))
-            .where(eq(userRoleAssignments.userId, user.id as string));
+            .where(and(
+              eq(userRoleAssignments.userId, userId),
+              eq(userRoleAssignments.status, 'active')
+            ));
 
           token.roles = assignments.map((a: any) => a.code);
         } catch (e) {
-          log.error('Failed to load user roles', e);
-          token.roles = [];
+          log.error('Failed to load user roles in jwt callback', e);
+          if (!token.roles) token.roles = [];
         }
       }
+
       return token;
     },
     async session({ session, token }) {

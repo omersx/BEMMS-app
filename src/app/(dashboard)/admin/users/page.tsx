@@ -33,9 +33,15 @@ export default async function UsersPage() {
       header: "Roles", 
       render: (item: any) => (
         <div className="flex gap-1 flex-wrap">
-          {item.roles?.map((role: any) => (
-            <Badge key={role.id} variant="secondary" className="text-xs">{role.name}</Badge>
-          )) || <span className="text-muted-foreground text-sm">No roles</span>}
+          {item.roles && item.roles.length > 0 ? (
+            item.roles.map((role: any) => (
+              <Badge key={role.id || role.code} variant="secondary" className="text-xs">
+                {role.name || role.code}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-muted-foreground text-sm">No roles</span>
+          )}
         </div>
       )
     },

@@ -13,7 +13,35 @@ export async function getUsers(filters?: { organizationId?: string }) {
   await requireAuth();
   try {
     const whereClause = filters?.organizationId ? eq(users.organizationId, filters.organizationId) : undefined;
-    const data = await db.query.users.findMany({ where: whereClause });
+    const usersList = await db.query.users.findMany({
+      where: whereClause,
+      orderBy: [users.createdAt],
+    });
+
+    // Query active role assignments for all users
+    const assignments = await db
+      .select({
+        userId: userRoleAssignments.userId,
+        roleId: roles.id,
+        roleCode: roles.code,
+        roleName: roles.name,
+      })
+      .from(userRoleAssignments)
+      .innerJoin(roles, eq(userRoleAssignments.roleId, roles.id))
+      .where(eq(userRoleAssignments.status, 'active'));
+
+    const rolesByUserId = new Map<string, { id: string; code: string; name: string }[]>();
+    for (const a of assignments) {
+      const existing = rolesByUserId.get(a.userId) || [];
+      existing.push({ id: a.roleId, code: a.roleCode, name: a.roleName });
+      rolesByUserId.set(a.userId, existing);
+    }
+
+    const data = usersList.map((u) => ({
+      ...u,
+      roles: rolesByUserId.get(u.id) || [],
+    }));
+
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -207,14 +235,70 @@ export async function assignUserRole(input: unknown) {
   if (!validated.success) return { success: false, error: validated.error.message };
 
   try {
-    return await db.transaction(async (tx) => {
-      const [assigned] = await tx.insert(userRoleAssignments).values({
-        userId: validated.data.userId,
-        roleId: validated.data.roleId,
-        assignedByUserId: session.id,
-        effectiveFrom: validated.data.effectiveFrom,
-        effectiveTo: validated.data.effectiveTo,
-      }).returning();
+    const result = await db.transaction(async (tx) => {
+      // Check if assignment already exists
+      const existing = await tx.query.userRoleAssignments.findFirst({
+        where: and(
+          eq(userRoleAssignments.userId, validated.data.userId),
+          eq(userRoleAssignments.roleId, validated.data.roleId),
+        ),
+      });
+
+      let assigned;
+      if (existing) {
+        if (existing.status !== 'active') {
+          const [updated] = await tx
+            .update(userRoleAssignments)
+            .set({
+              status: 'active',
+              effectiveFrom: validated.data.effectiveFrom || new Date(),
+              effectiveTo: validated.data.effectiveTo,
+            })
+            .where(eq(userRoleAssignments.id, existing.id))
+            .returning();
+          assigned = updated;
+        } else {
+          assigned = existing;
+        }
+      } else {
+        const [inserted] = await tx.insert(userRoleAssignments).values({
+          userId: validated.data.userId,
+          roleId: validated.data.roleId,
+          assignedByUserId: session.id,
+          effectiveFrom: validated.data.effectiveFrom,
+          effectiveTo: validated.data.effectiveTo,
+          status: 'active',
+        }).returning();
+        assigned = inserted;
+      }
+
+      // If this role is an engineering role, ensure an engineer profile exists
+      const roleRecord = await tx.query.roles.findFirst({
+        where: eq(roles.id, validated.data.roleId),
+      });
+
+      if (roleRecord && ['BIOMED_ENG', 'BIOMED_TECH', 'BIOMED_MGR'].includes(roleRecord.code)) {
+        const existingProfile = await tx.query.engineerProfiles.findFirst({
+          where: eq(engineerProfiles.userId, validated.data.userId),
+        });
+
+        if (!existingProfile) {
+          const userRecord = await tx.query.users.findFirst({
+            where: eq(users.id, validated.data.userId),
+          });
+
+          await tx.insert(engineerProfiles).values({
+            userId: validated.data.userId,
+            organizationId: userRecord?.organizationId || null,
+            jobTitle: userRecord?.jobTitle || roleRecord.name || 'Biomedical Engineer',
+            specialization: 'General Biomedical Engineering',
+            extension: userRecord?.employeeIdentifier || null,
+            mobileNumber: userRecord?.phone || null,
+            dutyStatus: 'on_duty',
+            coveredDepartmentIds: [],
+          });
+        }
+      }
       
       await createAuditLog(tx, {
         action: 'ASSIGN_ROLE',
@@ -226,6 +310,13 @@ export async function assignUserRole(input: unknown) {
 
       return { success: true, data: assigned };
     });
+
+    revalidatePath('/admin/users');
+    revalidatePath(`/admin/users/${validated.data.userId}`);
+    revalidatePath('/team');
+    revalidatePath('/engineering-team');
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -236,7 +327,7 @@ export async function revokeUserRole(assignmentId: string) {
   await requireRole('SYS_ADMIN', 'ORG_ADMIN');
 
   try {
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const assignment = await tx.query.userRoleAssignments.findFirst({ where: eq(userRoleAssignments.id, assignmentId) });
       if (!assignment) throw new Error("Assignment not found");
 
@@ -250,8 +341,17 @@ export async function revokeUserRole(assignmentId: string) {
         details: { assignmentId },
       });
 
-      return { success: true };
+      return { success: true, userId: assignment.userId };
     });
+
+    if (result.userId) {
+      revalidatePath('/admin/users');
+      revalidatePath(`/admin/users/${result.userId}`);
+      revalidatePath('/team');
+      revalidatePath('/engineering-team');
+    }
+
+    return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
