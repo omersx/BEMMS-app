@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { users, userRoleAssignments, userAccessScopes, serviceTickets } from '@/lib/db/schema';
+import { users, userRoleAssignments, userAccessScopes, serviceTickets, engineerProfiles } from '@/lib/db/schema';
 import { requireAuth, requireRole, requireScope } from '@/lib/auth/rbac';
 import { createAuditLog } from '@/lib/audit';
 import { inviteUserSchema, updateUserProfileSchema, assignRoleSchema, assignScopeSchema } from '@/lib/validators/users';
@@ -322,6 +322,19 @@ export interface DepartmentStaffProfile {
   hospitalId: string | null;
   roles: string[];
   activeTicketsCount: number;
+  engineerProfile?: {
+    id: string;
+    jobTitle: string;
+    specialization: string | null;
+    extension: string | null;
+    mobileNumber: string | null;
+    dutyStatus: string;
+    shiftHours: string | null;
+    workingDays: string[];
+    onCallDays: string[];
+    coveredDepartmentIds: string[];
+    notes: string | null;
+  } | null;
 }
 
 export async function getCurrentUserProfile(): Promise<{
@@ -351,6 +364,10 @@ export async function getCurrentUserProfile(): Promise<{
 
     const primaryScope = scopes.find((s) => s.departmentId) || scopes[0] || null;
 
+    const engineerProfile = await db.query.engineerProfiles.findFirst({
+      where: eq(engineerProfiles.userId, session.id),
+    });
+
     const [ticketCount] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(serviceTickets)
@@ -377,6 +394,21 @@ export async function getCurrentUserProfile(): Promise<{
         hospitalId: primaryScope?.hospitalId || null,
         roles: roleAssignments.map((ra) => ra.role.code),
         activeTicketsCount: ticketCount?.count || 0,
+        engineerProfile: engineerProfile
+          ? {
+              id: engineerProfile.id,
+              jobTitle: engineerProfile.jobTitle,
+              specialization: engineerProfile.specialization,
+              extension: engineerProfile.extension,
+              mobileNumber: engineerProfile.mobileNumber,
+              dutyStatus: engineerProfile.dutyStatus,
+              shiftHours: engineerProfile.shiftHours,
+              workingDays: (engineerProfile.workingDays as string[]) || [],
+              onCallDays: (engineerProfile.onCallDays as string[]) || [],
+              coveredDepartmentIds: (engineerProfile.coveredDepartmentIds as string[]) || [],
+              notes: engineerProfile.notes,
+            }
+          : null,
       },
     };
   } catch (error: any) {

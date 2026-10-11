@@ -23,8 +23,19 @@ import {
   Loader2,
   Stethoscope,
   ShieldCheck,
+  Wrench,
+  Clock,
+  Calendar,
+  PhoneCall,
+  CalendarDays,
+  Radio,
+  Moon,
+  Edit,
 } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { updateEngineerDutyStatus } from '@/lib/actions/engineers';
+import { EditEngineerDialog } from '@/components/team/edit-engineer-dialog';
 
 interface UserProfileViewProps {
   profile: DepartmentStaffProfile;
@@ -51,6 +62,42 @@ export function UserProfileView({ profile }: UserProfileViewProps) {
   const [jobTitle, setJobTitle] = useState(profile.jobTitle || '');
   const [phone, setPhone] = useState(profile.phone || '');
   const [employeeIdentifier, setEmployeeIdentifier] = useState(profile.employeeIdentifier || '');
+
+  // Engineer state
+  const isEngineer = profile.roles.some((r) =>
+    ['BIOMED_ENG', 'BIOMED_TECH', 'BIOMED_MGR', 'SYS_ADMIN'].includes(r)
+  ) || Boolean(profile.engineerProfile);
+
+  const [dutyStatus, setDutyStatus] = useState<string>(
+    profile.engineerProfile?.dutyStatus || 'on_duty'
+  );
+  const [updatingDuty, setUpdatingDuty] = useState(false);
+  const [editScheduleOpen, setEditScheduleOpen] = useState(false);
+
+  const handleDutyStatusChange = async (newStatus: any) => {
+    if (!profile.engineerProfile?.id) return;
+    setUpdatingDuty(true);
+    try {
+      const res = await updateEngineerDutyStatus(profile.engineerProfile.id, newStatus);
+      if (res.success) {
+        setDutyStatus(newStatus);
+        const labels: Record<string, string> = {
+          on_duty: 'On Duty',
+          on_call: 'On Call',
+          in_maintenance: 'In Maintenance',
+          off_duty: 'Off Duty',
+        };
+        toast.success(`Duty status updated to ${labels[newStatus] || newStatus}`);
+        router.refresh();
+      } else {
+        toast.error(res.error || 'Failed to update duty status');
+      }
+    } catch {
+      toast.error('An error occurred');
+    } finally {
+      setUpdatingDuty(false);
+    }
+  };
 
   const initials = profile.fullName
     .split(' ')
@@ -286,6 +333,184 @@ export function UserProfileView({ profile }: UserProfileViewProps) {
           </CardContent>
         </Card>
       ) : null}
+
+      {/* ── 2.5 Biomedical Engineer Duty Status & Schedule Card ─────────── */}
+      {isEngineer && profile.engineerProfile && (
+        <Card className="border shadow-sm border-blue-200 dark:border-blue-900 bg-blue-50/20 dark:bg-blue-950/10">
+          <CardHeader className="pb-3 border-b border-blue-100 dark:border-blue-900/40">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                  <Wrench className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  Biomedical Engineer Duty Status &amp; Schedule
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Your live duty availability, on-call days, and hospital working hours.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs bg-background"
+                onClick={() => setEditScheduleOpen(true)}
+              >
+                <Edit className="w-3.5 h-3.5" />
+                Edit My Schedule
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-4">
+            {/* Quick 1-Click Duty Status Switcher */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Current Duty Availability
+              </Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { id: 'on_duty', label: 'On Duty', desc: 'In Hospital', color: 'border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' },
+                  { id: 'on_call', label: 'On Call', desc: 'Emergency 24/7', color: 'border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300' },
+                  { id: 'in_maintenance', label: 'In Maintenance', desc: 'Active Workshop', color: 'border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300' },
+                  { id: 'off_duty', label: 'Off Duty', desc: 'Resting / Off', color: 'border-slate-400 bg-muted text-muted-foreground' },
+                ].map((item) => {
+                  const isActive = dutyStatus === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      disabled={updatingDuty}
+                      onClick={() => handleDutyStatusChange(item.id)}
+                      className={cn(
+                        'p-2.5 rounded-xl border text-left transition-all relative cursor-pointer',
+                        isActive
+                          ? `${item.color} ring-2 ring-primary/30 font-semibold shadow-xs`
+                          : 'border-border/70 hover:bg-muted/40 text-muted-foreground'
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold">{item.label}</span>
+                        {isActive && (
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] block opacity-80 mt-0.5">{item.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Schedule Details Grid */}
+            <div className="grid sm:grid-cols-3 gap-3 text-xs pt-2">
+              <div className="p-3 rounded-xl border bg-card space-y-1">
+                <span className="text-[10px] text-muted-foreground font-semibold uppercase flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-primary" /> Shift Hours
+                </span>
+                <p className="font-semibold text-foreground">
+                  {profile.engineerProfile.shiftHours || '08:00 AM - 04:00 PM'}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl border bg-card space-y-1">
+                <span className="text-[10px] text-muted-foreground font-semibold uppercase flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-primary" /> Working Days
+                </span>
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {(profile.engineerProfile.workingDays || ['Sun', 'Mon', 'Tue', 'Wed', 'Thu']).map((day) => (
+                    <Badge key={day} variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">
+                      {day}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl border bg-card space-y-1">
+                <span className="text-[10px] text-muted-foreground font-semibold uppercase flex items-center gap-1">
+                  <PhoneCall className="w-3 h-3 text-amber-500" /> On-Call Days
+                </span>
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {(profile.engineerProfile.onCallDays && profile.engineerProfile.onCallDays.length > 0) ? (
+                    profile.engineerProfile.onCallDays.map((day) => (
+                      <Badge key={day} className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800 text-[10px] px-1.5 py-0 font-medium">
+                        {day}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-muted-foreground italic text-[11px]">None assigned</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Contact & Specialization */}
+            <div className="grid sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded-xl border bg-card space-y-1">
+                <span className="text-[10px] text-muted-foreground font-semibold uppercase">
+                  Technical Specialization
+                </span>
+                <p className="font-medium text-foreground">
+                  {profile.engineerProfile.specialization || 'General Biomedical Engineering'}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl border bg-card space-y-1">
+                <span className="text-[10px] text-muted-foreground font-semibold uppercase">
+                  Direct Mobile / Extension
+                </span>
+                <p className="font-medium text-foreground">
+                  {profile.engineerProfile.mobileNumber || profile.phone || 'No mobile'} · Ext: {profile.engineerProfile.extension || profile.employeeIdentifier || '—'}
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Link to Team Duty Calendar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t border-border/60 text-xs">
+              <span className="text-muted-foreground">
+                View whole hospital biomedical engineering team duty roster:
+              </span>
+              <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
+                <Link href="/team">
+                  <CalendarDays className="w-3.5 h-3.5 text-primary" />
+                  Hospital Duty Roster &amp; Calendar →
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Edit Engineer Dialog for Schedule */}
+      {isEngineer && profile.engineerProfile && (
+        <EditEngineerDialog
+          engineer={{
+            id: profile.engineerProfile.id,
+            userId: profile.id,
+            fullName: profile.fullName,
+            email: profile.email,
+            avatarUrl: profile.avatarUrl,
+            jobTitle: profile.engineerProfile.jobTitle,
+            specialization: profile.engineerProfile.specialization,
+            extension: profile.engineerProfile.extension,
+            mobileNumber: profile.engineerProfile.mobileNumber,
+            dutyStatus: profile.engineerProfile.dutyStatus as any,
+            shiftHours: profile.engineerProfile.shiftHours,
+            workingDays: profile.engineerProfile.workingDays,
+            onCallDays: profile.engineerProfile.onCallDays,
+            coveredDepartmentIds: profile.engineerProfile.coveredDepartmentIds,
+            coveredDepartments: [],
+            emergencyPriority: 'first_responder',
+            notes: profile.engineerProfile.notes,
+            hospitalName: profile.hospitalName,
+            activeTicketsCount: profile.activeTicketsCount,
+            activeMaintenanceCount: 0,
+            assignedDevicesCount: 0,
+          }}
+          open={editScheduleOpen}
+          onOpenChange={setEditScheduleOpen}
+          onSuccess={() => router.refresh()}
+        />
+      )}
 
       {/* ── 3. Department & Hospital Assignment Card ──────────────────── */}
       <Card className="border shadow-sm">
