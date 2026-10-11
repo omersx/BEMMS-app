@@ -843,3 +843,4 @@ The PM scheduling and alert feature is ready for hospital testing only when:
 Make the PM Schedule page the operational planning center for biomedical teams, not merely a place to type dates.
 
 > **Plans define what should happen. Alerts bring work to the right engineer. Signed maintenance proves what happened. The device profile always reflects the latest qualifying result and the next required action.**
+

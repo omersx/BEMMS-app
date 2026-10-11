@@ -162,3 +162,4 @@ export const serviceTicketAttachmentsRelations = relations(serviceTicketAttachme
   serviceTicket: one(serviceTickets, { fields: [serviceTicketAttachments.serviceTicketId], references: [serviceTickets.id] }),
   uploadedByUser: one(users, { fields: [serviceTicketAttachments.uploadedByUserId], references: [users.id], relationName: 'ticketAttachmentsUploader' }),
 }));
+

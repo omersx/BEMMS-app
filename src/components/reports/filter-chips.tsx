@@ -44,3 +44,4 @@ export function ReportFilterChips({ filters, onClear }: ReportFilterChipsProps) 
     </div>
   );
 }
+

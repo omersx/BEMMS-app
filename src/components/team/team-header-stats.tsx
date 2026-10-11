@@ -85,3 +85,4 @@ export function TeamHeaderStats({ stats }: TeamHeaderStatsProps) {
     </div>
   );
 }
+

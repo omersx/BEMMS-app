@@ -30,3 +30,4 @@ describe('hasRole', () => {
     expect(hasRole([], 'SYS_ADMIN')).toBe(false);
   });
 });
+

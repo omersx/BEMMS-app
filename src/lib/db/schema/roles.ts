@@ -56,3 +56,4 @@ export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => 
     references: [permissions.id],
   }),
 }));
+

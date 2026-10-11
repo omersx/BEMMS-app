@@ -96,3 +96,4 @@ export async function archiveOrganization(id: string) {
     return { success: false, error: error.message };
   }
 }
+

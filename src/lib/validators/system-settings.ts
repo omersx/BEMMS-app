@@ -44,3 +44,4 @@ export type SystemSettings = z.infer<typeof systemSettingsSchema>;
 export type LocalizationSettings = z.infer<typeof localizationSettingsSchema>;
 export type SecuritySettings = z.infer<typeof securitySettingsSchema>;
 export type RetentionSettings = z.infer<typeof retentionSettingsSchema>;
+

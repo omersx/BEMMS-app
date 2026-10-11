@@ -12,3 +12,4 @@ export const createLocationSchema = z.object({
 });
 
 export const updateLocationSchema = createLocationSchema.partial().omit({ organizationId: true, hospitalId: true, departmentId: true });
+

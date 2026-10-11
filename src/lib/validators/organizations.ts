@@ -8,3 +8,4 @@ export const createOrganizationSchema = z.object({
 });
 
 export const updateOrganizationSchema = createOrganizationSchema.partial();
+

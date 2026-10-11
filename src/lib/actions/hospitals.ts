@@ -145,3 +145,4 @@ export async function archiveHospital(id: string) {
     return { success: false, error: error.message };
   }
 }
+

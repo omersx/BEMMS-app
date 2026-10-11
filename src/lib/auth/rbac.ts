@@ -100,3 +100,4 @@ export async function requirePermission(module: string, action: string): Promise
 
   return user;
 }
+

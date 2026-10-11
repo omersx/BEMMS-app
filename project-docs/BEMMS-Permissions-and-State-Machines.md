@@ -573,3 +573,4 @@ Authorized person identifies a device
 ~~~
 
 This prevents the key weaknesses of a simple CRUD application: unrestricted status changes, accidental device release, untraceable edits, and administrators unintentionally receiving technical authority.
+

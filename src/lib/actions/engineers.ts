@@ -280,3 +280,4 @@ export async function getDepartmentCoverageMatrix(): Promise<{
     return { success: false, error: error.message };
   }
 }
+

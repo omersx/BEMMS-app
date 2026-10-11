@@ -42,3 +42,4 @@ export function formatReportMetadata(params: {
   
   return lines.map(line => `# ${line}`).join('\n') + '\n\n';
 }
+

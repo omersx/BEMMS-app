@@ -112,3 +112,4 @@ export async function archiveLocation(id: string) {
     return { success: false, error: error.message };
   }
 }
+

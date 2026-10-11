@@ -187,3 +187,4 @@ export function getDepartmentVisuals(
     badgeClass: 'bg-secondary text-secondary-foreground',
   };
 }
+

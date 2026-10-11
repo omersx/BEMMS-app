@@ -29,3 +29,4 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type PasswordResetInput = z.infer<typeof passwordResetSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+

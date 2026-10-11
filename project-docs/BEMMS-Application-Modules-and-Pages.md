@@ -758,3 +758,4 @@ Parts, calibration, integrations, advanced reports, external notification channe
 The application should be easy for a clinician standing beside a device and powerful for a biomedical team responsible for thousands of devices:
 
 > **Find the device quickly. Report work simply. Manage it professionally. Keep the complete history.**
+

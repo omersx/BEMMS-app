@@ -39,3 +39,4 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
     references: [hospitals.id],
   }),
 }));
+

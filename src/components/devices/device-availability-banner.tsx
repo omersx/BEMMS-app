@@ -56,3 +56,4 @@ export function DeviceAvailabilityBanner({ status, limitationsNote }: { status: 
     </div>
   )
 }
+

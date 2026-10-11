@@ -379,3 +379,4 @@ export default function NewDevicePage() {
     </div>
   )
 }
+

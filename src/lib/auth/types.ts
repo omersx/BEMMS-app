@@ -54,3 +54,4 @@ export interface SessionUser {
   roles: string[];
   avatarUrl: string | null;
 }
+

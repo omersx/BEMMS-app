@@ -189,3 +189,4 @@ export async function getDeviceHistoryReport(filters: z.infer<typeof deviceHisto
 
   return { tickets, tasks };
 }
+

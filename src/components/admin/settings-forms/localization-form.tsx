@@ -200,3 +200,4 @@ export function LocalizationForm({ initialData, organizationId }: LocalizationFo
     </form>
   );
 }
+

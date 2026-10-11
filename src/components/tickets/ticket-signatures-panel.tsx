@@ -35,3 +35,4 @@ export function TicketSignaturesPanel({ signatures = [] }: TicketSignaturesPanel
     </Card>
   )
 }
+

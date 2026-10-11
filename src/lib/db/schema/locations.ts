@@ -43,3 +43,4 @@ export const locationsRelations = relations(locations, ({ one, many }) => ({
     relationName: 'parentChildLocations',
   }),
 }));
+

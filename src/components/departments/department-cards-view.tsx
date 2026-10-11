@@ -241,3 +241,4 @@ export function DepartmentCardsView({ departments, hospitals }: DepartmentCardsV
     </div>
   );
 }
+

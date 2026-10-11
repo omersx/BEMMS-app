@@ -114,3 +114,4 @@ export async function archiveDeviceCategory(id: string) {
     return { success: false, error: error.message };
   }
 }
+

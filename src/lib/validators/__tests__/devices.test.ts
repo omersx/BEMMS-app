@@ -95,3 +95,4 @@ describe('createDeviceSchema', () => {
     expect(result.success).toBe(false);
   });
 });
+

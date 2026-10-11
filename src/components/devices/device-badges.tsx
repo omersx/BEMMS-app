@@ -53,3 +53,4 @@ export function RiskClassBadge({ classification }: { classification?: string | n
     </Badge>
   )
 }
+

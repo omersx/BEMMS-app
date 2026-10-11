@@ -91,3 +91,4 @@ export const deviceFilterSchema = z.object({
   page: z.number().int().positive().optional(),
   pageSize: z.number().int().positive().max(100).optional(),
 });
+

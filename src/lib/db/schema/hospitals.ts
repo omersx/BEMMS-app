@@ -31,3 +31,4 @@ export const hospitalsRelations = relations(hospitals, ({ one, many }) => ({
   }),
   departments: many(departments),
 }));
+

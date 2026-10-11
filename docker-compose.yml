@@ -42,3 +42,4 @@ services:
 
 volumes:
   bemms_postgres_data:
+

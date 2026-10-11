@@ -27,3 +27,4 @@ describe('computeSHA256', () => {
     expect(hash1).toBe(hash2);
   });
 });
+

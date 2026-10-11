@@ -184,3 +184,4 @@ export function DeviceQrCard({ device, qrLabel }: DeviceQrCardProps) {
     </div>
   )
 }
+

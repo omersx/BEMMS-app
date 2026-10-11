@@ -57,3 +57,4 @@ export const deviceModelsRelations = relations(deviceModels, ({ one }) => ({
     references: [manufacturers.id],
   }),
 }));
+

@@ -26,3 +26,4 @@ echo "[BEMMS Backup] Cleaning up backups older than 30 days..."
 find "${BACKUP_DIR}" -name "bemms_backup_*.sql.gz" -type f -mtime +30 -delete
 
 echo "[BEMMS Backup] Done."
+

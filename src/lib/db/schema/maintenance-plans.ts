@@ -96,3 +96,4 @@ export const maintenanceScheduleOccurrencesRelations = relations(maintenanceSche
   device: one(devices, { fields: [maintenanceScheduleOccurrences.deviceId], references: [devices.id] }),
   deferredByUser: one(users, { fields: [maintenanceScheduleOccurrences.deferredByUserId], references: [users.id], relationName: 'occurrencesDeferredByUser' }),
 }));
+

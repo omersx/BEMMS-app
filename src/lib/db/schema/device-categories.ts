@@ -35,3 +35,4 @@ export const deviceCategoriesRelations = relations(deviceCategories, ({ one }) =
     relationName: 'categoriesCreatedByUser',
   }),
 }));
+

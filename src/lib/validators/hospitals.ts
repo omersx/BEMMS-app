@@ -14,3 +14,4 @@ export const createHospitalSchema = z.object({
 });
 
 export const updateHospitalSchema = createHospitalSchema.partial().omit({ organizationId: true });
+

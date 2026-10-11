@@ -138,3 +138,4 @@ export function DepartmentCoverage({ coverage }: DepartmentCoverageProps) {
     </div>
   );
 }
+

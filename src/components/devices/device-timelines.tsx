@@ -121,3 +121,4 @@ export function DeviceLocationTimeline({ entries }: { entries: LocationEntry[] }
     </div>
   )
 }
+

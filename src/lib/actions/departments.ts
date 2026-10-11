@@ -366,3 +366,4 @@ export async function seedDefaultDepartmentsForHospital(hospitalId: string) {
 }
 
 
+

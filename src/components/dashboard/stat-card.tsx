@@ -35,3 +35,4 @@ export function StatCard({ title, value, icon, href, trend, className }: StatCar
     </Link>
   );
 }
+

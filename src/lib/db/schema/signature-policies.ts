@@ -57,3 +57,4 @@ export const signaturePoliciesRelations = relations(signaturePolicies, ({ one })
     references: [deviceCategories.id],
   }),
 }));
+

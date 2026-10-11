@@ -178,3 +178,4 @@ export function getDepartmentImportTemplateCSV(): string {
 
   return `${BOM}${headers}\n${samples}\n`;
 }
+

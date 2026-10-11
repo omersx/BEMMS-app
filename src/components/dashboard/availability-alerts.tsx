@@ -62,3 +62,4 @@ export function AvailabilityAlerts({ devices }: AvailabilityAlertsProps) {
     </Card>
   );
 }
+

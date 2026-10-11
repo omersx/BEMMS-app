@@ -724,3 +724,4 @@ The department-device management feature is ready for hospital testing only when
 Use the Department Devices tab for focused local management and the global Devices module for full inventory control. Keep one underlying device record and one Device Profile for every physical device.
 
 > **Departments answer “what devices are here?” The Devices module answers “where is this device and what is its complete history?” BEMMS must answer both without duplicating data.**
+

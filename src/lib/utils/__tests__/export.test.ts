@@ -52,3 +52,4 @@ describe('formatReportMetadata', () => {
     expect(header).toContain('dept-123');
   });
 });
+

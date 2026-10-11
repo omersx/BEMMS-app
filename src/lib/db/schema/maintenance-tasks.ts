@@ -193,3 +193,4 @@ export const maintenanceChecklistResultsRelations = relations(maintenanceCheckli
     relationName: 'checklistResultsPerformedByUser',
   }),
 }));
+

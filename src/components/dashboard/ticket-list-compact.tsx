@@ -83,3 +83,4 @@ export function TicketListCompact({ tickets, title, emptyMessage }: TicketListCo
     </Card>
   );
 }
+

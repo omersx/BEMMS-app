@@ -37,3 +37,4 @@ export function ReportSummaryCards({ items, className }: ReportSummaryCardsProps
     </div>
   );
 }
+

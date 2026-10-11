@@ -60,3 +60,4 @@ export const engineerDutyShiftsRelations = relations(engineerDutyShifts, ({ one 
     references: [engineerProfiles.id],
   }),
 }));
+

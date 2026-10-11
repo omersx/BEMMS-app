@@ -132,3 +132,4 @@ export function QuickAddCategoryDialog({
     </Dialog>
   );
 }
+

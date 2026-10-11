@@ -118,3 +118,4 @@ export function SignatureHistory({ events, className }: SignatureHistoryProps) {
     </div>
   )
 }
+

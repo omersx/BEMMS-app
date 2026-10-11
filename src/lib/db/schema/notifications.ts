@@ -45,3 +45,4 @@ export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one })
     references: [users.id],
   }),
 }));
+

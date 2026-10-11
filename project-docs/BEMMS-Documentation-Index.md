@@ -172,3 +172,4 @@ When creating or changing a feature:
 5. Update this index if a new major specification is added.
 
 > **BEMMS is designed as one connected system: device identity leads to ticket/work, work leads to signed history, and configuration/access rules govern every step.**
+

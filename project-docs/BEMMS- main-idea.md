@@ -2083,3 +2083,4 @@ Reports and analytics
 An installable mobile web application
 
 The system should be designed as a scalable foundation that can begin as a small hospital pilot and later expand to support multiple hospitals, larger biomedical engineering teams, advanced maintenance workflows, and enterprise-level reporting.
+

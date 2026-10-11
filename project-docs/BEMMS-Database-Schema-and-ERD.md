@@ -1120,3 +1120,4 @@ The initial PostgreSQL schema is ready for application implementation only when:
 Implement this schema in migrations by domain, keep the core relationships normalized, and treat history/signatures/audit events as first-class data—not optional notes.
 
 > **The database must always be able to prove which device was involved, where it was, who reported the work, who performed it, who approved or released it, what record version was signed, and how the current device summary was derived.**
+

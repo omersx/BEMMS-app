@@ -32,3 +32,4 @@ export const assignScopeSchema = z.object({
   departmentId: z.string().uuid().optional(),
   locationId: z.string().uuid().optional(),
 });
+

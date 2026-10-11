@@ -46,3 +46,4 @@ export const signActionSchema = z.object({
   password: z.string().min(1, 'Password is required for signature authentication'),
   comments: z.string().max(2000).optional(),
 });
+

@@ -136,3 +136,4 @@ export function DeviceTicketsTab({ tickets = [], deviceId, deviceName }: DeviceT
     </div>
   )
 }
+

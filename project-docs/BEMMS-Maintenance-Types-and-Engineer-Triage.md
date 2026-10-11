@@ -619,3 +619,4 @@ The maintenance-classification feature is ready for hospital testing when:
 Make maintenance type a **technical decision owned by biomedical engineers**, not a choice forced on doctors or department staff.
 
 > **Staff describe the observed problem. Engineers classify the technical work. Technicians perform the assigned task. Authorized engineers review, sign, and release the device.**
+

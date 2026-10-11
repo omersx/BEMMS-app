@@ -158,3 +158,4 @@ export const maintenanceCostsRelations = relations(maintenanceCosts, ({ one }) =
     relationName: 'maintenanceCostsRecordedByUser',
   }),
 }));
+

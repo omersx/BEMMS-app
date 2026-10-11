@@ -28,3 +28,4 @@ export const workloadReportFiltersSchema = reportFiltersSchema.extend({});
 export const deviceHistoryFiltersSchema = reportFiltersSchema.extend({
   deviceId: z.string().uuid().optional(),
 });
+

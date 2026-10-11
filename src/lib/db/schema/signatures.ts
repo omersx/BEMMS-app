@@ -84,3 +84,4 @@ export const electronicSignaturesRelations = relations(electronicSignatures, ({ 
     relationName: 'signaturesBySigner',
   }),
 }));
+

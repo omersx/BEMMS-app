@@ -29,3 +29,4 @@ export const DEFAULT_MANUFACTURERS: DefaultManufacturerTemplate[] = [
   { name: 'Stryker', code: 'STRYKER', country: 'United States', website: 'https://www.stryker.com' },
   { name: 'Zoll Medical', code: 'ZOLL', country: 'United States', website: 'https://www.zoll.com' },
 ];
+

@@ -13,3 +13,4 @@ export const DEFAULT_HOSPITAL_DEPARTMENTS: DefaultDepartmentTemplate[] = [
   { name: 'Pediatrics', code: 'PED', departmentType: 'Pediatrics' },
   { name: 'Dental Clinic', code: 'DENT', departmentType: 'Dental' },
 ];
+

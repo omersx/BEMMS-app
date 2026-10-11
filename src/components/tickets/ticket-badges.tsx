@@ -40,3 +40,4 @@ export function TicketImpactBadge({ impact }: { impact?: string | null }) {
   const config = impactConfig[impact || ''] || { label: impact || 'N/A', className: 'bg-muted text-muted-foreground' }
   return <Badge variant="outline" className={cn("font-medium text-xs", config.className)}>{config.label}</Badge>
 }
+

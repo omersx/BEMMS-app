@@ -129,3 +129,4 @@ export async function archiveManufacturer(id: string) {
     return { success: false, error: error.message };
   }
 }
+

@@ -82,3 +82,4 @@ export const userAccessScopesRelations = relations(userAccessScopes, ({ one }) =
     relationName: 'scopesCreatedByUser',
   }),
 }));
+

@@ -36,3 +36,4 @@ export const usersRelations = relations(users, ({ one }) => ({
     references: [organizations.id],
   }),
 }));
+

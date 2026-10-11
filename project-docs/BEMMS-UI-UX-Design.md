@@ -812,3 +812,4 @@ The MVP interface is ready for hospital testing only when:
 ## 11. Final Design Principle
 
 > **The user should never wonder which device they are viewing, whether it is available, what action they can take, or where their request is in the workflow.**
+

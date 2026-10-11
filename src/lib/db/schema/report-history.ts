@@ -25,3 +25,4 @@ export const generatedReportsRelations = relations(generatedReports, ({ one }) =
   organization: one(organizations, { fields: [generatedReports.organizationId], references: [organizations.id] }),
   generatedByUser: one(users, { fields: [generatedReports.generatedByUserId], references: [users.id] }),
 }));
+

@@ -144,3 +144,4 @@ export async function resolveDeviceScan(opaqueReference: string) {
     return { success: false, error: error.message };
   }
 }
+

@@ -110,3 +110,4 @@ export function DeviceMaintenanceTab({ maintenanceTasks = [], deviceId }: Device
     </div>
   )
 }
+

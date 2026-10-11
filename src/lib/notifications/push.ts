@@ -60,3 +60,4 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
 
   return results;
 }
+

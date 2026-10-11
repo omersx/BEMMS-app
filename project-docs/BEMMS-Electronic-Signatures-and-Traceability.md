@@ -623,3 +623,4 @@ Begin with **authenticated electronic signatures** that are tightly integrated w
 Do not treat a signature as merely a name typed into a text field. Treat it as a controlled responsibility decision attached permanently to the exact maintenance, calibration, test, ticket, or device-status action.
 
 > **BEMMS should always be able to answer: what happened, to which device, who performed it, who reviewed it, who released it, when it happened, and which signed record proves it.**
+

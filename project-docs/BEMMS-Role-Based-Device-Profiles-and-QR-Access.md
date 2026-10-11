@@ -622,3 +622,4 @@ The role-based device-profile feature is complete for the MVP only when:
 Use one QR code and one underlying device profile for each medical device. Make the profile adapt safely to the signed-in user's role, permissions, and scope.
 
 > **Staff should see what they need to use or report the device safely. Biomedical users should see what they need to maintain it professionally. Administrators should manage inventory and access without automatically gaining clinical or technical authority.**
+

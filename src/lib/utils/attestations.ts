@@ -16,3 +16,4 @@ export const ATTESTATION_TEMPLATES: Record<string, string> = {
 export function getAttestationText(purpose: string): string {
   return ATTESTATION_TEMPLATES[purpose] || `I confirm this ${purpose} action and that the information is accurate.`;
 }
+

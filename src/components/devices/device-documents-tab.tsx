@@ -90,3 +90,4 @@ export function DeviceDocumentsTab({ documents, deviceId }: DeviceDocumentsTabPr
     </div>
   )
 }
+

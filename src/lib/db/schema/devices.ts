@@ -192,3 +192,4 @@ export const deviceAttachmentsRelations = relations(deviceAttachments, ({ one })
   device: one(devices, { fields: [deviceAttachments.deviceId], references: [devices.id] }),
   uploadedByUser: one(users, { fields: [deviceAttachments.uploadedByUserId], references: [users.id], relationName: 'attachmentsUploadedByUser' }),
 }));
+

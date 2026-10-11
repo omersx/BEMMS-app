@@ -41,3 +41,4 @@ jobs:
           NEXT_TELEMETRY_DISABLED: 1
           NEXTAUTH_SECRET: ci-dummy-secret-key-32-chars-long!
           DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+

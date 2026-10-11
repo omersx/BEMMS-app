@@ -606,3 +606,4 @@ The scan-to-action helpdesk feature is complete for the MVP only when all of the
 The feature should feel simple to the person standing beside the device, while preserving the traceability and discipline required by a biomedical engineering service desk:
 
 > **One scan or authorized device selection identifies the device. One short report opens a ticket. Every update is visible to the right people until the work is complete.**
+

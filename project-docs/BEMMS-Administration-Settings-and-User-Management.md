@@ -939,3 +939,4 @@ The Administration and Settings module is ready for hospital testing only when:
 Build Administration as a secure, role-scoped configuration center—not as an unrestricted control panel.
 
 > **The right administrator can configure the right part of BEMMS, for the right hospital scope, with every important change traceable—and without bypassing biomedical engineering responsibility for technical medical-device work.**
+

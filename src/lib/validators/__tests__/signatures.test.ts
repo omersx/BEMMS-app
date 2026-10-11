@@ -152,3 +152,4 @@ describe('getAttestationText', () => {
     expect(text).toContain('I confirm this custom_action action');
   });
 });
+

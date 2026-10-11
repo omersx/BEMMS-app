@@ -11,3 +11,4 @@ export const createDepartmentSchema = z.object({
 });
 
 export const updateDepartmentSchema = createDepartmentSchema.partial().omit({ organizationId: true, hospitalId: true });
+

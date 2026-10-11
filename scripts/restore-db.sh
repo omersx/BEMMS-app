@@ -32,3 +32,4 @@ echo "[BEMMS Restore] Restoring from '${BACKUP_FILE}'..."
 gunzip -c "${BACKUP_FILE}" | docker exec -i "${CONTAINER}" psql -U "${DB_USER}" -d "${DB_NAME}"
 
 echo "[BEMMS Restore] Database restore complete."
+

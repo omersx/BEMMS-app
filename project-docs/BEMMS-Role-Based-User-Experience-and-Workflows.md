@@ -805,3 +805,4 @@ The role-based experience is ready for hospital testing only when:
 Design each role around its real daily job rather than showing every user the same complex interface.
 
 > **Staff identify and report. Technicians perform. Engineers decide and release. Managers oversee. Administrators configure. Every handoff is visible, authorized, and traceable.**
+

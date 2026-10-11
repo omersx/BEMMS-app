@@ -179,3 +179,4 @@ export function HealthPanel({ initialData }: HealthPanelProps) {
     </div>
   );
 }
+

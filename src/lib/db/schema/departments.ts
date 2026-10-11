@@ -36,3 +36,4 @@ export const departmentsRelations = relations(departments, ({ one }) => ({
     references: [users.id],
   }),
 }));
+

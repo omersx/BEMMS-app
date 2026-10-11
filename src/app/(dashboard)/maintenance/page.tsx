@@ -246,3 +246,4 @@ export default async function MaintenanceDashboardPage() {
     </div>
   )
 }
+

@@ -8,3 +8,4 @@ export default defineConfig({
     url: process.env.DATABASE_URL || "postgresql://bemms:bemms_dev_password@localhost:5432/bemms_db",
   },
 });
+
