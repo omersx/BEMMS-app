@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { hasRole } from '@/lib/auth/rbac';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Monitor,
@@ -38,25 +39,38 @@ export default async function MorePage() {
   const roles = user.roles || [];
   const isAdmin = hasRole(roles, 'SYS_ADMIN', 'ORG_ADMIN', 'HOSP_ADMIN');
   const isBiomed = hasRole(roles, 'BIOMED_ENG', 'BIOMED_TECH', 'BIOMED_MGR');
+  const isStaffOnly = hasRole(roles, 'STAFF', 'DEPT_MGR') && !isBiomed && !isAdmin;
 
   const sections = [
     {
       title: 'Equipment & Helpdesk',
       items: [
-        {
-          label: 'Device Inventory',
-          description: 'Browse, search, and manage all biomedical equipment',
-          href: '/devices',
-          icon: Monitor,
-          color: 'text-blue-500 bg-blue-50 dark:bg-blue-950',
-        },
-        {
-          label: 'Departments',
-          description: 'Explore hospital departments and departmental equipment',
-          href: '/departments',
-          icon: Building2,
-          color: 'text-sky-500 bg-sky-50 dark:bg-sky-950',
-        },
+        ...(isStaffOnly
+          ? [
+              {
+                label: 'My Department',
+                description: 'View your department equipment and status',
+                href: '/my-department',
+                icon: Building2,
+                color: 'text-sky-500 bg-sky-50 dark:bg-sky-950',
+              },
+            ]
+          : [
+              {
+                label: 'Device Inventory',
+                description: 'Browse, search, and manage all biomedical equipment',
+                href: '/devices',
+                icon: Monitor,
+                color: 'text-blue-500 bg-blue-50 dark:bg-blue-950',
+              },
+              {
+                label: 'Departments',
+                description: 'Explore hospital departments and departmental equipment',
+                href: '/departments',
+                icon: Building2,
+                color: 'text-sky-500 bg-sky-50 dark:bg-sky-950',
+              },
+            ]),
         {
           label: 'Scan QR Code',
           description: 'Quick scan device label with camera',
@@ -65,8 +79,10 @@ export default async function MorePage() {
           color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950',
         },
         {
-          label: 'Helpdesk Tickets',
-          description: 'View service tickets, fault reports, and status',
+          label: isStaffOnly ? 'My Tickets' : 'Helpdesk Tickets',
+          description: isStaffOnly
+            ? 'Track your reported device problems'
+            : 'View service tickets, fault reports, and status',
           href: '/tickets',
           icon: TicketCheck,
           color: 'text-orange-500 bg-orange-50 dark:bg-orange-950',
@@ -78,6 +94,17 @@ export default async function MorePage() {
           icon: PlusCircle,
           color: 'text-red-500 bg-red-50 dark:bg-red-950',
         },
+        ...(isStaffOnly
+          ? [
+              {
+                label: 'Our Engineering Team',
+                description: 'View biomedical engineers, contact info, and schedules',
+                href: '/engineering-team',
+                icon: User,
+                color: 'text-purple-500 bg-purple-50 dark:bg-purple-950',
+              },
+            ]
+          : []),
         ...(isBiomed || isAdmin
           ? [
               {
@@ -91,39 +118,43 @@ export default async function MorePage() {
           : []),
       ],
     },
-    {
-      title: 'Maintenance & Work Orders',
-      items: [
-        {
-          label: 'Maintenance Overview',
-          description: 'Corrective and preventive maintenance hub',
-          href: '/maintenance',
-          icon: Wrench,
-          color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950',
-        },
-        {
-          label: 'Work Orders / Tasks',
-          description: 'Assigned maintenance tasks and due schedules',
-          href: '/maintenance/tasks',
-          icon: ClipboardList,
-          color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-950',
-        },
-        {
-          label: 'PM Plans & Schedules',
-          description: 'Recurring inspection and calibration schedules',
-          href: '/maintenance/plans',
-          icon: Calendar,
-          color: 'text-violet-500 bg-violet-50 dark:bg-violet-950',
-        },
-        {
-          label: 'Checklists',
-          description: 'Standardized safety and inspection checklists',
-          href: '/maintenance/checklists',
-          icon: CheckSquare,
-          color: 'text-teal-500 bg-teal-50 dark:bg-teal-950',
-        },
-      ],
-    },
+    ...(!isStaffOnly
+      ? [
+          {
+            title: 'Maintenance & Work Orders',
+            items: [
+              {
+                label: 'Maintenance Overview',
+                description: 'Corrective and preventive maintenance hub',
+                href: '/maintenance',
+                icon: Wrench,
+                color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950',
+              },
+              {
+                label: 'Work Orders / Tasks',
+                description: 'Assigned maintenance tasks and due schedules',
+                href: '/maintenance/tasks',
+                icon: ClipboardList,
+                color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-950',
+              },
+              {
+                label: 'PM Plans & Schedules',
+                description: 'Recurring inspection and calibration schedules',
+                href: '/maintenance/plans',
+                icon: Calendar,
+                color: 'text-violet-500 bg-violet-50 dark:bg-violet-950',
+              },
+              {
+                label: 'Checklists',
+                description: 'Standardized safety and inspection checklists',
+                href: '/maintenance/checklists',
+                icon: CheckSquare,
+                color: 'text-teal-500 bg-teal-50 dark:bg-teal-950',
+              },
+            ],
+          },
+        ]
+      : []),
     {
       title: 'Analytics & Notifications',
       items: [
@@ -178,22 +209,27 @@ export default async function MorePage() {
   return (
     <div className="space-y-6 max-w-2xl mx-auto pb-8">
       {/* User Card */}
-      <Card className="border shadow-sm">
-        <CardContent className="p-4 sm:p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg shrink-0">
-            {user.fullName?.charAt(0) || <User className="w-6 h-6" />}
-          </div>
-          <div className="flex flex-col flex-1 min-w-0">
-            <h2 className="font-semibold text-base truncate">{user.fullName || 'User'}</h2>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {roles.map((role) => (
-                <Badge key={role} variant="secondary" className="text-[10px] px-1.5 py-0">
-                  {role.replace(/_/g, ' ')}
-                </Badge>
-              ))}
+      <Card className="border shadow-sm hover:border-primary/30 transition">
+        <CardContent className="p-4 sm:p-5 flex items-center justify-between gap-4">
+          <Link href="/profile" className="flex items-center gap-4 flex-1 min-w-0">
+            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg shrink-0">
+              {user.fullName?.charAt(0) || <User className="w-6 h-6" />}
             </div>
-          </div>
+            <div className="flex flex-col flex-1 min-w-0">
+              <h2 className="font-semibold text-base truncate">{user.fullName || 'User'}</h2>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {roles.map((role) => (
+                  <Badge key={role} variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {role.replace(/_/g, ' ')}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </Link>
+          <Button asChild variant="outline" size="sm" className="shrink-0 text-xs">
+            <Link href="/profile">My Profile</Link>
+          </Button>
         </CardContent>
       </Card>
 

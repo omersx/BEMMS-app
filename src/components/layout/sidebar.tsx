@@ -6,7 +6,8 @@ import { useState, useEffect } from 'react'
 import {
   LayoutDashboard, QrCode, Monitor, TicketCheck, Wrench, BarChart3,
   Bell, Settings, Activity, ChevronLeft, ChevronRight, AlertTriangle,
-  ClipboardList, Calendar, CheckSquare, Building2, UsersRound
+  ClipboardList, Calendar, CheckSquare, Building2, UsersRound, PlusCircle,
+  Inbox
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -15,10 +16,44 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface SidebarProps {
-  user: { name: string; role: string; email: string }
+  user: { name: string; role: string; email: string; roles: string[] }
 }
 
-const SIDEBAR_LINKS = [
+interface SidebarLink {
+  href: string;
+  label: string;
+  icon: any;
+}
+
+// Staff-specific nav: simplified, focused on their department
+const STAFF_LINKS: SidebarLink[] = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/my-department', label: 'My Department', icon: Building2 },
+  { href: '/scan', label: 'Scan QR', icon: QrCode },
+  { href: '/tickets/create', label: 'Report Problem', icon: PlusCircle },
+  { href: '/tickets', label: 'My Tickets', icon: TicketCheck },
+  { href: '/engineering-team', label: 'Engineering Team', icon: UsersRound },
+  { href: '/notifications', label: 'Notifications', icon: Bell },
+]
+
+// Engineer/Technician nav: workflow-optimized for BME daily work
+const ENGINEER_LINKS: SidebarLink[] = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/scan', label: 'Scan QR', icon: QrCode },
+  { href: '/tickets/triage', label: 'Triage Queue', icon: Inbox },
+  { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck },
+  { href: '/devices', label: 'Devices', icon: Monitor },
+  { href: '/departments', label: 'Departments', icon: Building2 },
+  { href: '/maintenance', label: 'Maintenance', icon: Wrench },
+  { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList },
+  { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar },
+  { href: '/maintenance/checklists', label: 'Checklists', icon: CheckSquare },
+  { href: '/reports', label: 'Reports', icon: BarChart3 },
+  { href: '/notifications', label: 'Notifications', icon: Bell },
+]
+
+// Full nav for managers and admins (includes team management + admin access)
+const FULL_LINKS: SidebarLink[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/scan', label: 'Scan QR', icon: QrCode },
   { href: '/devices', label: 'Devices', icon: Monitor },
@@ -34,6 +69,30 @@ const SIDEBAR_LINKS = [
   { href: '/notifications', label: 'Notifications', icon: Bell },
 ]
 
+function getSidebarLinks(roles: string[]): SidebarLink[] {
+  const staffRoles = ['STAFF', 'DEPT_MGR'];
+  const engineerRoles = ['BIOMED_ENG', 'BIOMED_TECH'];
+  const adminManagerRoles = ['SYS_ADMIN', 'ORG_ADMIN', 'HOSP_ADMIN', 'BIOMED_MGR', 'AUDITOR'];
+
+  const hasStaff = roles.some(r => staffRoles.includes(r));
+  const hasEngineer = roles.some(r => engineerRoles.includes(r));
+  const hasAdminManager = roles.some(r => adminManagerRoles.includes(r));
+
+  // Admin/Manager roles get full nav (includes admin link)
+  if (hasAdminManager) {
+    return FULL_LINKS;
+  }
+  // Engineer/Technician get workflow-optimized nav
+  if (hasEngineer) {
+    return ENGINEER_LINKS;
+  }
+  // Staff-only users get simplified nav
+  if (hasStaff) {
+    return STAFF_LINKS;
+  }
+  return FULL_LINKS;
+}
+
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
@@ -42,7 +101,8 @@ export function Sidebar({ user }: SidebarProps) {
   useEffect(() => {
     setMounted(true)
   }, [])
-  const isAdmin = user.role.toLowerCase().includes('admin')
+  const isAdmin = user.roles.some(r => ['SYS_ADMIN', 'ORG_ADMIN', 'HOSP_ADMIN'].includes(r))
+  const links = getSidebarLinks(user.roles)
 
   return (
     <aside
@@ -69,10 +129,10 @@ export function Sidebar({ user }: SidebarProps) {
       <ScrollArea className="flex-1 py-4">
         <nav className="space-y-1 px-2">
           <TooltipProvider delayDuration={0}>
-            {SIDEBAR_LINKS.map((link) => {
+            {links.map((link) => {
               const active = pathname === link.href || 
-                (link.href !== '/tickets' && link.href !== '/maintenance' && pathname.startsWith(link.href + '/')) || 
-                (link.href === '/tickets' && pathname.startsWith('/tickets') && !pathname.startsWith('/tickets/triage')) ||
+                (link.href !== '/tickets' && link.href !== '/maintenance' && link.href !== '/tickets/create' && pathname.startsWith(link.href + '/')) || 
+                (link.href === '/tickets' && pathname.startsWith('/tickets') && !pathname.startsWith('/tickets/triage') && !pathname.startsWith('/tickets/create')) ||
                 (link.href === '/maintenance' && pathname === '/maintenance')
 
               const navLink = (
@@ -135,7 +195,14 @@ export function Sidebar({ user }: SidebarProps) {
       </ScrollArea>
 
       <div className="border-t border-border p-4">
-        <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+        <Link
+          href="/profile"
+          className={cn(
+            "flex items-center gap-3 hover:opacity-80 transition rounded-lg p-1 -m-1 hover:bg-muted/50",
+            collapsed && "justify-center"
+          )}
+          title="View My Profile"
+        >
           <Avatar className="h-9 w-9 shrink-0">
             <AvatarFallback className="bg-primary/10 text-primary">
               {user.name.substring(0, 2).toUpperCase()}
@@ -147,7 +214,7 @@ export function Sidebar({ user }: SidebarProps) {
               <span className="text-xs text-muted-foreground truncate">{user.role}</span>
             </div>
           )}
-        </div>
+        </Link>
       </div>
     </aside>
   )

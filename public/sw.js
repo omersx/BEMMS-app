@@ -1,7 +1,7 @@
 // BEMMS Service Worker
 // Handles: caching, push notifications, offline shell
 
-const CACHE_NAME = 'bemms-v1';
+const CACHE_NAME = 'bemms-v2';
 const STATIC_ASSETS = [
   '/login',
   '/dashboard',
@@ -94,6 +94,12 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  // Determine urgency from data
+  const isCritical = data.data?.priority === 'p1_critical' ||
+                     data.data?.impact === 'patient_care_affected';
+  const isNewTicket = data.data?.type === 'new_ticket';
+  const isAccepted = data.data?.type === 'ticket_accepted';
+
   const options = {
     body: data.body,
     icon: '/icons/icon-192.png',
@@ -102,14 +108,41 @@ self.addEventListener('push', (event) => {
     renotify: true,
     data: {
       url: data.url || '/notifications',
+      ...data.data,
     },
     actions: data.actions || [],
-    vibrate: [100, 50, 100],
-    requireInteraction: data.requireInteraction || false,
+    vibrate: data.vibrate || (isCritical ? [200, 100, 200, 100, 200] : [100, 50, 100]),
+    requireInteraction: data.requireInteraction || isCritical || false,
+    // On Android, set notification color based on urgency
+    ...(isCritical && { badge: '/icons/icon-192.png' }),
   };
+
+  // For new tickets, add View action if not already present
+  if (isNewTicket && options.actions.length === 0) {
+    options.actions = [
+      { action: 'view', title: '📋 View Ticket' },
+    ];
+  }
 
   event.waitUntil(
     self.registration.showNotification(data.title, options)
+  );
+
+  // Also notify all open app windows to refresh their notification count
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      clients.forEach((client) => {
+        client.postMessage({
+          type: 'PUSH_RECEIVED',
+          notification: {
+            title: data.title,
+            body: data.body,
+            url: data.url,
+            data: data.data,
+          },
+        });
+      });
+    })
   );
 });
 
@@ -117,7 +150,14 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const url = event.notification.data?.url || '/notifications';
+  const notificationData = event.notification.data || {};
+  const action = event.action; // 'view', 'accept', or empty (body click)
+  let url = notificationData.url || '/notifications';
+
+  // If they clicked the View action or the body, go to the ticket
+  if (action === 'view' || !action) {
+    url = notificationData.url || '/notifications';
+  }
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {

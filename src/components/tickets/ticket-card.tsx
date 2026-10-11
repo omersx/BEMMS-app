@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { TicketPriorityBadge, TicketStatusBadge } from "./ticket-badges"
+import { WaitingForEngineerBanner } from "./ticket-dispatch-status"
 import { Monitor, MapPin, User, Calendar, Package } from "lucide-react"
 
 export interface TicketItem {
@@ -171,6 +172,12 @@ export function TicketCard({ ticket }: { ticket: TicketItem }) {
               <span className="text-foreground font-medium">
                 {ticket.assignedEngineer.fullName}
               </span>
+            ) : ["new", "acknowledged", "in_triage"].includes(ticket.statusCode) ? (
+              <WaitingForEngineerBanner
+                compact
+                reportedAt={ticket.reportedAt || ticket.createdAt || new Date()}
+                reportedImpact={ticket.reportedImpact || undefined}
+              />
             ) : (
               <span className="text-rose-600 dark:text-rose-400 font-semibold">
                 Unassigned

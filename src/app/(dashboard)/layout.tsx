@@ -13,10 +13,13 @@ export default async function DashboardLayout({
     | { name?: string; fullName?: string; email?: string; roles?: string[] }
     | undefined;
 
+  const roles = sessionUser?.roles || [];
+
   const user = {
     name: sessionUser?.fullName || sessionUser?.name || 'Administrator',
-    role: sessionUser?.roles?.[0] ? sessionUser.roles[0].replace(/_/g, ' ') : 'Admin',
+    role: roles[0] ? roles[0].replace(/_/g, ' ') : 'Admin',
     email: sessionUser?.email || 'admin@hospital.org',
+    roles,
   };
 
   return (
@@ -26,7 +29,7 @@ export default async function DashboardLayout({
         <Header user={user} />
         <main className="flex-1 p-4 md:p-6 pb-24 md:pb-6">{children}</main>
       </div>
-      <MobileNav />
+      <MobileNav roles={roles} />
     </div>
   );
 }

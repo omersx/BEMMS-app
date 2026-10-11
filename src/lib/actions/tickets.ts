@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import {
   serviceTickets, serviceTicketComments, serviceTicketEvents, devices,
   recordVersions, electronicSignatures, signatureEvents, deviceStatusHistory,
+  userAccessScopes, hospitals, departments, users,
 } from '@/lib/db/schema';
 import { requireAuth, requireRole } from '@/lib/auth/rbac';
 import { createAuditLog } from '@/lib/audit';
@@ -17,6 +18,64 @@ import { eq, and, or, desc, ilike, notInArray, inArray } from 'drizzle-orm';
 import { verifySignatureAuth, createSignatureEvent } from './signature-auth';
 import { getAttestationText } from '@/lib/utils/attestations';
 import { buildCanonicalSnapshot, computeSHA256 } from '@/lib/utils/crypto';
+import { notifyEngineersOnNewTicket, notifyReporterOnAccept } from '@/lib/notifications/dispatcher';
+
+// ── Ticket Creation Defaults ──────────────────────────────────────────────────
+
+export async function getTicketCreationDefaults() {
+  const session = await requireAuth();
+  const orgId = session.organizationId;
+  if (!orgId) return { success: false, error: 'No organization found' };
+
+  try {
+    const scopes = await db.query.userAccessScopes.findMany({
+      where: eq(userAccessScopes.userId, session.id),
+      with: {
+        hospital: true,
+        department: true,
+      },
+    });
+
+    const hospitalList = await db.query.hospitals.findMany({
+      where: eq(hospitals.organizationId, orgId),
+    });
+
+    const departmentList = await db.query.departments.findMany({
+      where: eq(departments.organizationId, orgId),
+    });
+
+    const userRecord = await db.query.users.findFirst({
+      where: eq(users.id, session.id),
+    });
+
+    const userDept = scopes.find(s => s.departmentId)?.department || departmentList[0] || null;
+    const userHosp = scopes.find(s => s.hospitalId)?.hospital || hospitalList[0] || null;
+
+    const isElevatedUser = session.roles.some((r: string) =>
+      ['SYS_ADMIN', 'BIOMED_MGR', 'BIOMED_ENG', 'BIOMED_TECH'].includes(r)
+    );
+
+    return {
+      success: true,
+      data: {
+        organizationId: orgId,
+        defaultHospitalId: userHosp?.id || hospitalList[0]?.id || '',
+        defaultHospitalName: userHosp?.name || hospitalList[0]?.name || 'Assigned Hospital',
+        defaultDepartmentId: userDept?.id || departmentList[0]?.id || '',
+        defaultDepartmentName: userDept?.name || departmentList[0]?.name || 'Assigned Department',
+        isElevatedUser,
+        hospitals: hospitalList.map(h => ({ id: h.id, name: h.name })),
+        departments: departmentList.map(d => ({ id: d.id, name: d.name, hospitalId: d.hospitalId })),
+        userFullName: session.fullName,
+        userPhone: userRecord?.phone || null,
+        userJobTitle: userRecord?.jobTitle || null,
+        userExtension: userRecord?.employeeIdentifier || null,
+      },
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
 
 // ── Ticket Number Generation ────────────────────────────────────────────────────
 
@@ -62,7 +121,7 @@ export async function createTicket(input: unknown) {
       }
     }
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const ticketNumber = generateTicketNumber();
 
       const [ticket] = await tx.insert(serviceTickets).values({
@@ -137,6 +196,27 @@ export async function createTicket(input: unknown) {
 
       return { success: true, data: ticket };
     });
+
+    // Notify all scoped engineers (fire-and-forget, outside transaction)
+    if (result.success && result.data) {
+      const ticketData = result.data;
+      notifyEngineersOnNewTicket({
+        ticketId: ticketData.id,
+        ticketNumber: ticketData.ticketNumber,
+        title: ticketData.title,
+        organizationId: validated.data.organizationId,
+        hospitalId: validated.data.hospitalId,
+        departmentId: validated.data.departmentId,
+        departmentName: device?.department?.name,
+        deviceName: device?.name,
+        reportedImpact: validated.data.reportedImpact,
+        priorityCode: ticketData.priorityCode,
+        reportedByUserId: session.id,
+        reportedByName: session.fullName,
+      }).catch((err) => console.error('[Ticket] Notification dispatch failed:', err));
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -396,7 +476,7 @@ export async function acceptTicket(ticketId: string, input: unknown) {
       return { success: false, error: authResult.error };
     }
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [updated] = await tx.update(serviceTickets)
         .set({
           statusCode: 'in_progress',
@@ -497,6 +577,21 @@ export async function acceptTicket(ticketId: string, input: unknown) {
 
       return { success: true, data: updated, signature: sig };
     });
+
+    // Notify reporter that their ticket has been accepted (fire-and-forget)
+    if (result.success && ticket.reportedByUserId) {
+      notifyReporterOnAccept({
+        ticketId,
+        ticketNumber: ticket.ticketNumber,
+        title: ticket.title,
+        organizationId: ticket.organizationId,
+        reporterUserId: ticket.reportedByUserId,
+        engineerName: session.fullName || session.email || 'Biomedical Engineer',
+        engineerUserId: session.id,
+      }).catch((err) => console.error('[Ticket] Reporter notification failed:', err));
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }

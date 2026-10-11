@@ -62,6 +62,7 @@ export async function getMyTickets(limit = 5) {
     ),
     with: {
       device: true,
+      assignedEngineer: true,
     },
     orderBy: [desc(serviceTickets.updatedAt), desc(serviceTickets.reportedAt)],
     limit
@@ -74,7 +75,10 @@ export async function getMyTickets(limit = 5) {
     statusCode: t.statusCode,
     priorityCode: t.priorityCode,
     reportedAt: t.reportedAt,
-    deviceName: t.device?.name
+    updatedAt: t.updatedAt,
+    deviceName: t.device?.name,
+    deviceAssetNumber: t.device?.assetNumber,
+    assignedEngineerName: t.assignedEngineer?.fullName || null,
   }));
 }
 

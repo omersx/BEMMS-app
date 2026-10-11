@@ -1,11 +1,12 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { users, userRoleAssignments, userAccessScopes } from '@/lib/db/schema';
+import { users, userRoleAssignments, userAccessScopes, serviceTickets } from '@/lib/db/schema';
 import { requireAuth, requireRole, requireScope } from '@/lib/auth/rbac';
 import { createAuditLog } from '@/lib/audit';
 import { inviteUserSchema, updateUserProfileSchema, assignRoleSchema, assignScopeSchema } from '@/lib/validators/users';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql, not, inArray } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 
 export async function getUsers(filters?: { organizationId?: string }) {
   await requireAuth();
@@ -304,3 +305,174 @@ export async function archiveUser(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+// ── Department Staff Profile Actions ──────────────────────────────────────────
+
+export interface DepartmentStaffProfile {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  jobTitle: string | null;
+  employeeIdentifier: string | null;
+  avatarUrl: string | null;
+  hospitalName: string | null;
+  departmentName: string | null;
+  departmentId: string | null;
+  hospitalId: string | null;
+  roles: string[];
+  activeTicketsCount: number;
+}
+
+export async function getCurrentUserProfile(): Promise<{
+  success: boolean;
+  data?: DepartmentStaffProfile;
+  error?: string;
+}> {
+  const session = await requireAuth();
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, session.id),
+    });
+    if (!user) return { success: false, error: 'User not found' };
+
+    const scopes = await db.query.userAccessScopes.findMany({
+      where: eq(userAccessScopes.userId, session.id),
+      with: {
+        hospital: true,
+        department: true,
+      },
+    });
+
+    const roleAssignments = await db.query.userRoleAssignments.findMany({
+      where: eq(userRoleAssignments.userId, session.id),
+      with: { role: true },
+    });
+
+    const primaryScope = scopes.find((s) => s.departmentId) || scopes[0] || null;
+
+    const [ticketCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(serviceTickets)
+      .where(
+        and(
+          eq(serviceTickets.reportedByUserId, session.id),
+          not(inArray(serviceTickets.statusCode, ['resolved', 'closed', 'cancelled']))
+        )
+      );
+
+    return {
+      success: true,
+      data: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        jobTitle: user.jobTitle,
+        employeeIdentifier: user.employeeIdentifier,
+        avatarUrl: user.avatarUrl,
+        hospitalName: (primaryScope as any)?.hospital?.name || null,
+        departmentName: (primaryScope as any)?.department?.name || null,
+        departmentId: primaryScope?.departmentId || null,
+        hospitalId: primaryScope?.hospitalId || null,
+        roles: roleAssignments.map((ra) => ra.role.code),
+        activeTicketsCount: ticketCount?.count || 0,
+      },
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateCurrentUserProfile(input: {
+  fullName?: string;
+  phone?: string;
+  jobTitle?: string;
+  employeeIdentifier?: string;
+}): Promise<{
+  success: boolean;
+  data?: any;
+  error?: string;
+}> {
+  const session = await requireAuth();
+  const validated = updateUserProfileSchema.safeParse(input);
+  if (!validated.success) return { success: false, error: validated.error.message };
+
+  try {
+    const [updated] = await db
+      .update(users)
+      .set({
+        ...validated.data,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, session.id))
+      .returning();
+
+    revalidatePath('/profile');
+    revalidatePath('/dashboard');
+    return { success: true, data: updated };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getDepartmentStaffProfile(userId: string): Promise<{
+  success: boolean;
+  data?: DepartmentStaffProfile;
+  error?: string;
+}> {
+  await requireAuth();
+  try {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+    if (!user) return { success: false, error: 'User not found' };
+
+    const scopes = await db.query.userAccessScopes.findMany({
+      where: eq(userAccessScopes.userId, userId),
+      with: {
+        hospital: true,
+        department: true,
+      },
+    });
+
+    const roleAssignments = await db.query.userRoleAssignments.findMany({
+      where: eq(userRoleAssignments.userId, userId),
+      with: { role: true },
+    });
+
+    const primaryScope = scopes.find((s) => s.departmentId) || scopes[0] || null;
+
+    const [ticketCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(serviceTickets)
+      .where(
+        and(
+          eq(serviceTickets.reportedByUserId, userId),
+          not(inArray(serviceTickets.statusCode, ['resolved', 'closed', 'cancelled']))
+        )
+      );
+
+    return {
+      success: true,
+      data: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        jobTitle: user.jobTitle,
+        employeeIdentifier: user.employeeIdentifier,
+        avatarUrl: user.avatarUrl,
+        hospitalName: (primaryScope as any)?.hospital?.name || null,
+        departmentName: (primaryScope as any)?.department?.name || null,
+        departmentId: primaryScope?.departmentId || null,
+        hospitalId: primaryScope?.hospitalId || null,
+        roles: roleAssignments.map((ra) => ra.role.code),
+        activeTicketsCount: ticketCount?.count || 0,
+      },
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+

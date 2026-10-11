@@ -1,18 +1,27 @@
+import { auth } from "@/lib/auth"
+import { hasRole } from "@/lib/auth/rbac"
 import { getTicketById, getTicketComments, getTicketTimeline, getTicketSignatures } from "@/lib/actions/tickets"
 import { getUsers } from "@/lib/actions/users"
+import { db } from "@/lib/db"
+import { engineerProfiles } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
 import { PageHeader } from "@/components/shared/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TicketStatusBadge, TicketPriorityBadge, TicketImpactBadge } from "@/components/tickets/ticket-badges"
+import { StaffStatusLabel } from "@/components/tickets/staff-status-label"
+import { StaffTicketProgressTracker } from "@/components/tickets/staff-ticket-progress-tracker"
 import { DeviceStatusBadge } from "@/components/devices/device-badges"
 import { TicketTimeline } from "@/components/tickets/ticket-timeline"
 import { TicketCommentSection } from "@/components/tickets/ticket-comment-section"
 import { TicketTriagePanel } from "@/components/tickets/ticket-triage-panel"
 import { TicketActionButtons, ResumeWorkButton } from "@/components/tickets/ticket-action-buttons"
 import { TicketSignaturesPanel } from "@/components/tickets/ticket-signatures-panel"
-import { MapPin, Phone, User as UserIcon, Monitor, Clock, AlertTriangle, CheckCircle, ShieldCheck, AlertOctagon, Package, Info } from "lucide-react"
+import { TicketReporterProfile } from "@/components/tickets/ticket-reporter-profile"
+import { WaitingForEngineerBanner, AcceptedByEngineerBanner } from "@/components/tickets/ticket-dispatch-status"
+import { MapPin, Phone, User as UserIcon, Monitor, Clock, AlertTriangle, CheckCircle, ShieldCheck, AlertOctagon, Package, Info, Mail, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { use } from "react"
 
@@ -40,8 +49,23 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
 
   if (!ticket) return <div className="p-8 text-center text-muted-foreground">Ticket not found</div>
 
-  // In a real app, you'd check session role here. For now, we assume user is biomed and can triage/see internal.
-  const isBiomed = true
+  // Role checking
+  const session = await auth()
+  const currentUser = session?.user as { roles?: string[] } | undefined
+  const userRoles = currentUser?.roles || []
+  const isBiomed = hasRole(userRoles, 'BIOMED_ENG', 'BIOMED_TECH', 'BIOMED_MGR', 'SYS_ADMIN', 'ORG_ADMIN', 'HOSP_ADMIN')
+  const isStaffOnly = hasRole(userRoles, 'STAFF', 'DEPT_MGR') && !isBiomed
+
+  let engineerProfile: any = null
+  if (ticket.assignedEngineerUserId) {
+    engineerProfile = await db.query.engineerProfiles.findFirst({
+      where: eq(engineerProfiles.userId, ticket.assignedEngineerUserId),
+    })
+  }
+
+  const visibleTimeline = isStaffOnly
+    ? timeline.filter((e: any) => e.visibility !== 'internal')
+    : timeline
 
   const reportedDate = ticket.reportedAt 
     ? new Date(ticket.reportedAt).toISOString().replace('T', ' ').substring(0, 16)
@@ -53,18 +77,56 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
         title={ticket.title}
         description={`Ticket ${ticket.ticketNumber}${reportedDate ? ` — Reported ${reportedDate} UTC` : ''}`}
       >
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <TicketPriorityBadge priority={ticket.priorityCode} />
-          <TicketStatusBadge status={ticket.statusCode} />
-          <TicketActionButtons
-            ticketId={ticketId}
-            statusCode={ticket.statusCode}
-            hasDevice={!!ticket.deviceId}
-            ticketNumber={ticket.ticketNumber}
-            currentDeviceStatus={ticket.device?.currentStatusCode}
-          />
+          {isStaffOnly ? (
+            <StaffStatusLabel statusCode={ticket.statusCode} />
+          ) : (
+            <TicketStatusBadge status={ticket.statusCode} />
+          )}
+          {!isStaffOnly && (
+            <TicketActionButtons
+              ticketId={ticketId}
+              statusCode={ticket.statusCode}
+              hasDevice={!!ticket.deviceId}
+              ticketNumber={ticket.ticketNumber}
+              currentDeviceStatus={ticket.device?.currentStatusCode}
+            />
+          )}
         </div>
       </PageHeader>
+
+      {/* Staff Visual Progress Stepper & Guidance */}
+      {isStaffOnly && (
+        <StaffTicketProgressTracker
+          ticket={ticket}
+          engineerContact={engineerProfile}
+        />
+      )}
+
+      {/* Dispatch Status: Waiting for Engineer / Accepted */}
+      {ticket.statusCode === 'new' && !ticket.assignedEngineerUserId && (
+        <WaitingForEngineerBanner
+          reportedAt={ticket.reportedAt}
+          reportedImpact={ticket.reportedImpact}
+        >
+          {!isStaffOnly && (
+            <TicketActionButtons
+              ticketId={ticketId}
+              statusCode={ticket.statusCode}
+              hasDevice={!!ticket.deviceId}
+              ticketNumber={ticket.ticketNumber}
+              currentDeviceStatus={ticket.device?.currentStatusCode}
+            />
+          )}
+        </WaitingForEngineerBanner>
+      )}
+      {ticket.acceptedAt && ticket.assignedEngineer && isStaffOnly && (
+        <AcceptedByEngineerBanner
+          engineerName={(ticket.assignedEngineer as any).fullName || 'Biomedical Engineer'}
+          acceptedAt={ticket.acceptedAt}
+        />
+      )}
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left Column: Details */}
@@ -268,7 +330,7 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
           )}
 
           {/* Electronic Signatures Panel */}
-          <TicketSignaturesPanel signatures={signatures} />
+          {!isStaffOnly && <TicketSignaturesPanel signatures={signatures} />}
 
           {isBiomed && ['new', 'acknowledged', 'in_triage', 'waiting_requester'].includes(ticket.statusCode) && (
             <TicketTriagePanel
@@ -278,13 +340,21 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
             />
           )}
 
-          <Card>
-            <CardHeader><CardTitle>Updates & Notes</CardTitle></CardHeader>
-            <CardContent>
+          <Card className="overflow-hidden border shadow-sm">
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-primary" />
+                Chat with Biomedical Engineering
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
               <TicketCommentSection
                 ticketId={ticketId}
                 comments={comments as any}
                 canAddInternal={isBiomed}
+                currentUserId={session?.user?.id}
+                assignedEngineerUserId={ticket.assignedEngineerUserId}
+                assignedEngineerName={(ticket as any).assignedEngineer?.fullName}
               />
             </CardContent>
           </Card>
@@ -319,16 +389,26 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
               </div>
 
               <div className="space-y-2 pt-2 border-t">
-                <h4 className="font-semibold flex items-center gap-2"><UserIcon className="w-4 h-4" /> Reporter</h4>
-                <div className="pl-6 space-y-1">
-                  <p>{(ticket as any).reportedByUser?.fullName}</p>
-                  {(ticket.requesterContactPhone || ticket.requesterContactName) && (
-                    <p className="text-muted-foreground flex items-center gap-1 mt-1">
-                      <Phone className="w-3 h-3" />
-                      {ticket.requesterContactName} {ticket.requesterContactPhone}
-                    </p>
-                  )}
-                </div>
+                <h4 className="font-semibold flex items-center gap-2">
+                  <UserIcon className="w-4 h-4 text-primary" />
+                  Reported By
+                </h4>
+                <TicketReporterProfile
+                  reporter={{
+                    id: ticket.reportedByUserId || undefined,
+                    fullName: (ticket as any).reportedByUser?.fullName || ticket.requesterContactName,
+                    email: (ticket as any).reportedByUser?.email,
+                    phone: ticket.requesterContactPhone || (ticket as any).reportedByUser?.phone,
+                    jobTitle: (ticket as any).reportedByUser?.jobTitle,
+                    employeeIdentifier: (ticket as any).reportedByUser?.employeeIdentifier,
+                    departmentName: (ticket as any).department?.name,
+                    hospitalName: (ticket as any).hospital?.name,
+                    reportedLocationCorrection: ticket.reportedLocationCorrection,
+                    requesterContactName: ticket.requesterContactName,
+                    requesterContactPhone: ticket.requesterContactPhone,
+                  }}
+                  isBiomedOrAdmin={isBiomed}
+                />
               </div>
 
               <div className="space-y-2 pt-2 border-t">
@@ -344,10 +424,30 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
             </CardContent>
           </Card>
 
+          {/* Assigned Engineer - prominent for staff */}
+          {isStaffOnly && ticket.assignedEngineerUserId && (
+            <Card className="border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20">
+              <CardContent className="p-4">
+                <h3 className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider mb-2">
+                  Assigned Engineer
+                </h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold text-sm">
+                    {(ticket as any).assignedEngineer?.fullName?.substring(0, 2)?.toUpperCase() || '??'}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{(ticket as any).assignedEngineer?.fullName}</p>
+                    <p className="text-xs text-muted-foreground">Biomedical Engineer</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader><CardTitle>Timeline</CardTitle></CardHeader>
             <CardContent>
-              <TicketTimeline entries={timeline as any} />
+              <TicketTimeline entries={visibleTimeline as any} />
             </CardContent>
           </Card>
         </div>

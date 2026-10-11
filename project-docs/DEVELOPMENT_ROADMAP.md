@@ -308,3 +308,50 @@ Extend FDA 21 CFR Part 11 compliant electronic signatures to the helpdesk ticket
 
 ### Status: `COMPLETE`
 
+---
+
+## Phase 10: Department Staff Experience & Clinical Helpdesk
+
+### Objective and Business Value
+Empower clinical users (doctors, nurses, ward charge nurses, department managers) with a simplified, intuitive, mobile-first experience for hospital equipment oversight, rapid one-touch problem reporting, live repair progress tracking, and direct access to on-duty biomedical engineering team information and hospital working schedules.
+
+### In-Scope Modules & Features
+- Role-filtered navigation for staff (`STAFF`, `DEPT_MGR`) in desktop sidebar and mobile bottom nav
+- "My Department" equipment dashboard (`/my-department`) with availability metrics, search, and device status cards
+- Hospital Engineering Team directory (`/engineering-team`) with real-time duty status (On Duty, On Call, In Maintenance, Off Duty), direct telephone/extension, email, weekly schedule calendar, and covered departments
+- Clinical-grade Problem Reporting page (`/tickets/create`) with 1-tap symptom prefill chips, visual urgency cards (Usable, Not Usable, Patient Care Affected — Urgent), duplicate ticket warnings, and auto-populated hospital context
+- Staff-facing Helpdesk view (`/tickets`) with plain-language status translations ("Being repaired", "Waiting for parts", "Response requested")
+- Public-safe Ticket Detail view (`/tickets/[id]`) highlighting assigned engineer details and progress while suppressing internal engineering triage panels and signatures
+### Status: `COMPLETE`
+
+---
+
+## Phase 11: Real-Time Ticket Dispatch, Native Push Notifications & Engineer Experience
+
+### Objective and Business Value
+Establish a real-time hospital dispatch mechanism for incoming incident reports and deliver a tailored biomedical engineering workflow. When clinical staff report equipment issues, all in-scope biomedical engineers receive instant in-app alerts and native push notifications on their desktop or mobile devices ("Waiting for engineer to accept"). Engineers can accept ticket responsibility with cryptographic electronic signatures, triggering instant progress confirmations back to clinical staff. Dedicated engineer navigation brings Helpdesk Tickets, Devices, Departments, and Triage Queues directly to the engineer's fingertips.
+
+### In-Scope Modules & Features
+- Web Push sender engine (`src/lib/notifications/push-sender.ts`) supporting VAPID native push, background delivery, device vibration, and automatic cleanup of expired endpoints
+- Biomedical Engineering notification dispatcher (`src/lib/notifications/dispatcher.ts`) finding scoped on-duty engineers, writing in-app notifications, and broadcasting native pushes on new ticket creation
+- Reporter acceptance notifier (`notifyReporterOnAccept`) and status progression notifier (`notifyReporterOnStatusChange`) keeping clinical staff updated in real time
+- Real-time Server-Sent Events (SSE) stream (`/api/notifications/sse`) streaming full notification objects with toast trigger payload
+- In-app animated toast notification system in `NotificationBell` with priority badges, auto-dismiss, and direct deep-linking
+- PWA Service Worker (`public/sw.js`) handling native background push, urgency flags, multi-window client sync, and actionable notifications
+- Dispatch Status Banners (`WaitingForEngineerBanner` & `AcceptedByEngineerBanner`) providing clear wait duration, urgency coloring, and embedded "Accept & Sign" CTA for biomedical engineers
+- Workflow-optimized navigation for engineers (`ENGINEER_LINKS`) in desktop sidebar: Dashboard, Scan QR, Triage Queue, Helpdesk Tickets, Devices, Departments, Maintenance (Work Orders, PM Plans, Checklists), Reports, and Notifications
+- Mobile bottom navigation (`engineerTabs`) tailored for field engineers with direct Triage and Devices shortcuts
+- Enhanced dashboard action buttons for engineers linking directly to Scan, Triage, Helpdesk, Devices, and Departments
+- Compact waiting-for-engineer indicators across Ticket Cards view, Table view, and Triage Queue
+
+### Acceptance Criteria
+1. When clinical staff submit an equipment ticket, scoped biomedical engineers receive both in-app notification and native push on device
+2. Urgent tickets (`patient_care_affected`) trigger high-urgency notifications with extended vibration and alert styling
+3. Ticket cards and detail pages clearly present "Waiting for engineer to accept" with live waiting duration
+4. Engineers can accept ticket responsibility directly from the detail view banner with 21 CFR Part 11 electronic signature
+5. Accepting a ticket triggers an instant confirmation notification to the reporting clinician
+6. Biomedical engineers have direct, role-optimized navigation to Helpdesk Tickets, Devices, and Departments in both desktop sidebar and mobile bottom nav
+7. TypeScript compiles with 0 errors and test suite passes 103/103 tests
+
+### Status: `COMPLETE`
+

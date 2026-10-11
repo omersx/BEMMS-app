@@ -16,13 +16,14 @@ export async function GET(req: NextRequest) {
 
   const encoder = new TextEncoder();
   let intervalId: NodeJS.Timeout;
+  let lastChecked = new Date();
 
   const stream = new ReadableStream({
     start(controller) {
-      // Send initial unread count
-      const sendCount = async () => {
+      const poll = async () => {
         try {
-          const result = await db.select({
+          // 1. Send unread count
+          const countResult = await db.select({
             count: sql<number>`count(*)::int`,
           })
           .from(notifications)
@@ -31,9 +32,38 @@ export async function GET(req: NextRequest) {
             isNull(notifications.readAt),
           ));
 
-          const count = result[0]?.count || 0;
-          const data = `data: ${JSON.stringify({ type: 'unread_count', count })}\n\n`;
-          controller.enqueue(encoder.encode(data));
+          const count = countResult[0]?.count || 0;
+          const countData = `data: ${JSON.stringify({ type: 'unread_count', count })}\n\n`;
+          controller.enqueue(encoder.encode(countData));
+
+          // 2. Check for new notifications since last poll
+          const newNotifications = await db.select({
+            id: notifications.id,
+            notificationType: notifications.notificationType,
+            title: notifications.title,
+            body: notifications.body,
+            actionUrl: notifications.actionUrl,
+            relatedEntityType: notifications.relatedEntityType,
+            relatedEntityId: notifications.relatedEntityId,
+            createdAt: notifications.createdAt,
+          })
+          .from(notifications)
+          .where(and(
+            eq(notifications.recipientUserId, userId),
+            gt(notifications.createdAt, lastChecked),
+          ))
+          .orderBy(desc(notifications.createdAt))
+          .limit(5);
+
+          if (newNotifications.length > 0) {
+            const eventData = `data: ${JSON.stringify({
+              type: 'new_notifications',
+              notifications: newNotifications,
+            })}\n\n`;
+            controller.enqueue(encoder.encode(eventData));
+          }
+
+          lastChecked = new Date();
         } catch (error) {
           // Connection closed
           clearInterval(intervalId);
@@ -41,10 +71,10 @@ export async function GET(req: NextRequest) {
       };
 
       // Send immediately
-      sendCount();
+      poll();
 
-      // Poll every 10 seconds
-      intervalId = setInterval(sendCount, 10000);
+      // Poll every 5 seconds for faster real-time feel
+      intervalId = setInterval(poll, 5000);
     },
     cancel() {
       clearInterval(intervalId);

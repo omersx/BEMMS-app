@@ -12,15 +12,19 @@ import {
   getDevicesOutOfService,
   getAdminAlerts,
 } from '@/lib/actions/dashboard';
+import { getEngineersTeam } from '@/lib/actions/engineers';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { ActionButtons } from '@/components/dashboard/action-buttons';
 import { TicketListCompact } from '@/components/dashboard/ticket-list-compact';
 import { MaintenanceDueList } from '@/components/dashboard/maintenance-due-list';
 import { AvailabilityAlerts } from '@/components/dashboard/availability-alerts';
 import { AdminAlerts } from '@/components/dashboard/admin-alerts';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   Monitor, TicketCheck, Wrench, AlertTriangle,
-  ShieldAlert, ClipboardCheck, Clock,
+  ShieldAlert, ClipboardCheck, Clock, UsersRound, MessageCircle,
 } from 'lucide-react';
 
 export default async function DashboardPage() {
@@ -81,25 +85,97 @@ export default async function DashboardPage() {
 
 // ── Staff Dashboard ─────────────────────────────────────────────────────
 async function StaffDashboard({ stats, userId }: { stats: any; userId: string }) {
-  const [myTickets, alerts] = await Promise.all([
+  const [myTickets, alerts, teamRes] = await Promise.all([
     getMyTickets(5),
     getDepartmentAlerts(),
+    getEngineersTeam(),
   ]);
+
+  const engineers = teamRes.data || [];
+  const onDutyEngineers = engineers.filter((e: any) => e.dutyStatus === 'on_duty' || e.dutyStatus === 'on_call');
+  const responseNeededTickets = myTickets.filter((t: any) => t.statusCode === 'waiting_requester');
 
   return (
     <>
       {/* Quick Actions - full width on mobile */}
       <ActionButtons role="staff" />
 
+      {/* Action Required: Response Requested on Tickets */}
+      {responseNeededTickets.length > 0 && (
+        <Card className="border-amber-300 dark:border-amber-900 bg-amber-50/70 dark:bg-amber-950/20 shadow-sm overflow-hidden">
+          <CardContent className="p-4 flex items-start gap-3">
+            <MessageCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-sm text-amber-900 dark:text-amber-200">
+                Action Required: Response Requested ({responseNeededTickets.length})
+              </h4>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                Biomedical Engineering needs additional information from you regarding reported issues.
+              </p>
+              <div className="mt-2 space-y-1">
+                {responseNeededTickets.map((t: any) => (
+                  <Link
+                    key={t.id}
+                    href={`/tickets/${t.id}`}
+                    className="block p-2 rounded-lg bg-card/80 border border-amber-200 dark:border-amber-800 text-xs hover:border-amber-400 transition"
+                  >
+                    <span className="font-mono font-bold">{t.ticketNumber}</span>: {t.title} → Tap to reply
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Department Availability Alerts */}
       {alerts.length > 0 && (
         <AvailabilityAlerts devices={alerts} />
       )}
 
+      {/* Biomedical Engineering Coverage / On-Duty Team Widget */}
+      <Card className="border shadow-sm">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
+                <UsersRound className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm">Biomedical Engineering Support</h3>
+                <p className="text-xs text-muted-foreground">
+                  {onDutyEngineers.length > 0
+                    ? `${onDutyEngineers.length} engineer(s) available in hospital today`
+                    : 'Biomedical support on duty & on call'}
+                </p>
+              </div>
+            </div>
+            <Button asChild variant="outline" size="sm" className="self-start sm:self-auto text-xs">
+              <Link href="/engineering-team">View Team & Schedules →</Link>
+            </Button>
+          </div>
+          {onDutyEngineers.length > 0 && (
+            <div className="mt-3 pt-3 border-t grid sm:grid-cols-2 md:grid-cols-3 gap-2">
+              {onDutyEngineers.slice(0, 3).map((eng: any) => (
+                <div key={eng.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/40 text-xs">
+                  <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                  <span className="font-medium truncate">{eng.fullName}</span>
+                  {eng.extension ? (
+                    <span className="text-muted-foreground ml-auto shrink-0 font-mono">Ext. {eng.extension}</span>
+                  ) : eng.mobileNumber ? (
+                    <span className="text-muted-foreground ml-auto shrink-0">{eng.mobileNumber}</span>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* My Tickets */}
       <TicketListCompact
         tickets={myTickets}
-        title="My Tickets"
+        title="My Recent Tickets"
         emptyMessage="No tickets need your attention."
       />
 
@@ -109,13 +185,13 @@ async function StaffDashboard({ stats, userId }: { stats: any; userId: string })
           title="Open Tickets"
           value={stats?.openTickets || 0}
           icon={<TicketCheck className="h-4 w-4 text-orange-500" />}
-          href="/tickets?status=open"
+          href="/tickets"
         />
         <StatCard
           title="Devices Available"
           value={stats?.activeDevices || 0}
           icon={<Monitor className="h-4 w-4 text-green-500" />}
-          href="/devices?status=operational"
+          href="/my-department"
         />
       </div>
     </>

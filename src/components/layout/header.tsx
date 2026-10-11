@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { NotificationBell } from '@/components/notifications/notification-bell'
 
+import Link from 'next/link'
+
 export function Header({ user }: { user: { name: string; role: string; email: string } }) {
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-card/80 backdrop-blur-sm px-4 md:px-6">
@@ -51,16 +53,20 @@ export function Header({ user }: { user: { name: string; role: string; email: st
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="flex items-center w-full cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                <span>My Profile</span>
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+            <DropdownMenuItem asChild>
+              <Link href="/more" className="flex items-center w-full cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Menu &amp; Settings</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()}>
+            <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>

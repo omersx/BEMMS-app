@@ -23,6 +23,7 @@ import {
   Inbox,
   Filter,
 } from "lucide-react"
+import { WaitingForEngineerBanner } from "./ticket-dispatch-status"
 import { cn } from "@/lib/utils"
 
 interface TicketCardsViewProps {
@@ -365,6 +366,12 @@ export function TicketCardsView({ tickets }: TicketCardsViewProps) {
                         <span className="font-medium text-foreground">
                           {ticket.assignedEngineer.fullName}
                         </span>
+                      ) : ["new", "acknowledged", "in_triage"].includes(ticket.statusCode) ? (
+                        <WaitingForEngineerBanner
+                          compact
+                          reportedAt={ticket.reportedAt || ticket.createdAt || new Date()}
+                          reportedImpact={ticket.reportedImpact || undefined}
+                        />
                       ) : (
                         <span className="text-rose-600 dark:text-rose-400 font-semibold">
                           Unassigned

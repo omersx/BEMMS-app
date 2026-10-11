@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { QrCode, PlusCircle, Inbox, Users, MonitorSmartphone } from "lucide-react";
+import { QrCode, PlusCircle, Inbox, Users, MonitorSmartphone, Monitor, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -33,17 +33,37 @@ export function ActionButtons({ role, triageCount = 0 }: ActionButtonsProps) {
       )}
 
       {isBiomed && (
-        <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto min-h-[44px] relative">
-          <Link href="/tickets/triage">
-            <Inbox className="mr-2 h-5 w-5" />
-            Triage Queue
-            {triageCount > 0 && (
-              <Badge variant="destructive" className="ml-2 absolute -top-2 -right-2">
-                {triageCount}
-              </Badge>
-            )}
-          </Link>
-        </Button>
+        <>
+          <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto min-h-[44px] relative">
+            <Link href="/tickets/triage">
+              <Inbox className="mr-2 h-5 w-5" />
+              Triage Queue
+              {triageCount > 0 && (
+                <Badge variant="destructive" className="ml-2 absolute -top-2 -right-2">
+                  {triageCount}
+                </Badge>
+              )}
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-h-[44px]">
+            <Link href="/tickets">
+              <Inbox className="mr-2 h-5 w-5" />
+              Helpdesk Tickets
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-h-[44px]">
+            <Link href="/devices">
+              <Monitor className="mr-2 h-5 w-5" />
+              Devices
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-h-[44px]">
+            <Link href="/departments">
+              <Building2 className="mr-2 h-5 w-5" />
+              Departments
+            </Link>
+          </Button>
+        </>
       )}
 
       {isAdmin && (
