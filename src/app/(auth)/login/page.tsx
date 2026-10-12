@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
@@ -11,11 +11,16 @@ import { Button } from '@/components/ui/button'
 
 export default function LoginPage() {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,7 +41,7 @@ export default function LoginPage() {
       } else {
         router.push('/dashboard')
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setLoading(false)
@@ -44,75 +49,92 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full shadow-lg border-border/40" suppressHydrationWarning>
+    <Card className="w-full shadow-lg border-border/40">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>
           Enter your username or email and password to access your account
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit} suppressHydrationWarning>
-        <CardContent className="space-y-4" suppressHydrationWarning>
-          {error && (
-            <div className="p-3 text-sm text-destructive-foreground bg-destructive/90 rounded-md">
-              {error}
-            </div>
-          )}
-          <div className="space-y-2" suppressHydrationWarning>
-            <Label htmlFor="email">Username or Email</Label>
-            <Input
-              id="email"
-              type="text"
-              autoCapitalize="none"
-              autoCorrect="off"
-              placeholder="admin or email@hospital.org"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              suppressHydrationWarning
-            />
+
+      {!mounted ? (
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="h-4 w-28 bg-muted animate-pulse rounded" />
+            <div className="h-10 w-full bg-muted/40 rounded-md border border-input" />
           </div>
-          <div className="space-y-2" suppressHydrationWarning>
-            <Label htmlFor="password">Password</Label>
-            <div className="relative" suppressHydrationWarning>
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                suppressHydrationWarning
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
-                <span className="sr-only">Toggle password visibility</span>
-              </Button>
-            </div>
+          <div className="space-y-2">
+            <div className="h-4 w-20 bg-muted animate-pulse rounded" />
+            <div className="h-10 w-full bg-muted/40 rounded-md border border-input" />
           </div>
-        </CardContent>
-        <CardFooter>
-          <Button className="w-full" type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              'Sign In'
-            )}
+          <Button className="w-full mt-2" disabled>
+            Sign In
           </Button>
-        </CardFooter>
-      </form>
+        </CardContent>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            {error && (
+              <div className="p-3 text-sm text-destructive-foreground bg-destructive/90 rounded-md">
+                {error}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="email">Username or Email</Label>
+              <Input
+                id="email"
+                type="text"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                placeholder="admin or email@hospital.org"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="sr-only">Toggle password visibility</span>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button className="w-full" type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </Button>
+          </CardFooter>
+        </form>
+      )}
     </Card>
   )
 }
