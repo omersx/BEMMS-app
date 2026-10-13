@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { users, userRoleAssignments, userAccessScopes, serviceTickets, engineerProfiles, roles } from '@/lib/db/schema';
+import { users, userRoleAssignments, userAccessScopes, serviceTickets, engineerProfiles, roles, hospitals, departments } from '@/lib/db/schema';
 import { requireAuth, requireRole, requireScope } from '@/lib/auth/rbac';
 import { createAuditLog } from '@/lib/audit';
 import { hashPassword } from '@/lib/auth/password';
@@ -37,10 +37,57 @@ export async function getUsers(filters?: { organizationId?: string }) {
       rolesByUserId.set(a.userId, existing);
     }
 
-    const data = usersList.map((u) => ({
-      ...u,
-      roles: rolesByUserId.get(u.id) || [],
-    }));
+    // Query access scopes for all users with hospital and department info
+    const scopes = await db
+      .select({
+        userId: userAccessScopes.userId,
+        scopeType: userAccessScopes.scopeType,
+        hospitalId: userAccessScopes.hospitalId,
+        hospitalName: hospitals.name,
+        departmentId: userAccessScopes.departmentId,
+        departmentName: departments.name,
+      })
+      .from(userAccessScopes)
+      .leftJoin(hospitals, eq(userAccessScopes.hospitalId, hospitals.id))
+      .leftJoin(departments, eq(userAccessScopes.departmentId, departments.id));
+
+    const scopesByUserId = new Map<string, typeof scopes>();
+    for (const s of scopes) {
+      const existing = scopesByUserId.get(s.userId) || [];
+      existing.push(s);
+      scopesByUserId.set(s.userId, existing);
+    }
+
+    const data = usersList.map((u) => {
+      const userRoles = rolesByUserId.get(u.id) || [];
+      const userScopes = scopesByUserId.get(u.id) || [];
+      const primaryScope = userScopes.find((s) => s.departmentName) || userScopes[0] || null;
+
+      const roleCodes = userRoles.map((r) => r.code);
+      const isEngineer = roleCodes.some((code) =>
+        ['BIOMED_ENG', 'BIOMED_TECH', 'BIOMED_MGR'].includes(code)
+      );
+      const isStaff = roleCodes.some((code) =>
+        ['STAFF', 'DEPT_MGR'].includes(code)
+      );
+      const isAdmin = roleCodes.some((code) =>
+        ['SYS_ADMIN', 'ORG_ADMIN', 'HOSP_ADMIN'].includes(code)
+      );
+
+      let userType: 'engineer' | 'department' | 'admin' | 'other' = 'other';
+      if (isEngineer) userType = 'engineer';
+      else if (isStaff) userType = 'department';
+      else if (isAdmin) userType = 'admin';
+
+      return {
+        ...u,
+        roles: userRoles,
+        scopes: userScopes,
+        departmentName: primaryScope?.departmentName || null,
+        hospitalName: primaryScope?.hospitalName || null,
+        userType,
+      };
+    });
 
     return { success: true, data };
   } catch (error: any) {
@@ -75,6 +122,10 @@ export async function getUserById(id: string) {
       },
     });
 
+    const engineerProfile = await db.query.engineerProfiles.findFirst({
+      where: eq(engineerProfiles.userId, id),
+    });
+
     return {
       success: true,
       data: {
@@ -87,6 +138,7 @@ export async function getUserById(id: string) {
           effectiveTo: ra.effectiveTo,
         })),
         accessScopes,
+        engineerProfile: engineerProfile || null,
       },
     };
   } catch (error: any) {
@@ -183,6 +235,14 @@ export async function inviteUser(input: unknown) {
         });
       }
 
+      // 3. Link Department Manager if DEPT_MGR role and departmentId provided
+      if (roleCodes.includes('DEPT_MGR') && validated.data.departmentId) {
+        await tx
+          .update(departments)
+          .set({ managerUserId: newUser.id, updatedAt: new Date() })
+          .where(eq(departments.id, validated.data.departmentId));
+      }
+
       await createAuditLog(tx, {
         action: 'INVITE',
         entityType: 'user',
@@ -193,6 +253,10 @@ export async function inviteUser(input: unknown) {
 
       revalidatePath('/admin/users');
       revalidatePath('/team');
+      revalidatePath('/departments');
+      if (validated.data.departmentId) {
+        revalidatePath(`/departments/${validated.data.departmentId}`);
+      }
       return { success: true, data: newUser };
     });
   } catch (error: any) {
