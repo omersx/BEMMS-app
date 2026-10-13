@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
@@ -9,8 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
+const emptySubscribe = () => () => {}
+
 export default function LoginPage() {
   const router = useRouter()
+  const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -53,70 +56,83 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full shadow-lg border-border/40" suppressHydrationWarning>
-      <CardHeader className="space-y-1 text-center" suppressHydrationWarning>
+    <Card className="w-full shadow-lg border-border/40">
+      <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>
           Enter your username or email and password to access your account
         </CardDescription>
       </CardHeader>
 
-      <form onSubmit={handleSubmit} suppressHydrationWarning>
-        <CardContent className="space-y-4" suppressHydrationWarning>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
           {error && (
             <div className="p-3 text-sm text-destructive-foreground bg-destructive/90 rounded-md">
               {error}
             </div>
           )}
-          <div className="space-y-2" suppressHydrationWarning>
-            <Label htmlFor="email">Username or Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="text"
-              autoComplete="username"
-              autoCapitalize="none"
-              autoCorrect="off"
-              placeholder="admin or email@hospital.org"
-              data-lpignore="true"
-              defaultValue=""
-              required
-              suppressHydrationWarning
-            />
-          </div>
-          <div className="space-y-2" suppressHydrationWarning>
-            <Label htmlFor="password">Password</Label>
-            <div className="relative" suppressHydrationWarning>
-              <Input
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                data-lpignore="true"
-                defaultValue=""
-                required
-                suppressHydrationWarning
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
-                )}
-                <span className="sr-only">Toggle password visibility</span>
-              </Button>
+          {!isClient ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="h-4 w-28 bg-muted animate-pulse rounded" />
+                <div className="h-9 w-full bg-muted/40 rounded-md border border-input animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-20 bg-muted animate-pulse rounded" />
+                <div className="h-9 w-full bg-muted/40 rounded-md border border-input animate-pulse" />
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="email">Username or Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="text"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  placeholder="admin or email@hospital.org"
+                  data-lpignore="true"
+                  defaultValue=""
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    data-lpignore="true"
+                    defaultValue=""
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">Toggle password visibility</span>
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
-        <CardFooter suppressHydrationWarning>
-          <Button className="w-full" type="submit" disabled={loading}>
+        <CardFooter>
+          <Button className="w-full" type="submit" disabled={!isClient || loading}>
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
