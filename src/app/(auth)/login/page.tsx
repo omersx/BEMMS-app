@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
@@ -11,9 +11,18 @@ import { Button } from '@/components/ui/button'
 
 export default function LoginPage() {
   const router = useRouter()
+  const [isClient, setIsClient] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  if (!isClient) {
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -53,22 +62,22 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full shadow-lg border-border/40" suppressHydrationWarning>
-      <CardHeader className="space-y-1 text-center" suppressHydrationWarning>
+    <Card className="w-full shadow-lg border-border/40">
+      <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>
           Enter your username or email and password to access your account
         </CardDescription>
       </CardHeader>
 
-      <form onSubmit={handleSubmit} suppressHydrationWarning>
-        <CardContent className="space-y-4" suppressHydrationWarning>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="space-y-4">
           {error && (
             <div className="p-3 text-sm text-destructive-foreground bg-destructive/90 rounded-md">
               {error}
             </div>
           )}
-          <div className="space-y-2" suppressHydrationWarning>
+          <div className="space-y-2">
             <Label htmlFor="email">Username or Email</Label>
             <Input
               id="email"
@@ -82,9 +91,9 @@ export default function LoginPage() {
               required
             />
           </div>
-          <div className="space-y-2" suppressHydrationWarning>
+          <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <div className="relative" suppressHydrationWarning>
+            <div className="relative">
               <Input
                 id="password"
                 name="password"
@@ -111,7 +120,7 @@ export default function LoginPage() {
             </div>
           </div>
         </CardContent>
-        <CardFooter suppressHydrationWarning>
+        <CardFooter>
           <Button className="w-full" type="submit" disabled={loading}>
             {loading ? (
               <>
