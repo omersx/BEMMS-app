@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
@@ -11,18 +11,9 @@ import { Button } from '@/components/ui/button'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [isClient, setIsClient] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  if (!isClient) {
-    return null
-  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -62,22 +53,22 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full shadow-lg border-border/40">
-      <CardHeader className="space-y-1 text-center">
+    <Card className="w-full shadow-lg border-border/40" suppressHydrationWarning>
+      <CardHeader className="space-y-1 text-center" suppressHydrationWarning>
         <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>
           Enter your username or email and password to access your account
         </CardDescription>
       </CardHeader>
 
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+      <form onSubmit={handleSubmit} suppressHydrationWarning>
+        <CardContent className="space-y-4" suppressHydrationWarning>
           {error && (
             <div className="p-3 text-sm text-destructive-foreground bg-destructive/90 rounded-md">
               {error}
             </div>
           )}
-          <div className="space-y-2">
+          <div className="space-y-2" suppressHydrationWarning>
             <Label htmlFor="email">Username or Email</Label>
             <Input
               id="email"
@@ -87,20 +78,24 @@ export default function LoginPage() {
               autoCapitalize="none"
               autoCorrect="off"
               placeholder="admin or email@hospital.org"
+              data-lpignore="true"
               defaultValue=""
               required
+              suppressHydrationWarning
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2" suppressHydrationWarning>
             <Label htmlFor="password">Password</Label>
-            <div className="relative">
+            <div className="relative" suppressHydrationWarning>
               <Input
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
+                data-lpignore="true"
                 defaultValue=""
                 required
+                suppressHydrationWarning
               />
               <Button
                 type="button"
@@ -120,7 +115,7 @@ export default function LoginPage() {
             </div>
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter suppressHydrationWarning>
           <Button className="w-full" type="submit" disabled={loading}>
             {loading ? (
               <>
