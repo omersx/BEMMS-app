@@ -66,7 +66,7 @@ export function Header({ user }: { user: { name: string; role: string; email: st
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/login' })} className="cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>
