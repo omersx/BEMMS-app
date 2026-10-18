@@ -4,11 +4,13 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bell, CheckCheck, TicketCheck, Wrench, Monitor, AlertTriangle } from 'lucide-react';
+import { playNotificationSound, playUrgentNotificationSound, unlockAudio } from '@/lib/utils/sound';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from '@/components/ui/popover';
+import { NavBadge } from '@/components/layout/nav-badge';
 import { NotificationItem } from './notification-item';
 import { getNotifications, markAsRead, markAllAsRead } from '@/lib/actions/notifications';
 
@@ -118,6 +120,21 @@ export function NotificationBell() {
     }
   }, [showNextToast]);
 
+  // Unlock Web Audio API on first user interaction for mobile device sound support
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      unlockAudio();
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
+    document.addEventListener('click', handleFirstInteraction, { once: true });
+    document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+    return () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, []);
+
   // SSE connection for real-time unread count + new notification events
   useEffect(() => {
     let eventSource: EventSource | null = null;
@@ -135,6 +152,7 @@ export function NotificationBell() {
 
           // Real-time toast for new notifications
           if (data.type === 'new_notifications' && Array.isArray(data.notifications)) {
+            let hasCritical = false;
             data.notifications.forEach((notif: any) => {
               queueToast({
                 title: notif.title,
@@ -142,7 +160,20 @@ export function NotificationBell() {
                 actionUrl: notif.actionUrl || undefined,
                 notificationType: notif.notificationType,
               });
+              // Check if any notification is urgent/critical
+              if (notif.title?.includes('🚨') || notif.title?.includes('URGENT')) {
+                hasCritical = true;
+              }
             });
+
+            // Play notification sound (urgent alarm for critical, chime for normal)
+            if (data.notifications.length > 0) {
+              if (hasCritical) {
+                playUrgentNotificationSound();
+              } else {
+                playNotificationSound();
+              }
+            }
 
             // Dispatch global event for live page sync (ticket detail, tickets list, etc.)
             if (typeof window !== 'undefined') {
@@ -178,6 +209,18 @@ export function NotificationBell() {
           });
           // Bump unread count immediately
           setUnreadCount((prev) => prev + 1);
+
+          // Play notification sound for push-received notifications
+          const isCritical =
+            notif.data?.priority === 'p1_critical' ||
+            notif.data?.impact === 'patient_care_affected' ||
+            notif.title?.includes('🚨') ||
+            notif.title?.includes('URGENT');
+          if (isCritical) {
+            playUrgentNotificationSound();
+          } else {
+            playNotificationSound();
+          }
 
           // Dispatch global event for live page sync
           if (typeof window !== 'undefined') {
@@ -251,11 +294,15 @@ export function NotificationBell() {
         <PopoverTrigger asChild>
           <Button variant="ghost" size="icon" className="relative min-h-[44px] min-w-[44px]">
             <Bell className={`h-5 w-5 ${unreadCount > 0 ? 'animate-pulse' : ''}`} />
-            {unreadCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 min-w-[20px] flex items-center justify-center p-0 px-1 rounded-full text-[10px] animate-in zoom-in">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </Badge>
-            )}
+            <NavBadge
+              type="count"
+              value={unreadCount}
+              variant="default"
+              position="icon-corner"
+              maxCount={99}
+              hideWhenZero={true}
+              ariaLabel={`${unreadCount} unread notifications`}
+            />
             <span className="sr-only">Notifications</span>
           </Button>
         </PopoverTrigger>

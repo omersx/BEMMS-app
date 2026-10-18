@@ -15,15 +15,19 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { NavBadge, type NavBadgeConfig } from './nav-badge'
+import { useNavCounts } from '@/components/providers/nav-counts-provider'
 
 interface SidebarProps {
   user: { name: string; role: string; email: string; roles: string[] }
 }
 
-interface SidebarLink {
+export interface SidebarLink {
   href: string;
   label: string;
   icon: any;
+  badgeKey?: 'notifications' | 'triage' | 'tickets' | 'maintenance' | 'workOrders' | 'pmPlans' | string;
+  badgeConfig?: Partial<NavBadgeConfig>;
 }
 
 // Staff-specific nav: simplified, focused on their department
@@ -32,26 +36,26 @@ const STAFF_LINKS: SidebarLink[] = [
   { href: '/my-department', label: 'My Department', icon: Building2 },
   { href: '/scan', label: 'Scan QR', icon: QrCode },
   { href: '/tickets/create', label: 'Report Problem', icon: PlusCircle },
-  { href: '/tickets', label: 'My Tickets', icon: TicketCheck },
+  { href: '/tickets', label: 'My Tickets', icon: TicketCheck, badgeKey: 'tickets' },
   { href: '/engineering-team', label: 'Engineering Team', icon: UsersRound },
-  { href: '/notifications', label: 'Notifications', icon: Bell },
+  { href: '/notifications', label: 'Notifications', icon: Bell, badgeKey: 'notifications' },
 ]
 
 // Engineer/Technician nav: workflow-optimized for BME daily work
 const ENGINEER_LINKS: SidebarLink[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/scan', label: 'Scan QR', icon: QrCode },
-  { href: '/tickets/triage', label: 'Triage Queue', icon: Inbox },
-  { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck },
+  { href: '/tickets/triage', label: 'Triage Queue', icon: Inbox, badgeKey: 'triage' },
+  { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck, badgeKey: 'tickets' },
   { href: '/devices', label: 'Devices', icon: Monitor },
   { href: '/departments', label: 'Departments', icon: Building2 },
   { href: '/team', label: 'Engineering Team', icon: UsersRound },
-  { href: '/maintenance', label: 'Maintenance', icon: Wrench },
-  { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList },
-  { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar },
+  { href: '/maintenance', label: 'Maintenance', icon: Wrench, badgeKey: 'maintenance' },
+  { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList, badgeKey: 'workOrders' },
+  { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar, badgeKey: 'pmPlans' },
   { href: '/maintenance/checklists', label: 'Checklists', icon: CheckSquare },
   { href: '/reports', label: 'Reports', icon: BarChart3 },
-  { href: '/notifications', label: 'Notifications', icon: Bell },
+  { href: '/notifications', label: 'Notifications', icon: Bell, badgeKey: 'notifications' },
 ]
 
 // Full nav for managers and admins (includes team management + admin access)
@@ -61,14 +65,14 @@ const FULL_LINKS: SidebarLink[] = [
   { href: '/devices', label: 'Devices', icon: Monitor },
   { href: '/departments', label: 'Departments', icon: Building2 },
   { href: '/team', label: 'Engineering Team', icon: UsersRound },
-  { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck },
-  { href: '/tickets/triage', label: 'Triage Queue', icon: AlertTriangle },
-  { href: '/maintenance', label: 'Maintenance', icon: Wrench },
-  { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList },
-  { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar },
+  { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck, badgeKey: 'tickets' },
+  { href: '/tickets/triage', label: 'Triage Queue', icon: AlertTriangle, badgeKey: 'triage' },
+  { href: '/maintenance', label: 'Maintenance', icon: Wrench, badgeKey: 'maintenance' },
+  { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList, badgeKey: 'workOrders' },
+  { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar, badgeKey: 'pmPlans' },
   { href: '/maintenance/checklists', label: 'Checklists', icon: CheckSquare },
   { href: '/reports', label: 'Reports', icon: BarChart3 },
-  { href: '/notifications', label: 'Notifications', icon: Bell },
+  { href: '/notifications', label: 'Notifications', icon: Bell, badgeKey: 'notifications' },
 ]
 
 function getSidebarLinks(roles: string[]): SidebarLink[] {
@@ -99,6 +103,7 @@ export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const { resolveBadge } = useNavCounts()
 
   useEffect(() => {
     setMounted(true)
@@ -137,6 +142,8 @@ export function Sidebar({ user }: SidebarProps) {
                 (link.href === '/tickets' && pathname.startsWith('/tickets') && !pathname.startsWith('/tickets/triage') && !pathname.startsWith('/tickets/create')) ||
                 (link.href === '/maintenance' && pathname === '/maintenance')
 
+              const badge = resolveBadge(link.badgeKey, link.badgeConfig, { isCollapsed: collapsed })
+
               const navLink = (
                 <Link
                   href={link.href}
@@ -146,8 +153,24 @@ export function Sidebar({ user }: SidebarProps) {
                     collapsed && "justify-center px-0"
                   )}
                 >
-                  <link.icon className={cn("h-5 w-5 shrink-0", active ? "text-primary-foreground" : "")} />
-                  {!collapsed && <span>{link.label}</span>}
+                  <div className="relative flex items-center justify-center shrink-0">
+                    <link.icon className={cn("h-5 w-5 shrink-0", active ? "text-primary-foreground" : "")} />
+                    {collapsed && badge && (
+                      <NavBadge {...badge} position="icon-corner" />
+                    )}
+                  </div>
+                  {!collapsed && (
+                    <>
+                      <span className="truncate">{link.label}</span>
+                      {badge && (
+                        <NavBadge
+                          {...badge}
+                          position="trailing"
+                          className={active && badge.variant === 'secondary' ? 'bg-primary-foreground/20 text-primary-foreground' : undefined}
+                        />
+                      )}
+                    </>
+                  )}
                 </Link>
               )
 
@@ -156,7 +179,10 @@ export function Sidebar({ user }: SidebarProps) {
                   {mounted && collapsed ? (
                     <Tooltip>
                       <TooltipTrigger asChild>{navLink}</TooltipTrigger>
-                      <TooltipContent side="right">{link.label}</TooltipContent>
+                      <TooltipContent side="right" className="flex items-center gap-2">
+                        <span>{link.label}</span>
+                        {badge && <NavBadge {...badge} position="inline" />}
+                      </TooltipContent>
                     </Tooltip>
                   ) : (
                     navLink

@@ -25,6 +25,7 @@ import {
   User,
 } from 'lucide-react';
 import { SignOutButton } from '@/components/shared/sign-out-button';
+import { MoreItemBadge } from '@/components/layout/more-item-badge';
 
 export default async function MorePage() {
   const session = await auth();
@@ -87,6 +88,7 @@ export default async function MorePage() {
           href: '/tickets',
           icon: TicketCheck,
           color: 'text-orange-500 bg-orange-50 dark:bg-orange-950',
+          badgeKey: 'tickets',
         },
         {
           label: 'Report a Problem',
@@ -121,6 +123,7 @@ export default async function MorePage() {
                 href: '/tickets/triage',
                 icon: AlertTriangle,
                 color: 'text-amber-500 bg-amber-50 dark:bg-amber-950',
+                badgeKey: 'triage',
               },
             ]
           : []),
@@ -137,6 +140,7 @@ export default async function MorePage() {
                 href: '/maintenance',
                 icon: Wrench,
                 color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950',
+                badgeKey: 'maintenance',
               },
               {
                 label: 'Work Orders / Tasks',
@@ -144,6 +148,7 @@ export default async function MorePage() {
                 href: '/maintenance/tasks',
                 icon: ClipboardList,
                 color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-950',
+                badgeKey: 'workOrders',
               },
               {
                 label: 'PM Plans & Schedules',
@@ -151,6 +156,7 @@ export default async function MorePage() {
                 href: '/maintenance/plans',
                 icon: Calendar,
                 color: 'text-violet-500 bg-violet-50 dark:bg-violet-950',
+                badgeKey: 'pmPlans',
               },
               {
                 label: 'Checklists',
@@ -179,6 +185,7 @@ export default async function MorePage() {
           href: '/notifications',
           icon: Bell,
           color: 'text-amber-500 bg-amber-50 dark:bg-amber-950',
+          badgeKey: 'notifications',
         },
       ],
     },
@@ -267,7 +274,10 @@ export default async function MorePage() {
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <MoreItemBadge badgeKey={(item as any).badgeKey} />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  </div>
                 </Link>
               );
             })}

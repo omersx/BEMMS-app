@@ -106,6 +106,7 @@ self.addEventListener('push', (event) => {
     badge: '/icons/icon-192.png',
     tag: data.tag || 'bemms-notification',
     renotify: true,
+    silent: false, // Ensure native device notification sound plays
     data: {
       url: data.url || '/notifications',
       ...data.data,

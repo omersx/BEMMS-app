@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Camera, CameraOff, QrCode, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { playQrBeep, unlockAudio } from "@/lib/utils/sound"
 
 export function QrCameraScanner() {
   const router = useRouter()
@@ -21,6 +22,9 @@ export function QrCameraScanner() {
         scannerRef.current.clear().catch(() => {})
       }
       setIsScanning(false)
+
+      // Play beep sound to indicate successful capture (works on native devices)
+      playQrBeep()
 
       toast.success("QR Code detected!")
 
@@ -50,6 +54,9 @@ export function QrCameraScanner() {
   const startScanner = async () => {
     setErrorMsg(null)
     setIsScanning(true)
+
+    // Unlock Web Audio on user gesture so beep can play on mobile devices
+    unlockAudio()
 
     try {
       const { Html5QrcodeScanner } = await import("html5-qrcode")
