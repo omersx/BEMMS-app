@@ -1,4 +1,5 @@
 import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { Header } from '@/components/layout/header';
@@ -10,7 +11,11 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  const sessionUser = session?.user as
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  const sessionUser = session.user as
     | { name?: string; fullName?: string; email?: string; roles?: string[] }
     | undefined;
 
