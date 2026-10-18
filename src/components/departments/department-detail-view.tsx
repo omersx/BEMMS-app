@@ -260,7 +260,7 @@ export function DepartmentDetailView({
                 placeholder="Search department devices by name, asset #, category..."
                 value={deviceSearch}
                 onChange={(e) => setDeviceSearch(e.target.value)}
-                className="pl-9 bg-white"
+                className="pl-9 bg-card"
               />
             </div>
 
@@ -365,7 +365,7 @@ export function DepartmentDetailView({
               placeholder="Search tickets by number, title, device..."
               value={ticketSearch}
               onChange={(e) => setTicketSearch(e.target.value)}
-              className="pl-9 bg-white"
+              className="pl-9 bg-card"
             />
           </div>
 

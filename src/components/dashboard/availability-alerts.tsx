@@ -19,16 +19,16 @@ interface AvailabilityAlertsProps {
 
 export function AvailabilityAlerts({ devices }: AvailabilityAlertsProps) {
   return (
-    <Card className="border-orange-200 shadow-sm">
-      <CardHeader className="pb-3 bg-orange-50/50 rounded-t-xl border-b border-orange-100">
-        <CardTitle className="text-lg flex items-center text-orange-800">
+    <Card className="border-orange-200 dark:border-orange-900 shadow-sm">
+      <CardHeader className="pb-3 bg-orange-50/50 dark:bg-orange-950/30 rounded-t-xl border-b border-orange-100 dark:border-orange-900">
+        <CardTitle className="text-lg flex items-center text-orange-800 dark:text-orange-300">
           <AlertTriangle className="w-5 h-5 mr-2 text-orange-500" />
           Unavailable Devices
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
         {devices.length === 0 ? (
-          <div className="text-center py-6 text-sm text-green-700 bg-green-50 rounded-md border border-green-100 flex flex-col items-center gap-2">
+          <div className="text-center py-6 text-sm text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950/30 rounded-md border border-green-100 dark:border-green-900 flex flex-col items-center gap-2">
             <MonitorSmartphone className="h-8 w-8 text-green-500 opacity-80" />
             <p>All department devices are operational.</p>
           </div>
@@ -36,7 +36,7 @@ export function AvailabilityAlerts({ devices }: AvailabilityAlertsProps) {
           <div className="space-y-3">
             {devices.map((device) => (
               <Link key={device.id} href={`/devices/${device.id}`} className="block">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-orange-100 bg-white rounded-lg hover:bg-orange-50/30 transition-colors gap-2 min-h-[44px]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-orange-100 dark:border-orange-900 bg-card rounded-lg hover:bg-orange-50/30 dark:hover:bg-orange-950/30 transition-colors gap-2 min-h-[44px]">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold">{device.assetNumber}</span>

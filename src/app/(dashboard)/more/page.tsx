@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { SignOutButton } from '@/components/shared/sign-out-button';
 import { MoreItemBadge } from '@/components/layout/more-item-badge';
+import { ThemeSelectorCard } from '@/components/theme/theme-selector-card';
 
 export default async function MorePage() {
   const session = await auth();
@@ -284,6 +285,9 @@ export default async function MorePage() {
           </div>
         </div>
       ))}
+
+      {/* Theme Settings */}
+      <ThemeSelectorCard />
 
       {/* Account Session & Sign Out */}
       <div className="pt-2">

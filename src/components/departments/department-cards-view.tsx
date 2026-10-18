@@ -87,7 +87,7 @@ export function DepartmentCardsView({ departments, hospitals }: DepartmentCardsV
             placeholder="Search departments, codes, managers..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-white"
+            className="pl-9 bg-card"
           />
         </div>
 

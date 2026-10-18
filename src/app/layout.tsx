@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
 import AuthProvider from '@/components/providers/session-provider'
+import { ThemeProvider } from '@/components/providers/theme-provider'
 import { ServiceWorkerRegister } from '@/components/pwa/sw-register'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 
@@ -39,12 +40,19 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <AuthProvider>
-          {children}
-          <Toaster />
-          <ServiceWorkerRegister />
-          <InstallPrompt />
-        </AuthProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            {children}
+            <Toaster richColors closeButton />
+            <ServiceWorkerRegister />
+            <InstallPrompt />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

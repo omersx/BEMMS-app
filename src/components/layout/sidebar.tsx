@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { NavBadge, type NavBadgeConfig } from './nav-badge'
 import { useNavCounts } from '@/components/providers/nav-counts-provider'
+import { ThemeToggle } from '@/components/theme/theme-toggle'
 
 interface SidebarProps {
   user: { name: string; role: string; email: string; roles: string[] }
@@ -236,6 +237,7 @@ export function Sidebar({ user }: SidebarProps) {
                 </AvatarFallback>
               </Avatar>
             </Link>
+            <ThemeToggle />
             {mounted && (
               <TooltipProvider>
                 <Tooltip>
@@ -272,24 +274,27 @@ export function Sidebar({ user }: SidebarProps) {
                 <span className="text-[11px] text-muted-foreground truncate leading-tight">{user.role}</span>
               </div>
             </Link>
-            {mounted && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
-                      onClick={() => signOut({ callbackUrl: '/login' })}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span className="sr-only">Log out</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Log out</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
+            <div className="flex items-center gap-1 shrink-0">
+              <ThemeToggle />
+              {mounted && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                        onClick={() => signOut({ callbackUrl: '/login' })}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="sr-only">Log out</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Log out</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -10,6 +10,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import { ThemeToggle } from '@/components/theme/theme-toggle'
 
 import Link from 'next/link'
 
@@ -32,7 +33,8 @@ export function Header({ user }: { user: { name: string; role: string; email: st
         </div>
       </div>
 
-      <div className="flex items-center gap-4 ml-auto md:ml-0">
+      <div className="flex items-center gap-2 ml-auto md:ml-0">
+        <ThemeToggle />
         <NotificationBell />
 
         <DropdownMenu>

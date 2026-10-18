@@ -65,7 +65,7 @@ export default async function TriageQueuePage() {
     { key: "age", header: "Age", render: (item: any) => {
       const hours = Math.floor((Date.now() - new Date(item.reportedAt).getTime()) / (1000 * 60 * 60))
       return (
-        <span className={`text-sm flex items-center gap-1 ${hours > 24 ? 'text-red-600 font-medium' : hours > 4 ? 'text-amber-600 font-medium' : 'text-muted-foreground'}`}>
+        <span className={`text-sm flex items-center gap-1 ${hours > 24 ? 'text-red-600 dark:text-red-400 font-medium' : hours > 4 ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-muted-foreground'}`}>
           <Clock className="w-3 h-3" />
           {hours < 1 ? '< 1h' : `${hours}h`}
         </span>
