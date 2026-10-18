@@ -4,6 +4,7 @@ import { DataTable } from "@/components/shared/data-table"
 import { TicketStatusBadge, TicketPriorityBadge, TicketImpactBadge } from "@/components/tickets/ticket-badges"
 import { WaitingForEngineerBanner } from "@/components/tickets/ticket-dispatch-status"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { TicketListAutoRefresh } from "@/components/tickets/ticket-list-auto-refresh"
 import { AlertTriangle, Clock, Inbox, CheckCircle2, Timer } from "lucide-react"
 import Link from "next/link"
 
@@ -74,6 +75,7 @@ export default async function TriageQueuePage() {
 
   return (
     <div className="space-y-6">
+      <TicketListAutoRefresh />
       <PageHeader
         title="Triage Queue"
         description="Review, classify, and assign incoming service requests"

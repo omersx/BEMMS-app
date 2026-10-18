@@ -21,6 +21,7 @@ import { TicketActionButtons, ResumeWorkButton } from "@/components/tickets/tick
 import { TicketSignaturesPanel } from "@/components/tickets/ticket-signatures-panel"
 import { TicketReporterProfile } from "@/components/tickets/ticket-reporter-profile"
 import { WaitingForEngineerBanner, AcceptedByEngineerBanner } from "@/components/tickets/ticket-dispatch-status"
+import { TicketAutoRefresh } from "@/components/tickets/ticket-auto-refresh"
 import { MapPin, Phone, User as UserIcon, Monitor, Clock, AlertTriangle, CheckCircle, ShieldCheck, AlertOctagon, Package, Info, Mail, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { use } from "react"
@@ -73,6 +74,13 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
 
   return (
     <div className="space-y-6">
+      <TicketAutoRefresh
+        ticketId={ticketId}
+        initialUpdatedAt={ticket.updatedAt}
+        initialStatusCode={ticket.statusCode}
+        initialCommentCount={comments.length}
+        initialAssignedEngineerUserId={ticket.assignedEngineerUserId}
+      />
       <PageHeader
         title={ticket.title}
         description={`Ticket ${ticket.ticketNumber}${reportedDate ? ` — Reported ${reportedDate} UTC` : ''}`}

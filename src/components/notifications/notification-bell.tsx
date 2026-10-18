@@ -143,6 +143,13 @@ export function NotificationBell() {
                 notificationType: notif.notificationType,
               });
             });
+
+            // Dispatch global event for live page sync (ticket detail, tickets list, etc.)
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(
+                new CustomEvent('bemms:notification', { detail: data.notifications })
+              );
+            }
           }
         } catch (e) {
           // Ignore parse errors
@@ -171,6 +178,13 @@ export function NotificationBell() {
           });
           // Bump unread count immediately
           setUnreadCount((prev) => prev + 1);
+
+          // Dispatch global event for live page sync
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('bemms:notification', { detail: [notif] })
+            );
+          }
         }
       }
     };

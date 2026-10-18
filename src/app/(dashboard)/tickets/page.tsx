@@ -6,6 +6,7 @@ import { getMyTickets } from "@/lib/actions/dashboard";
 import { PageHeader } from "@/components/shared/page-header";
 import { TicketCardsView } from "@/components/tickets/ticket-cards-view";
 import { StaffTicketsView } from "@/components/tickets/staff-tickets-view";
+import { TicketListAutoRefresh } from "@/components/tickets/ticket-list-auto-refresh";
 import { Button } from "@/components/ui/button";
 import { Plus, Filter } from "lucide-react";
 import Link from "next/link";
@@ -25,7 +26,12 @@ export default async function TicketsPage() {
   if (isStaffOnly) {
     // Staff view: show only their own tickets with plain-language status, search, and filters
     const myTickets = await getMyTickets(50);
-    return <StaffTicketsView tickets={myTickets} />;
+    return (
+      <>
+        <TicketListAutoRefresh />
+        <StaffTicketsView tickets={myTickets} />
+      </>
+    );
   }
 
   // Full view for BME/admin
@@ -34,6 +40,7 @@ export default async function TicketsPage() {
 
   return (
     <div className="space-y-6">
+      <TicketListAutoRefresh />
       <PageHeader
         title="Helpdesk Tickets"
         description="Track device problems, service requests, and maintenance progress"

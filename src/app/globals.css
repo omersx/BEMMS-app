@@ -59,9 +59,3 @@
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
 }
-
-/* Suppress development error overlay from browser extension hydration noise */
-nextjs-portal,
-[data-nextjs-dialog-overlay] {
-  display: none !important;
-}

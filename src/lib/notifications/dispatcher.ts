@@ -357,3 +357,125 @@ export async function notifyReporterOnStatusChange(params: {
     console.error('[Dispatcher] Error notifying reporter on status change:', error);
   }
 }
+
+// ── Notify on New Comment ────────────────────────────────────────────────────────
+
+/**
+ * When a comment is added to a ticket, notify the other party.
+ * If the commenter is the reporter → notify the assigned engineer.
+ * If the commenter is the engineer → notify the reporter.
+ */
+export async function notifyOnNewComment(params: {
+  ticketId: string;
+  ticketNumber: string;
+  title: string;
+  organizationId: string;
+  commentAuthorUserId: string;
+  commentAuthorName: string;
+  reporterUserId: string;
+  assignedEngineerUserId: string | null;
+  commentPreview: string;
+}): Promise<void> {
+  try {
+    const isReporterCommenting = params.commentAuthorUserId === params.reporterUserId;
+    const recipientUserId = isReporterCommenting
+      ? params.assignedEngineerUserId
+      : params.reporterUserId;
+
+    if (!recipientUserId) return; // No one to notify
+
+    const notifTitle = `💬 New message on ticket ${params.ticketNumber}`;
+    const preview = params.commentPreview.length > 80
+      ? params.commentPreview.substring(0, 80) + '…'
+      : params.commentPreview;
+    const notifBody = `${params.commentAuthorName}: ${preview}`;
+
+    await createInAppNotification({
+      organizationId: params.organizationId,
+      recipientUserId,
+      notificationType: 'ticket_updated',
+      title: notifTitle,
+      body: notifBody,
+      relatedEntityType: 'service_ticket',
+      relatedEntityId: params.ticketId,
+      actionUrl: `/tickets/${params.ticketId}`,
+    });
+
+    // Send push notification for new messages
+    const recipient = await db.query.users.findFirst({
+      where: eq(users.id, recipientUserId),
+      columns: { notificationPreferences: true },
+    });
+    const prefs = recipient?.notificationPreferences;
+    if (!prefs || (prefs.pushEnabled !== false && prefs.categories?.tickets !== false)) {
+      await sendPushToUser(recipientUserId, {
+        title: notifTitle,
+        body: notifBody,
+        tag: `ticket-comment-${params.ticketNumber}`,
+        url: `/tickets/${params.ticketId}`,
+        vibrate: [100, 50, 100],
+        data: {
+          ticketId: params.ticketId,
+          type: 'ticket_comment',
+        },
+      });
+    }
+
+    console.log(`[Dispatcher] Notified ${isReporterCommenting ? 'engineer' : 'reporter'} of new comment on ${params.ticketNumber}`);
+  } catch (error) {
+    console.error('[Dispatcher] Error notifying on new comment:', error);
+  }
+}
+
+// ── Notify Assigned Engineer ─────────────────────────────────────────────────────
+
+/**
+ * When a ticket is assigned to an engineer, notify them.
+ */
+export async function notifyEngineerOnAssign(params: {
+  ticketId: string;
+  ticketNumber: string;
+  title: string;
+  organizationId: string;
+  assignedEngineerUserId: string;
+  assignerName: string;
+}): Promise<void> {
+  try {
+    const notifTitle = `🔧 Ticket assigned to you: ${params.ticketNumber}`;
+    const notifBody = `${params.assignerName} assigned you to ticket "${params.title}". Please review and accept.`;
+
+    await createInAppNotification({
+      organizationId: params.organizationId,
+      recipientUserId: params.assignedEngineerUserId,
+      notificationType: 'ticket_updated',
+      title: notifTitle,
+      body: notifBody,
+      relatedEntityType: 'service_ticket',
+      relatedEntityId: params.ticketId,
+      actionUrl: `/tickets/${params.ticketId}`,
+    });
+
+    const engineer = await db.query.users.findFirst({
+      where: eq(users.id, params.assignedEngineerUserId),
+      columns: { notificationPreferences: true },
+    });
+    const prefs = engineer?.notificationPreferences;
+    if (!prefs || (prefs.pushEnabled !== false && prefs.categories?.tickets !== false)) {
+      await sendPushToUser(params.assignedEngineerUserId, {
+        title: notifTitle,
+        body: notifBody,
+        tag: `ticket-assigned-${params.ticketNumber}`,
+        url: `/tickets/${params.ticketId}`,
+        vibrate: [100, 50, 100],
+        data: {
+          ticketId: params.ticketId,
+          type: 'ticket_assigned',
+        },
+      });
+    }
+
+    console.log(`[Dispatcher] Notified engineer of assignment for ticket ${params.ticketNumber}`);
+  } catch (error) {
+    console.error('[Dispatcher] Error notifying engineer on assign:', error);
+  }
+}

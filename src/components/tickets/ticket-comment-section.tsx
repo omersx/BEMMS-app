@@ -60,11 +60,19 @@ export function TicketCommentSection({
   const [visibility, setVisibility] = useState<"public" | "internal">("public");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [optimisticComments, setOptimisticComments] = useState<Comment[]>([]);
+
+  // Clear optimistic comments when server re-renders with new props
+  useEffect(() => {
+    setOptimisticComments([]);
+  }, [comments]);
+
+  const allComments = [...comments, ...optimisticComments];
 
   // If user cannot add internal notes (e.g. ward staff), filter out internal comments
   const visibleComments = canAddInternal
-    ? comments
-    : comments.filter((c) => c.visibility === "public");
+    ? allComments
+    : allComments.filter((c) => c.visibility === "public");
 
   // Sort chronologically (oldest first) like a chat thread
   const sortedComments = [...visibleComments].sort(
@@ -76,26 +84,46 @@ export function TicketCommentSection({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [comments]);
+  }, [comments, optimisticComments]);
 
   const handleSubmit = async () => {
-    if (!body.trim() || loading) return;
+    const text = body.trim();
+    if (!text || loading) return;
     setLoading(true);
+
+    const tempComment: Comment = {
+      id: `temp-${Date.now()}`,
+      body: text,
+      visibility: canAddInternal ? visibility : "public",
+      createdAt: new Date(),
+      authorUserId: currentUserId,
+      author: {
+        id: currentUserId,
+        fullName: "You",
+      },
+    };
+
+    setOptimisticComments((prev) => [...prev, tempComment]);
+    setBody("");
+
     try {
       const res = await addTicketComment(ticketId, {
-        body: body.trim(),
+        body: text,
         visibility: canAddInternal ? visibility : "public",
       });
       if (res?.success) {
-        setBody("");
         router.refresh();
         toast.success(
           visibility === "internal" ? "Internal note posted" : "Message sent"
         );
       } else {
+        setOptimisticComments((prev) => prev.filter((c) => c.id !== tempComment.id));
+        setBody(text);
         toast.error((res as any)?.error || "Failed to post message");
       }
     } catch (err: any) {
+      setOptimisticComments((prev) => prev.filter((c) => c.id !== tempComment.id));
+      setBody(text);
       toast.error(err.message || "An unexpected error occurred");
     } finally {
       setLoading(false);

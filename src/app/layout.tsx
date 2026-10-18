@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
 import AuthProvider from '@/components/providers/session-provider'
-import { HydrationErrorSuppressor } from '@/components/providers/hydration-error-suppressor'
 import { ServiceWorkerRegister } from '@/components/pwa/sw-register'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 
@@ -40,7 +39,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <HydrationErrorSuppressor />
         <AuthProvider>
           {children}
           <Toaster />

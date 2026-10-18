@@ -18,7 +18,7 @@ import { eq, and, or, desc, ilike, notInArray, inArray } from 'drizzle-orm';
 import { verifySignatureAuth, createSignatureEvent } from './signature-auth';
 import { getAttestationText } from '@/lib/utils/attestations';
 import { buildCanonicalSnapshot, computeSHA256 } from '@/lib/utils/crypto';
-import { notifyEngineersOnNewTicket, notifyReporterOnAccept } from '@/lib/notifications/dispatcher';
+import { notifyEngineersOnNewTicket, notifyReporterOnAccept, notifyReporterOnStatusChange, notifyOnNewComment, notifyEngineerOnAssign } from '@/lib/notifications/dispatcher';
 
 // ── Ticket Creation Defaults ──────────────────────────────────────────────────
 
@@ -421,7 +421,7 @@ export async function assignTicket(ticketId: string, input: unknown) {
     const ticket = await db.query.serviceTickets.findFirst({ where: eq(serviceTickets.id, ticketId) });
     if (!ticket) return { success: false, error: 'Ticket not found' };
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [updated] = await tx.update(serviceTickets)
         .set({
           assignedEngineerUserId: validated.data.assignedEngineerUserId,
@@ -450,6 +450,33 @@ export async function assignTicket(ticketId: string, input: unknown) {
 
       return { success: true, data: updated };
     });
+
+    // Notify the assigned engineer (fire-and-forget)
+    if (result.success && validated.data.assignedEngineerUserId) {
+      notifyEngineerOnAssign({
+        ticketId,
+        ticketNumber: ticket.ticketNumber,
+        title: ticket.title,
+        organizationId: ticket.organizationId,
+        assignedEngineerUserId: validated.data.assignedEngineerUserId,
+        assignerName: session.fullName || session.email || 'System',
+      }).catch((err) => console.error('[Ticket] Engineer notification failed:', err));
+    }
+
+    // Also notify reporter that ticket is assigned / in progress
+    if (result.success && ticket.reportedByUserId) {
+      notifyReporterOnStatusChange({
+        ticketId,
+        ticketNumber: ticket.ticketNumber,
+        title: ticket.title,
+        organizationId: ticket.organizationId,
+        reporterUserId: ticket.reportedByUserId,
+        newStatus: 'in_progress',
+        actorName: session.fullName || session.email || 'System',
+      }).catch((err) => console.error('[Ticket] Reporter assignment notification failed:', err));
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -628,7 +655,7 @@ export async function resolveTicket(ticketId: string, input: unknown) {
       }
     }
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [updated] = await tx.update(serviceTickets)
         .set({
           statusCode: 'resolved',
@@ -759,6 +786,21 @@ export async function resolveTicket(ticketId: string, input: unknown) {
 
       return { success: true, data: updated, signature: signatureRecord };
     });
+
+    // Notify reporter that their ticket has been resolved (fire-and-forget)
+    if (result.success && ticket.reportedByUserId) {
+      notifyReporterOnStatusChange({
+        ticketId,
+        ticketNumber: ticket.ticketNumber,
+        title: ticket.title,
+        organizationId: ticket.organizationId,
+        reporterUserId: ticket.reportedByUserId,
+        newStatus: 'resolved',
+        actorName: session.fullName || session.email || 'Biomedical Engineer',
+      }).catch((err) => console.error('[Ticket] Reporter notification failed:', err));
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -786,7 +828,7 @@ export async function closeTicket(ticketId: string, input: unknown) {
       }
     }
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [updated] = await tx.update(serviceTickets)
         .set({
           statusCode: 'closed',
@@ -878,6 +920,21 @@ export async function closeTicket(ticketId: string, input: unknown) {
 
       return { success: true, data: updated, signature: signatureRecord };
     });
+
+    // Notify reporter that their ticket has been closed (fire-and-forget)
+    if (result.success && ticket.reportedByUserId) {
+      notifyReporterOnStatusChange({
+        ticketId,
+        ticketNumber: ticket.ticketNumber,
+        title: ticket.title,
+        organizationId: ticket.organizationId,
+        reporterUserId: ticket.reportedByUserId,
+        newStatus: 'closed',
+        actorName: session.fullName || session.email || 'System User',
+      }).catch((err) => console.error('[Ticket] Reporter notification failed:', err));
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -946,7 +1003,7 @@ export async function reopenTicket(ticketId: string, input: unknown) {
       return { success: false, error: `Cannot reopen ticket in '${ticket.statusCode}' status` };
     }
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       // Determine next status: if assigned to an engineer, resume work in_progress; otherwise back to in_triage
       const nextStatus = ticket.assignedEngineerUserId ? 'in_progress' : 'in_triage';
 
@@ -1015,6 +1072,21 @@ export async function reopenTicket(ticketId: string, input: unknown) {
 
       return { success: true, data: updated };
     });
+
+    // Notify reporter and assigned engineer about reopening (fire-and-forget)
+    if (result.success && ticket.reportedByUserId) {
+      notifyReporterOnStatusChange({
+        ticketId,
+        ticketNumber: ticket.ticketNumber,
+        title: ticket.title,
+        organizationId: ticket.organizationId,
+        reporterUserId: ticket.reportedByUserId,
+        newStatus: 'in_progress',
+        actorName: session.fullName || session.email || 'System User',
+      }).catch((err) => console.error('[Ticket] Reporter notification failed:', err));
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -1032,7 +1104,7 @@ export async function updateTicketDeviceStatus(ticketId: string, input: unknown)
     const ticket = await db.query.serviceTickets.findFirst({ where: eq(serviceTickets.id, ticketId) });
     if (!ticket) return { success: false, error: 'Ticket not found' };
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       let prevDeviceStatus = 'unknown';
       const isWaitingForParts = validated.data.deviceStatusCode === 'waiting_for_parts';
       const reasonText = validated.data.partName
@@ -1125,6 +1197,24 @@ export async function updateTicketDeviceStatus(ticketId: string, input: unknown)
 
       return { success: true, data: updated };
     });
+
+    // Notify reporter about device status update (fire-and-forget)
+    if (result.success && ticket.reportedByUserId) {
+      const newStatus = validated.data.deviceStatusCode === 'waiting_for_parts'
+        ? 'waiting_parts_vendor'
+        : (ticket.statusCode === 'waiting_parts_vendor' ? 'in_progress' : ticket.statusCode);
+      notifyReporterOnStatusChange({
+        ticketId,
+        ticketNumber: ticket.ticketNumber,
+        title: ticket.title,
+        organizationId: ticket.organizationId,
+        reporterUserId: ticket.reportedByUserId,
+        newStatus,
+        actorName: session.fullName || session.email || 'Biomedical Engineer',
+      }).catch((err) => console.error('[Ticket] Reporter notification failed:', err));
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -1144,6 +1234,24 @@ export async function addTicketComment(ticketId: string, input: unknown) {
       visibility: validated.data.visibility,
       body: validated.data.body,
     }).returning();
+
+    // Notify the other party about new comment (fire-and-forget)
+    if (validated.data.visibility === 'public') {
+      const ticket = await db.query.serviceTickets.findFirst({ where: eq(serviceTickets.id, ticketId) });
+      if (ticket) {
+        notifyOnNewComment({
+          ticketId,
+          ticketNumber: ticket.ticketNumber,
+          title: ticket.title,
+          organizationId: ticket.organizationId,
+          commentAuthorUserId: session.id,
+          commentAuthorName: session.fullName || session.email || 'User',
+          reporterUserId: ticket.reportedByUserId,
+          assignedEngineerUserId: ticket.assignedEngineerUserId,
+          commentPreview: validated.data.body,
+        }).catch((err) => console.error('[Ticket] Comment notification failed:', err));
+      }
+    }
 
     return { success: true, data: comment };
   } catch (error: any) {
