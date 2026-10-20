@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   navBadgeVariants,
   formatNavBadge,
-  type NavBadgeConfig,
 } from '@/lib/utils/nav-badge';
 
 describe('NavBadge system', () => {

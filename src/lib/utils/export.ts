@@ -1,5 +1,5 @@
 // Generate CSV with BOM for Excel compatibility
-export function generateCSV(data: Record<string, any>[], columns: { key: string; header: string }[]): string {
+export function generateCSV(data: Record<string, unknown>[], columns: { key: string; header: string }[]): string {
   const BOM = '\uFEFF';
   if (!data || data.length === 0) {
     return BOM + columns.map(c => `"${c.header.replace(/"/g, '""')}"`).join(',');
@@ -20,7 +20,7 @@ export function generateCSV(data: Record<string, any>[], columns: { key: string;
 // Format report metadata for transparency header
 export function formatReportMetadata(params: {
   reportType: string;
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   dateRange?: { start?: string; end?: string };
   timezone: string;
   generatedAt: Date;

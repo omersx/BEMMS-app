@@ -14,7 +14,11 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Unhandled application error:', error);
+    // Only log full error details in development; production errors are
+    // captured server-side and identified by their digest hash.
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Unhandled application error:', error);
+    }
   }, [error]);
 
   return (

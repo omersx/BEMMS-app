@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { notifications, pushSubscriptions, users } from '@/lib/db/schema';
+import { notifications, users } from '@/lib/db/schema';
 import { userRoleAssignments, userAccessScopes, roles as rolesTable } from '@/lib/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { sendPushToUser, type PushNotificationPayload } from './push-sender';
@@ -40,6 +40,16 @@ const PRIORITY_LABELS: Record<string, string> = {
 
 // ── Find Scoped Engineers ────────────────────────────────────────────────────────
 
+type UserNotificationPreferences = {
+  pushEnabled?: boolean;
+  categories?: {
+    tickets?: boolean;
+    maintenance?: boolean;
+    devices?: boolean;
+    system?: boolean;
+  };
+} | null;
+
 /**
  * Find all active biomedical engineers/technicians/managers scoped to the same
  * organization and hospital as the ticket.
@@ -47,7 +57,7 @@ const PRIORITY_LABELS: Record<string, string> = {
 async function findScopedEngineers(
   organizationId: string,
   hospitalId: string,
-): Promise<Array<{ id: string; fullName: string; notificationPreferences: any }>> {
+): Promise<Array<{ id: string; fullName: string; notificationPreferences: UserNotificationPreferences }>> {
   const BME_ROLE_CODES = ['BIOMED_ENG', 'BIOMED_TECH', 'BIOMED_MGR'];
 
   // Find role IDs for BME roles
@@ -156,7 +166,6 @@ export async function notifyEngineersOnNewTicket(
 
     const isCritical = data.priorityCode === 'p1_critical' || data.reportedImpact === 'patient_care_affected';
     const impactLabel = IMPACT_LABELS[data.reportedImpact] || data.reportedImpact;
-    const priorityLabel = PRIORITY_LABELS[data.priorityCode] || data.priorityCode;
 
     const locationContext = data.departmentName || 'Unknown department';
     const deviceContext = data.deviceName || 'Unknown device';

@@ -1,4 +1,7 @@
-version: '3.8'
+# BEMMS Production Docker Compose
+# IMPORTANT: Create a .env file with all required secrets before starting.
+# See .env.example for the full list of required variables.
+# Do NOT use default/placeholder values in production.
 
 services:
   db:
@@ -6,17 +9,22 @@ services:
     container_name: bemms_prod_db
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-bemms}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bemms_prod_password_change_me}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-bemms_db}
     volumes:
       - bemms_prod_postgres_data:/var/lib/postgresql/data
       - ./backups:/backups
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bemms} -d ${POSTGRES_DB:-bemms_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-bemms_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
     networks:
       - bemms_network
 
@@ -30,16 +38,29 @@ services:
       db:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-bemms}:${POSTGRES_PASSWORD:-bemms_prod_password_change_me}@db:5432/${POSTGRES_DB:-bemms_db}
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-generate_a_random_32_character_secret_here}
-      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@bemms.local}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Admin123!@#}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:?required}:${POSTGRES_PASSWORD:?required}@db:5432/${POSTGRES_DB:-bemms_db}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:?NEXTAUTH_URL is required}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:?NEXTAUTH_SECRET is required - generate with: openssl rand -base64 32}
+      - AUTH_TRUST_HOST=true
+      - ADMIN_EMAIL=${ADMIN_EMAIL:?ADMIN_EMAIL is required}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
       - ADMIN_FULL_NAME=${ADMIN_FULL_NAME:-System Administrator}
       - NODE_ENV=production
-      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${NEXT_PUBLIC_VAPID_PUBLIC_KEY}
-      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${NEXT_PUBLIC_VAPID_PUBLIC_KEY:?VAPID public key required - generate with: npx web-push generate-vapid-keys}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:?VAPID private key required}
       - VAPID_SUBJECT=${VAPID_SUBJECT:-mailto:admin@bemms.app}
+      - DB_POOL_MAX=${DB_POOL_MAX:-20}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
     networks:
       - bemms_network
 
@@ -57,7 +78,13 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - app
+      app:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
     networks:
       - bemms_network
 

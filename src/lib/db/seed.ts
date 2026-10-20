@@ -64,7 +64,7 @@ async function seed() {
     for (const mod of modules) {
       for (const act of actions) {
         await db.insert(schema.permissions).values({
-          module: mod as any, // Cast if type mismatch occurs
+          module: mod as any,
           action: act as any,
         }).onConflictDoNothing();
       }
@@ -79,7 +79,7 @@ async function seed() {
       }).onConflictDoNothing();
     }
 
-    // 5. Create or Update Admin User
+    // 5. Create Admin User (only set password on first creation, never overwrite)
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@bemms.local';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
     const passwordHash = await hashPassword(adminPassword);
@@ -87,7 +87,7 @@ async function seed() {
     const [adminUser] = await db.insert(schema.users).values({
       email: adminEmail,
       passwordHash,
-      fullName: 'System Administrator',
+      fullName: process.env.ADMIN_FULL_NAME || 'System Administrator',
       employeeIdentifier: 'admin',
       organizationId: orgId,
       accountStatus: 'active',
@@ -95,19 +95,12 @@ async function seed() {
 
     let adminId = adminUser?.id;
     if (!adminId) {
+      // User already exists — do NOT overwrite password (may have been changed)
       const existingUser = await db.query.users.findFirst({
         where: (users, { eq }) => eq(users.email, adminEmail),
       });
       adminId = existingUser!.id;
-
-      // Update password and ensure active status
-      await db.update(schema.users)
-        .set({
-          passwordHash,
-          employeeIdentifier: 'admin',
-          accountStatus: 'active',
-        })
-        .where(eq(schema.users.id, adminId));
+      console.log('Admin user already exists — skipping password update to preserve production credentials.');
     }
 
     // 6. Assign SYS_ADMIN role to admin user
@@ -125,12 +118,14 @@ async function seed() {
     }).onConflictDoNothing();
 
     console.log('Seed completed successfully!');
-    process.exit(0);
   } catch (error) {
     console.error('Seed failed:', error);
+    await pool.end();
     process.exit(1);
   }
+
+  await pool.end();
+  process.exit(0);
 }
 
 seed();
-

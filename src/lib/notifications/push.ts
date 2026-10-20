@@ -46,13 +46,14 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
           },
           JSON.stringify(payload)
         );
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const pushError = error as { statusCode?: number; message?: string };
         // 404 or 410 = subscription expired, remove it
-        if (error.statusCode === 404 || error.statusCode === 410) {
+        if (pushError.statusCode === 404 || pushError.statusCode === 410) {
           await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, sub.id));
           console.log(`[Push] Removed expired subscription ${sub.id}`);
         } else {
-          console.error(`[Push] Failed to send to ${sub.id}:`, error.message);
+          console.error(`[Push] Failed to send to ${sub.id}:`, pushError.message);
         }
       }
     })

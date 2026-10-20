@@ -15,7 +15,6 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import {
-  signaturePolicySchema,
   createSignaturePolicySchema,
   signActionSchema,
   signatureRequirementSchema,

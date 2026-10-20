@@ -80,12 +80,13 @@ export async function sendPushToUser(
           },
         );
         successCount++;
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const pushError = error as { statusCode?: number; message?: string };
         // 410 Gone or 404 = subscription expired/invalid
-        if (error.statusCode === 410 || error.statusCode === 404) {
+        if (pushError.statusCode === 410 || pushError.statusCode === 404) {
           expiredIds.push(sub.id);
         } else {
-          console.error(`[Push] Failed to send to ${sub.endpoint.substring(0, 50)}...`, error.statusCode || error.message);
+          console.error(`[Push] Failed to send to ${sub.endpoint.substring(0, 50)}...`, pushError.statusCode || pushError.message);
         }
       }
     }),
