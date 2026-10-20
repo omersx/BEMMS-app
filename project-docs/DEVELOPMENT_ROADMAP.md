@@ -1,4 +1,4 @@
-# BEMMS Development Roadmap
+﻿# BEMMS Development Roadmap
 
 > **Git-tracked delivery plan.** Updated at phase boundaries per AGENTS.md.
 
@@ -6,8 +6,8 @@
 
 - **Repository:** Production Ready
 - **Technology:** Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, PostgreSQL, Auth.js, Docker Compose, Vitest, Caddy
-- **Current Phase:** All Phases Complete (Phases 1-12 `COMPLETE`)
-- **Last Updated:** 2026-10-11
+- **Current Phase:** Production Hardened & Verified (`v1.0.0-rc1`)
+- **Last Updated:** 2026-10-21
 
 ---
 
@@ -398,4 +398,32 @@ Establish a centralized, production-grade application logging infrastructure and
 
 ### Status: `COMPLETE`
 
+
+
+---
+
+## Production Hardening & Release Verification - `COMPLETE`
+
+### Objective and Business Value
+Harden application security, container configurations, reverse-proxy headers, and database resilience for clinical hospital deployments. Expand automated verification to cover critical server actions and electronic signature state transitions, ensuring 100% test passing and zero compilation errors.
+
+### In-Scope Modules & Features
+- **Security & Brute-Force Protection:** In-memory sliding-window rate limiter (5 attempts per 15 min per identifier) and account lockout in NextAuth authorize callback.
+- **Session Expiration & Role Caching:** Configured 8-hour JWT expiry aligned with clinical work shifts; added 5-minute TTL caching on JWT role lookups to eliminate database load spikes.
+- **Health Probing & Reliability:** Created `/api/health` with live PostgreSQL ping; integrated `HEALTHCHECK` in Dockerfile and health dependencies in `docker-compose.prod.yml`.
+- **Infrastructure Security:** Enforced mandatory production environment secrets (eliminated fallback defaults); capped container CPU and memory; implemented Content-Security-Policy (CSP) headers in Caddy and Next.js.
+- **Database Resilience:** Hardened `pg` pool with max 20 connections, idle timeouts, SSL support, and uncaught pool error event recovery.
+- **Server Action Integration Test Suites:** Added automated integration suites for Helpdesk Tickets (`createTicket`, `acceptTicket`, `resolveTicket`, `reopenTicket`), Medical Devices (`createDevice`, `changeDeviceStatus`, `transferDeviceLocation`, `decommissionDevice`), and Electronic Signatures (`signMaintenanceRecord`, `reviewMaintenanceRecord`, `releaseDeviceMaintenance`).
+
+### Acceptance Criteria
+1. Production Docker Compose refuses to start without explicit user-defined secrets
+2. `/api/health` returns HTTP 200 with database check and response time metrics
+3. Failed login attempts lock out after 5 failures within 15 minutes
+4. Performer cannot review or approve their own technical maintenance record (21 CFR Part 11)
+5. Resolving an incident ticket is blocked if the equipment remains `under_repair`
+6. `npx tsc --noEmit` passes with 0 errors
+7. `npx vitest run` passes all 17 test suites (150/150 tests passed)
+8. `next build` compiles all 58 routes with 0 errors
+
+### Status: `COMPLETE`
 
