@@ -58,6 +58,21 @@ export async function GET(req: NextRequest) {
         });
       }
 
+      if (selectedEntities.includes('rounds')) {
+        exportPayload.data.engineerRounds = await db.query.engineerRounds.findMany({
+          with: {
+            engineer: { columns: { id: true, fullName: true, email: true } },
+            hospital: { columns: { id: true, name: true } },
+            departmentVisits: {
+              with: {
+                department: { columns: { id: true, name: true, code: true } },
+                notes: true,
+              },
+            },
+          },
+        });
+      }
+
       return new NextResponse(JSON.stringify(exportPayload, null, 2), {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
@@ -106,6 +121,57 @@ export async function GET(req: NextRequest) {
         XLSX.utils.book_append_sheet(wb, ws, 'Departments');
       }
 
+      if (selectedEntities.includes('rounds')) {
+        const rawRounds = await db.query.engineerRounds.findMany({
+          with: {
+            engineer: true,
+            hospital: true,
+            departmentVisits: {
+              with: {
+                notes: true,
+              },
+            },
+          },
+        });
+
+        const formatted = rawRounds.map((r) => ({
+          'Round Date': r.roundDate,
+          'Shift': r.shiftType,
+          'Engineer': r.engineer?.fullName || '',
+          'Hospital': r.hospital?.name || '',
+          'Status': r.status,
+          'Started At': r.startedAt?.toISOString() || '',
+          'Completed At': r.completedAt?.toISOString() || '',
+          'Total Departments': r.totalDepartments,
+          'Completed Departments': r.completedDepartments,
+          'Issues Reported': r.totalIssuesReported,
+          'Total Notes': r.totalNotes,
+        }));
+        const ws = XLSX.utils.json_to_sheet(formatted);
+        XLSX.utils.book_append_sheet(wb, ws, 'Daily Rounds');
+
+        const visitRows: any[] = [];
+        for (const r of rawRounds) {
+          for (const v of r.departmentVisits || []) {
+            const notesText = (v.notes || []).map((n: any) => n.noteText).join(' | ');
+            visitRows.push({
+              'Round Date': r.roundDate,
+              'Engineer': r.engineer?.fullName || '',
+              'Department': v.departmentName,
+              'Sequence': v.sequence,
+              'Status': v.status,
+              'Started At': v.startedAt?.toISOString() || '',
+              'Completed At': v.completedAt?.toISOString() || '',
+              'Notes': notesText,
+            });
+          }
+        }
+        if (visitRows.length > 0) {
+          const wsVisits = XLSX.utils.json_to_sheet(visitRows);
+          XLSX.utils.book_append_sheet(wb, wsVisits, 'Department Visits');
+        }
+      }
+
       const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
       return new NextResponse(buf, {
         headers: {
@@ -145,6 +211,49 @@ export async function GET(req: NextRequest) {
           headers: {
             'Content-Type': 'text/csv; charset=utf-8',
             'Content-Disposition': `attachment; filename="bemms_departments_${timestamp}.csv"`,
+          },
+        });
+      }
+
+      if (selectedEntities.includes('rounds')) {
+        const rawRounds = await db.query.engineerRounds.findMany({
+          with: { engineer: true, hospital: true },
+        });
+
+        const formatted = rawRounds.map((r) => ({
+          roundDate: r.roundDate,
+          shiftType: r.shiftType,
+          engineerName: r.engineer?.fullName || '',
+          hospitalName: r.hospital?.name || '',
+          status: r.status,
+          startedAt: r.startedAt?.toISOString() || '',
+          completedAt: r.completedAt?.toISOString() || '',
+          totalDepartments: r.totalDepartments,
+          completedDepartments: r.completedDepartments,
+          totalIssuesReported: r.totalIssuesReported,
+          totalNotes: r.totalNotes,
+        }));
+
+        const columns = [
+          { key: 'roundDate', header: 'Round Date' },
+          { key: 'shiftType', header: 'Shift' },
+          { key: 'engineerName', header: 'Engineer Name' },
+          { key: 'hospitalName', header: 'Hospital' },
+          { key: 'status', header: 'Status' },
+          { key: 'startedAt', header: 'Started At' },
+          { key: 'completedAt', header: 'Completed At' },
+          { key: 'totalDepartments', header: 'Total Depts' },
+          { key: 'completedDepartments', header: 'Completed Depts' },
+          { key: 'totalIssuesReported', header: 'Issues Reported' },
+          { key: 'totalNotes', header: 'Notes' },
+        ];
+
+        const csvContent = generateCSV(formatted, columns);
+
+        return new NextResponse(csvContent, {
+          headers: {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': `attachment; filename="bemms_engineer_rounds_${timestamp}.csv"`,
           },
         });
       }

@@ -145,6 +145,7 @@ export async function createTicket(input: unknown) {
         priorityCode: validated.data.reportedImpact === 'patient_care_affected' ? 'p1_critical' : 'p3_normal',
         deviceSnapshot,
         locationSnapshot,
+        roundVisitId: validated.data.roundVisitId || null,
       }).returning();
 
       // Automatically update device status if issue is reported on operational equipment

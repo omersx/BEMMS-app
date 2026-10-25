@@ -12,6 +12,7 @@ import { departments } from './departments';
 import { locations } from './locations';
 import { users } from './users';
 import { devices } from './devices';
+import { roundDepartmentVisits } from './engineer-rounds';
 
 // ── Service Tickets ─────────────────────────────────────────────────────────────
 
@@ -76,6 +77,9 @@ export const serviceTickets = pgTable('service_tickets', {
   reopenedAt: timestamp('reopened_at', { withTimezone: true }),
   reopenedByUserId: uuid('reopened_by_user_id').references(() => users.id),
   reopenReason: text('reopen_reason'),
+
+  // Engineer's Round link (nullable — only set for tickets created during a round)
+  roundVisitId: uuid('round_visit_id').references(() => roundDepartmentVisits.id),
 
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

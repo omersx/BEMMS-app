@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseCSV, getDeviceImportTemplateCSV, getDepartmentImportTemplateCSV } from '@/lib/utils/csv-parser';
-import { deviceImportRowSchema, departmentImportRowSchema, purgeDataSchema } from '../data-management';
+import { deviceImportRowSchema, departmentImportRowSchema, purgeDataSchema, exportRequestSchema } from '../data-management';
 
 describe('CSV Parser Utility', () => {
   it('parses simple CSV text into structured records', () => {
@@ -152,4 +152,31 @@ describe('purgeDataSchema', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('exportRequestSchema', () => {
+  it('accepts rounds as a valid export entity', () => {
+    const result = exportRequestSchema.safeParse({
+      entities: ['rounds'],
+      format: 'xlsx',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts full multi-entity export including rounds', () => {
+    const result = exportRequestSchema.safeParse({
+      entities: ['devices', 'departments', 'tickets', 'rounds'],
+      format: 'json',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects empty entities array', () => {
+    const result = exportRequestSchema.safeParse({
+      entities: [],
+      format: 'csv',
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
 

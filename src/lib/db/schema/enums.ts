@@ -116,7 +116,7 @@ export const costTypeEnum = pgEnum('cost_type', [
 ]);
 export const recordVersionEntityTypeEnum = pgEnum('record_version_entity_type', [
   'maintenance_record', 'device_status_change', 'calibration_record',
-  'test_record', 'ticket_resolution'
+  'test_record', 'ticket_resolution', 'engineer_round'
 ]);
 
 // Phase 7: Notification enums
@@ -137,4 +137,12 @@ export const signaturePolicyActionEnum = pgEnum('signature_policy_action', [
   'complete_corrective', 'complete_pm', 'complete_calibration',
   'complete_testing', 'release_device', 'change_device_status',
   'resolve_ticket', 'close_ticket', 'approve_exception'
+]);
+
+// Phase 13: Engineer's Round enums
+export const roundStatusEnum = pgEnum('round_status', [
+  'scheduled', 'in_progress', 'completed', 'missed', 'cancelled'
+]);
+export const roundVisitStatusEnum = pgEnum('round_visit_status', [
+  'pending', 'completed', 'skipped'
 ]);

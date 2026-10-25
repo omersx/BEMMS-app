@@ -54,6 +54,9 @@ function CreateTicketContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const prefilledDeviceId = searchParams.get("deviceId");
+  const prefilledHospitalId = searchParams.get("hospitalId");
+  const prefilledDepartmentId = searchParams.get("departmentId");
+  const prefilledRoundVisitId = searchParams.get("roundVisitId");
   const prefilledSource = searchParams.get("source") || (prefilledDeviceId ? "device_profile" : "manual_entry");
 
   const [loading, setLoading] = useState(false);
@@ -102,8 +105,8 @@ function CreateTicketContent() {
       const defRes = await getTicketCreationDefaults();
       if (defRes.success && defRes.data) {
         setOrgDefaults(defRes.data);
-        setSelectedHospitalId(defRes.data.defaultHospitalId);
-        setSelectedDepartmentId(defRes.data.defaultDepartmentId);
+        setSelectedHospitalId(prefilledHospitalId || defRes.data.defaultHospitalId);
+        setSelectedDepartmentId(prefilledDepartmentId || defRes.data.defaultDepartmentId);
         if (defRes.data.userPhone || defRes.data.userExtension) {
           setContactPhone(defRes.data.userPhone || defRes.data.userExtension || "");
         }
@@ -208,6 +211,7 @@ function CreateTicketContent() {
       reportedLocationCorrection: locationCorrection.trim() || undefined,
       requesterContactPhone: contactPhone.trim() || undefined,
       requesterContactName: orgDefaults?.userFullName || undefined,
+      roundVisitId: prefilledRoundVisitId || undefined,
     };
 
     const result = await createTicket(payload);

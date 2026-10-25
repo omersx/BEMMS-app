@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, QrCode, PlusCircle, ClipboardList, Menu, TicketCheck, Inbox, Monitor } from 'lucide-react'
+import { Home, QrCode, PlusCircle, ClipboardList, Menu, TicketCheck, Inbox, Monitor, Route } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NavBadge, type NavBadgeConfig } from './nav-badge'
 import { useNavCounts } from '@/components/providers/nav-counts-provider'
@@ -40,12 +40,12 @@ export function MobileNav({ roles = [] }: MobileNavProps) {
     { href: '/more', label: 'More', icon: Menu, badgeKey: 'notifications' },
   ]
 
-  // Engineer-optimized: Triage is the key action, plus quick access to devices
+  // Engineer-optimized: Quick access to Daily Round, Scan, and Triage
   const engineerTabs: MobileTab[] = [
     { href: '/dashboard', label: 'Home', icon: Home },
+    { href: '/rounds', label: 'Round', icon: Route },
     { href: '/scan', label: 'Scan', icon: QrCode },
     { href: '/tickets/triage', label: 'Triage', icon: Inbox, badgeKey: 'triage' },
-    { href: '/devices', label: 'Devices', icon: Monitor },
     { href: '/more', label: 'More', icon: Menu, badgeKey: 'notifications' },
   ]
 

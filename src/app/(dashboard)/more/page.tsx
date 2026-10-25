@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   ChevronRight,
   User,
+  Route,
 } from 'lucide-react';
 import { SignOutButton } from '@/components/shared/sign-out-button';
 import { MoreItemBadge } from '@/components/layout/more-item-badge';
@@ -135,6 +136,13 @@ export default async function MorePage() {
           {
             title: 'Maintenance & Work Orders',
             items: [
+              {
+                label: "Engineer's Daily Round",
+                description: 'Start or continue daily department round and inspections',
+                href: '/rounds',
+                icon: Route,
+                color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950',
+              },
               {
                 label: 'Maintenance Overview',
                 description: 'Corrective and preventive maintenance hub',

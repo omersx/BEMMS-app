@@ -22,6 +22,7 @@ export const createTicketSchema = z.object({
   reportedLocationCorrection: z.string().max(200).optional(),
   requesterContactName: z.string().max(100).optional(),
   requesterContactPhone: z.string().max(30).optional(),
+  roundVisitId: z.string().uuid().optional(),
 });
 
 export const triageTicketSchema = z.object({

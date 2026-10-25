@@ -1,4 +1,4 @@
-﻿# BEMMS Development Roadmap
+# BEMMS Development Roadmap
 
 > **Git-tracked delivery plan.** Updated at phase boundaries per AGENTS.md.
 
@@ -427,3 +427,50 @@ Harden application security, container configurations, reverse-proxy headers, an
 
 ### Status: `COMPLETE`
 
+
+
+---
+
+## Phase 13: Engineer's Round & Daily Inspection — `COMPLETE`
+
+### Objective & Business Value
+Digitize the biomedical engineer's daily physical walk-through across hospital departments into a fast, mobile-first workflow that replaces paper-based rounds. Provides electronic signatures for accountability, flexible notes with `@device` mention indexing, quick ticket reporting from department visits, and a GitHub contributions-style interactive monthly compliance calendar.
+
+### In-Scope Modules & Features
+- **Organization-Level Feature Toggle:** Added `features.engineerRoundEnabled` to organization settings schema with toggle UI in Administrative Settings (`FeaturesForm`), allowing hospitals to enable or deactivate daily rounds on demand.
+- **Data Model:**
+  - `engineer_rounds`: Records engineer, hospital, shift, date, start signature, timestamps, and department progress.
+  - `round_department_visits`: To-do list items per department with arrival/completion timestamps, status (`pending`, `completed`, `skipped`), and linked tickets.
+  - `round_visit_notes`: Observations and notes with structured `device_mentions` JSONB extracted from `@device` tags.
+  - Updated `service_tickets` schema with `roundVisitId` foreign key linking issues created during department rounds.
+- **Workflow & Electronic Signatures:**
+  - Password re-authentication with SHA-256 canonical hash snapshot and 21 CFR Part 11 electronic signature audit entry upon round start.
+  - Synchronized with engineer working days and covered department roster from `engineer_profiles`.
+- **User Interface & Interaction:**
+  - Department checklist with one-tap completion, green check marks, and progress bar (`RoundDepartmentList`).
+  - Interactive bottom sheet (`DepartmentVisitSheet`) with `<MentionTextarea>` for autocomplete `@device` tagging and quick ticket reporting.
+  - Interactive GitHub contributions-style calendar (`RoundCalendar`) showing color-coded round status (`completed`, `partial`, `missed`, `off_day`, `in_progress`), month navigation, and day tooltips.
+  - Manager Compliance Dashboard view (`getTeamRoundCompliance`) showing team round completion, in-progress, and missed rounds for any date.
+  - Real-time `RoundWidget` integrated into BME & Manager main dashboards.
+  - Navigation links added to desktop sidebar and mobile bottom navigation.
+- **Data Export & Backup Center Integration:**
+  - Added Engineer's Daily Rounds as an exportable dataset in the administrative Data Export & Backup Center (`export-center.tsx` & `/api/admin/data/export`).
+  - Supports **JSON** (full relational backup with signatures, visits, and @device notes), **Excel (.xlsx)** with multi-sheet structure ("Daily Rounds" and "Department Visits"), and **CSV** formats.
+  - Added direct **"Export"** action button in the Round History page header (`/rounds/history`).
+  - Integrated rounds tables into the database purge and test data cleanup lifecycle in proper foreign-key dependency order.
+- **Automated Verification:**
+  - Unit test suite (`src/lib/validators/__tests__/engineer-rounds.test.ts` & `data-management.test.ts`) covering all schemas, boundary conditions, and defaults.
+
+### Acceptance Criteria
+1. Feature can be toggled on/off in Organization Settings; when off, round views and widgets remain hidden.
+2. Engineers can start scheduled rounds on duty days with password-authenticated electronic signatures.
+3. Department visits render in a clear to-do list with green checkmarks upon completion.
+4. Notes support `@device` mentions with autocomplete dropdown of active department equipment.
+5. Issues reported during rounds link to the current department visit and update ticket records.
+6. Monthly round history renders in an interactive heat-map calendar matching GitHub contributions design.
+7. Managers can monitor team compliance and identify missed rounds.
+8. Daily rounds can be exported in JSON, Excel (.xlsx), and CSV formats from both the History page and the Admin Export Center.
+9. `npx tsc --noEmit` passes with 0 errors.
+10. All 18 test suites pass (169/169 tests passed).
+
+### Status: `COMPLETE`

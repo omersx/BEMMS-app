@@ -7,7 +7,7 @@ import {
   LayoutDashboard, QrCode, Monitor, TicketCheck, Wrench, BarChart3,
   Bell, Settings, Activity, ChevronLeft, ChevronRight, AlertTriangle,
   ClipboardList, Calendar, CheckSquare, Building2, UsersRound, PlusCircle,
-  Inbox, LogOut
+  Inbox, LogOut, Route
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
@@ -45,6 +45,7 @@ const STAFF_LINKS: SidebarLink[] = [
 // Engineer/Technician nav: workflow-optimized for BME daily work
 const ENGINEER_LINKS: SidebarLink[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/rounds', label: 'Daily Round', icon: Route },
   { href: '/scan', label: 'Scan QR', icon: QrCode },
   { href: '/tickets/triage', label: 'Triage Queue', icon: Inbox, badgeKey: 'triage' },
   { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck, badgeKey: 'tickets' },
@@ -62,6 +63,7 @@ const ENGINEER_LINKS: SidebarLink[] = [
 // Full nav for managers and admins (includes team management + admin access)
 const FULL_LINKS: SidebarLink[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/rounds', label: 'Daily Round', icon: Route },
   { href: '/scan', label: 'Scan QR', icon: QrCode },
   { href: '/devices', label: 'Devices', icon: Monitor },
   { href: '/departments', label: 'Departments', icon: Building2 },

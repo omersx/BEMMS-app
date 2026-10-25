@@ -20,6 +20,10 @@ export const retentionSettingsSchema = z.object({
   attachmentQuotaMb: z.coerce.number().int().min(100).max(100000).default(5000), // 5GB
 });
 
+export const featuresSettingsSchema = z.object({
+  engineerRoundEnabled: z.boolean().default(false),
+});
+
 export const systemSettingsSchema = z.object({
   localization: localizationSettingsSchema.default({
     timezone: 'UTC',
@@ -38,10 +42,14 @@ export const systemSettingsSchema = z.object({
     pmAlertWindowDays: 14,
     attachmentQuotaMb: 5000,
   }),
+  features: featuresSettingsSchema.default({
+    engineerRoundEnabled: false,
+  }),
 });
 
 export type SystemSettings = z.infer<typeof systemSettingsSchema>;
 export type LocalizationSettings = z.infer<typeof localizationSettingsSchema>;
 export type SecuritySettings = z.infer<typeof securitySettingsSchema>;
 export type RetentionSettings = z.infer<typeof retentionSettingsSchema>;
+export type FeaturesSettings = z.infer<typeof featuresSettingsSchema>;
 

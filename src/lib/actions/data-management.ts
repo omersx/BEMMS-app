@@ -17,6 +17,9 @@ import {
   maintenanceParts,
   maintenanceCosts,
   auditLogs,
+  engineerRounds,
+  roundDepartmentVisits,
+  roundVisitNotes,
 } from '@/lib/db/schema';
 import { requireAuth, requireRole } from '@/lib/auth/rbac';
 import { createAuditLog } from '@/lib/audit';
@@ -393,7 +396,7 @@ export async function getExportSummary() {
   await requireRole('SYS_ADMIN', 'ORG_ADMIN', 'BIOMED_MGR', 'BIOMED_ENG');
 
   try {
-    const [devicesCount, departmentsCount, categoriesCount, manufacturersCount, ticketsCount, auditLogsCount] =
+    const [devicesCount, departmentsCount, categoriesCount, manufacturersCount, ticketsCount, auditLogsCount, roundsCount] =
       await Promise.all([
         db.select({ count: sql<number>`count(*)` }).from(devices),
         db.select({ count: sql<number>`count(*)` }).from(departments),
@@ -401,6 +404,7 @@ export async function getExportSummary() {
         db.select({ count: sql<number>`count(*)` }).from(manufacturers),
         db.select({ count: sql<number>`count(*)` }).from(serviceTickets),
         db.select({ count: sql<number>`count(*)` }).from(auditLogs),
+        db.select({ count: sql<number>`count(*)` }).from(engineerRounds),
       ]);
 
     return {
@@ -412,6 +416,7 @@ export async function getExportSummary() {
         manufacturers: Number(manufacturersCount[0]?.count || 0),
         tickets: Number(ticketsCount[0]?.count || 0),
         auditLogs: Number(auditLogsCount[0]?.count || 0),
+        rounds: Number(roundsCount[0]?.count || 0),
       },
     };
   } catch (error: any) {
@@ -477,24 +482,30 @@ export async function purgeData(payload: PurgeDataPayload): Promise<{
 
       if (scope === 'test_transactions') {
         await tx.delete(serviceTickets);
+        await tx.delete(roundVisitNotes);
+        await tx.delete(roundDepartmentVisits);
+        await tx.delete(engineerRounds);
 
         await createAuditLog(tx, {
           action: 'PURGE',
           entityType: 'system',
           entityId: session.id,
           actorUserId: session.id,
-          changeReason: reason || 'Purged transactional test tickets and maintenance logs prior to deployment',
+          changeReason: reason || 'Purged transactional test tickets, maintenance logs, and engineer rounds prior to deployment',
           details: { scope: 'test_transactions', executedAt: new Date().toISOString() },
         });
 
         return {
           success: true,
-          message: 'Transactional test data (tickets, work orders, maintenance logs) purged successfully.',
+          message: 'Transactional test data (tickets, work orders, maintenance logs, engineer rounds) purged successfully.',
         };
       } else {
-        // Factory Reset: Purge plans, tickets, devices, and logs
+        // Factory Reset: Purge plans, tickets, rounds, devices, and logs
         await tx.delete(maintenancePlans);
         await tx.delete(serviceTickets);
+        await tx.delete(roundVisitNotes);
+        await tx.delete(roundDepartmentVisits);
+        await tx.delete(engineerRounds);
         await tx.delete(devices);
         await tx.delete(auditLogs);
 

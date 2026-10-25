@@ -15,6 +15,7 @@ import {
 import { getEngineersTeam } from '@/lib/actions/engineers';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { ActionButtons } from '@/components/dashboard/action-buttons';
+import { RoundWidget } from '@/components/dashboard/round-widget';
 import { TicketListCompact } from '@/components/dashboard/ticket-list-compact';
 import { MaintenanceDueList } from '@/components/dashboard/maintenance-due-list';
 import { AvailabilityAlerts } from '@/components/dashboard/availability-alerts';
@@ -245,6 +246,9 @@ async function BMEDashboard({ stats }: { stats: any }) {
       {/* Quick Actions */}
       <ActionButtons role="bme" triageCount={triage.length} />
 
+      {/* Daily Round Widget */}
+      <RoundWidget />
+
       {/* Assigned Work */}
       <TicketListCompact
         tickets={assigned
@@ -362,6 +366,9 @@ async function ManagerDashboard({ stats }: { stats: any }) {
           href="/maintenance/tasks?status=awaiting_review"
         />
       </div>
+
+      {/* Daily Round Widget */}
+      <RoundWidget />
 
       {/* Triage Queue */}
       {triage.length > 0 && (

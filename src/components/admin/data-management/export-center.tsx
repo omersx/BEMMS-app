@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Download, FileSpreadsheet, FileText, FileJson, CheckSquare, Layers, ShieldCheck, Wrench, Building2, HardDrive } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, FileJson, CheckSquare, Layers, ShieldCheck, Wrench, Building2, HardDrive, Route } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ExportCenterProps {
@@ -17,6 +17,7 @@ interface ExportCenterProps {
     manufacturers: number;
     tickets: number;
     auditLogs: number;
+    rounds?: number;
   };
 }
 
@@ -32,7 +33,7 @@ export function ExportCenter({ summary }: ExportCenterProps) {
   };
 
   const handleSelectAll = () => {
-    setSelectedEntities(['devices', 'departments', 'catalogs', 'tickets', 'audit_logs']);
+    setSelectedEntities(['devices', 'departments', 'catalogs', 'tickets', 'audit_logs', 'rounds']);
   };
 
   const handleClearAll = () => {
@@ -183,6 +184,28 @@ export function ExportCenter({ summary }: ExportCenterProps) {
                   </div>
                 </div>
                 <Badge variant="secondary">{summary.tickets} tickets</Badge>
+              </div>
+
+              {/* Engineer's Daily Rounds */}
+              <div
+                onClick={() => toggleEntity('rounds')}
+                className={`p-4 rounded-lg border flex items-center justify-between cursor-pointer transition-colors ${
+                  selectedEntities.includes('rounds') ? 'border-primary bg-primary/5' : 'hover:bg-muted/40'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Checkbox checked={selectedEntities.includes('rounds')} />
+                  <div>
+                    <h5 className="font-medium text-sm flex items-center gap-1.5">
+                      <Route className="h-4 w-4 text-primary" />
+                      Engineer&apos;s Daily Rounds
+                    </h5>
+                    <p className="text-xs text-muted-foreground">
+                      Daily department inspections, electronic signatures, and @device notes
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="secondary">{summary.rounds || 0} rounds</Badge>
               </div>
 
               {/* Audit Logs */}

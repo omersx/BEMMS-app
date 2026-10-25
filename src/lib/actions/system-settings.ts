@@ -9,6 +9,7 @@ import {
   localizationSettingsSchema,
   securitySettingsSchema,
   retentionSettingsSchema,
+  featuresSettingsSchema,
   type SystemSettings,
 } from '@/lib/validators/system-settings';
 import { eq, sql } from 'drizzle-orm';
@@ -30,6 +31,9 @@ const defaultSettings: SystemSettings = {
     auditLogRetentionDays: 365,
     pmAlertWindowDays: 14,
     attachmentQuotaMb: 5000,
+  },
+  features: {
+    engineerRoundEnabled: false,
   },
 };
 
@@ -107,7 +111,7 @@ export type UpdateSettingsResult =
 
 export async function updateOrganizationSettings(params: {
   organizationId?: string;
-  section: 'localization' | 'security' | 'retention';
+  section: 'localization' | 'security' | 'retention' | 'features';
   settings: unknown;
   changeReason?: string;
 }): Promise<UpdateSettingsResult> {
@@ -135,6 +139,10 @@ export async function updateOrganizationSettings(params: {
     validatedSection = res.data;
   } else if (section === 'retention') {
     const res = retentionSettingsSchema.safeParse(newSectionData);
+    if (!res.success) return { success: false, error: res.error.message };
+    validatedSection = res.data;
+  } else if (section === 'features') {
+    const res = featuresSettingsSchema.safeParse(newSectionData);
     if (!res.success) return { success: false, error: res.error.message };
     validatedSection = res.data;
   } else {

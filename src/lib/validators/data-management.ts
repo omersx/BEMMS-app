@@ -59,7 +59,7 @@ export const purgeDataSchema = z.object({
 export type PurgeDataPayload = z.infer<typeof purgeDataSchema>;
 
 export const exportRequestSchema = z.object({
-  entities: z.array(z.enum(['devices', 'departments', 'catalogs', 'tickets', 'audit_logs'])).min(1, 'Select at least one entity'),
+  entities: z.array(z.enum(['devices', 'departments', 'catalogs', 'tickets', 'audit_logs', 'rounds'])).min(1, 'Select at least one entity'),
   format: z.enum(['csv', 'json', 'xlsx']).default('csv'),
 });
 

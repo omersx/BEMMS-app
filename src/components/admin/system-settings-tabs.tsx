@@ -1,11 +1,12 @@
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Globe, ShieldCheck, Database, Activity } from 'lucide-react';
+import { Globe, ShieldCheck, Database, Activity, Sliders } from 'lucide-react';
 import { LocalizationForm } from './settings-forms/localization-form';
 import { SecurityForm } from './settings-forms/security-form';
 import { RetentionForm } from './settings-forms/retention-form';
 import { HealthPanel } from './settings-forms/health-panel';
+import { FeaturesForm } from './settings-forms/features-form';
 import type { SystemSettings } from '@/lib/validators/system-settings';
 import type { SystemHealthData } from '@/lib/actions/system-settings';
 
@@ -35,7 +36,7 @@ export function SystemSettingsTabs({
       </div>
 
       <Tabs defaultValue="localization" className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full h-auto p-1 gap-1">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full h-auto p-1 gap-1">
           <TabsTrigger value="localization" className="flex items-center gap-2 py-2">
             <Globe className="h-4 w-4" />
             <span className="hidden sm:inline">Localization</span>
@@ -49,6 +50,10 @@ export function SystemSettingsTabs({
             <Database className="h-4 w-4" />
             <span className="hidden sm:inline">Data Retention</span>
             <span className="sm:hidden">Retention</span>
+          </TabsTrigger>
+          <TabsTrigger value="features" className="flex items-center gap-2 py-2">
+            <Sliders className="h-4 w-4" />
+            <span>Features</span>
           </TabsTrigger>
           <TabsTrigger value="health" className="flex items-center gap-2 py-2">
             <Activity className="h-4 w-4" />
@@ -67,6 +72,10 @@ export function SystemSettingsTabs({
 
         <TabsContent value="retention" className="space-y-4">
           <RetentionForm initialData={settings.retention} organizationId={organizationId} />
+        </TabsContent>
+
+        <TabsContent value="features" className="space-y-4">
+          <FeaturesForm initialData={settings.features} organizationId={organizationId} />
         </TabsContent>
 
         <TabsContent value="health" className="space-y-4">
