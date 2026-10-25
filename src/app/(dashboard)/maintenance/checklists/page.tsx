@@ -1,5 +1,6 @@
 import { listChecklistTemplates } from "@/lib/actions/checklists"
 import { PageHeader } from "@/components/shared/page-header"
+import { MaintenanceNav } from "@/components/maintenance/maintenance-nav"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ClipboardCheck, Plus } from "lucide-react"
@@ -19,6 +20,8 @@ export default async function ChecklistTemplatesPage() {
           </Button>
         </Link>
       </PageHeader>
+
+      <MaintenanceNav />
 
       <Card className="border-dashed">
         <CardHeader className="text-center pb-2">

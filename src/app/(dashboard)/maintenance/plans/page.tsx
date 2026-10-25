@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/shared/page-header"
+import { MaintenanceNav } from "@/components/maintenance/maintenance-nav"
 import {
   MaintenancePlanStatusBadge,
   DueStateBadge,
@@ -74,6 +75,8 @@ export default async function MaintenancePlansPage() {
           </Button>
         </Link>
       </PageHeader>
+
+      <MaintenanceNav />
 
       <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-950/20">
         <CardContent className="flex items-start gap-4 p-4">

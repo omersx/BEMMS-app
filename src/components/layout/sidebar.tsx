@@ -53,9 +53,6 @@ const ENGINEER_LINKS: SidebarLink[] = [
   { href: '/departments', label: 'Departments', icon: Building2 },
   { href: '/team', label: 'Engineering Team', icon: UsersRound },
   { href: '/maintenance', label: 'Maintenance', icon: Wrench, badgeKey: 'maintenance' },
-  { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList, badgeKey: 'workOrders' },
-  { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar, badgeKey: 'pmPlans' },
-  { href: '/maintenance/checklists', label: 'Checklists', icon: CheckSquare },
   { href: '/reports', label: 'Reports', icon: BarChart3 },
   { href: '/notifications', label: 'Notifications', icon: Bell, badgeKey: 'notifications' },
 ]
@@ -71,9 +68,6 @@ const FULL_LINKS: SidebarLink[] = [
   { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck, badgeKey: 'tickets' },
   { href: '/tickets/triage', label: 'Triage Queue', icon: AlertTriangle, badgeKey: 'triage' },
   { href: '/maintenance', label: 'Maintenance', icon: Wrench, badgeKey: 'maintenance' },
-  { href: '/maintenance/tasks', label: 'Work Orders', icon: ClipboardList, badgeKey: 'workOrders' },
-  { href: '/maintenance/plans', label: 'PM Plans', icon: Calendar, badgeKey: 'pmPlans' },
-  { href: '/maintenance/checklists', label: 'Checklists', icon: CheckSquare },
   { href: '/reports', label: 'Reports', icon: BarChart3 },
   { href: '/notifications', label: 'Notifications', icon: Bell, badgeKey: 'notifications' },
 ]
@@ -143,7 +137,7 @@ export function Sidebar({ user }: SidebarProps) {
               const active = pathname === link.href || 
                 (link.href !== '/tickets' && link.href !== '/maintenance' && link.href !== '/tickets/create' && pathname.startsWith(link.href + '/')) || 
                 (link.href === '/tickets' && pathname.startsWith('/tickets') && !pathname.startsWith('/tickets/triage') && !pathname.startsWith('/tickets/create')) ||
-                (link.href === '/maintenance' && pathname === '/maintenance')
+                (link.href === '/maintenance' && pathname.startsWith('/maintenance'))
 
               const badge = resolveBadge(link.badgeKey, link.badgeConfig, { isCollapsed: collapsed })
 

@@ -1,6 +1,7 @@
 import { listMaintenanceTasks } from "@/lib/actions/maintenance-tasks"
 import { PageHeader } from "@/components/shared/page-header"
 import { DataTable } from "@/components/shared/data-table"
+import { MaintenanceNav } from "@/components/maintenance/maintenance-nav"
 import {
   MaintenanceStatusBadge,
   MaintenanceTypeBadge,
@@ -134,28 +135,9 @@ export default async function MaintenanceDashboardPage() {
       <PageHeader
         title="Maintenance"
         description="Manage maintenance tasks, PM schedules, and work orders"
-      >
-        <div className="flex flex-wrap gap-2">
-          <Link href="/maintenance/plans">
-            <Button variant="outline">
-              <Calendar className="w-4 h-4 mr-2" />
-              PM Plans
-            </Button>
-          </Link>
-          <Link href="/maintenance/checklists">
-            <Button variant="outline">
-              <ClipboardCheck className="w-4 h-4 mr-2" />
-              Checklists
-            </Button>
-          </Link>
-          <Link href="/maintenance/tasks/new">
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Task
-            </Button>
-          </Link>
-        </div>
-      </PageHeader>
+      />
+
+      <MaintenanceNav />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

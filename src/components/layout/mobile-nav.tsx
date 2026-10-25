@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, QrCode, PlusCircle, ClipboardList, Menu, TicketCheck, Inbox, Monitor, Route } from 'lucide-react'
+import { Home, QrCode, PlusCircle, ClipboardList, Menu, TicketCheck, Inbox, Monitor, Route, Wrench } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NavBadge, type NavBadgeConfig } from './nav-badge'
 import { useNavCounts } from '@/components/providers/nav-counts-provider'
@@ -53,7 +53,7 @@ export function MobileNav({ roles = [] }: MobileNavProps) {
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/scan', label: 'Scan', icon: QrCode },
     { href: '/tickets/create', label: 'Report', icon: PlusCircle },
-    { href: '/maintenance/tasks', label: 'Work', icon: ClipboardList, badgeKey: 'workOrders' },
+    { href: '/maintenance', label: 'Maintenance', icon: Wrench, badgeKey: 'maintenance' },
     { href: '/more', label: 'More', icon: Menu, badgeKey: 'notifications' },
   ]
 

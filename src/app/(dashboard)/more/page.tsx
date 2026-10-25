@@ -144,8 +144,8 @@ export default async function MorePage() {
                 color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950',
               },
               {
-                label: 'Maintenance Overview',
-                description: 'Corrective and preventive maintenance hub',
+                label: 'Maintenance',
+                description: 'Hub for work orders, PM plans, and safety checklists',
                 href: '/maintenance',
                 icon: Wrench,
                 color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950',

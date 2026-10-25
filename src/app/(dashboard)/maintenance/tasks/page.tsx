@@ -1,6 +1,7 @@
 import { listMaintenanceTasks } from "@/lib/actions/maintenance-tasks"
 import { PageHeader } from "@/components/shared/page-header"
 import { DataTable } from "@/components/shared/data-table"
+import { MaintenanceNav } from "@/components/maintenance/maintenance-nav"
 import {
   MaintenanceStatusBadge,
   MaintenanceTypeBadge,
@@ -101,14 +102,9 @@ export default async function MaintenanceTasksPage() {
       <PageHeader
         title="Maintenance Tasks"
         description="View, filter, and manage maintenance work orders and execution stages"
-      >
-        <Link href="/maintenance/tasks/new">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            New Task
-          </Button>
-        </Link>
-      </PageHeader>
+      />
+
+      <MaintenanceNav />
 
       <DataTable
         data={tasks}
