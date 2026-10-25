@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button'
 
 export default function LoginPage() {
   const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -20,11 +22,9 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const formData = new FormData(e.currentTarget)
-    const email = (formData.get('email') as string)?.trim() || ''
-    const password = (formData.get('password') as string) || ''
+    const cleanEmail = email.trim()
 
-    if (!email || !password) {
+    if (!cleanEmail || !password) {
       setError('Please provide both username/email and password.')
       setLoading(false)
       return
@@ -32,7 +32,7 @@ export default function LoginPage() {
 
     try {
       const res = await signIn('credentials', {
-        email,
+        email: cleanEmail,
         password,
         redirect: false,
       })
@@ -79,7 +79,9 @@ export default function LoginPage() {
               autoCorrect="off"
               placeholder="admin or email@hospital.org"
               data-lpignore="true"
-              defaultValue=""
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              suppressHydrationWarning
               required
             />
           </div>
@@ -92,7 +94,9 @@ export default function LoginPage() {
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 data-lpignore="true"
-                defaultValue=""
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                suppressHydrationWarning
                 required
               />
               <Button
