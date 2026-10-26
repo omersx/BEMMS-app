@@ -1,7 +1,7 @@
 // BEMMS Service Worker
 // Handles: caching, push notifications, offline shell
 
-const CACHE_NAME = 'bemms-v2';
+const CACHE_NAME = 'bemms-v3';
 const STATIC_ASSETS = [
   '/login',
   '/dashboard',
@@ -39,8 +39,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET and cross-origin
+  // Skip non-GET, cross-origin, or localhost development
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return;
 
   // API/data requests — network only
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_next/data/')) return;
