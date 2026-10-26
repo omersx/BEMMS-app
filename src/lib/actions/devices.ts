@@ -491,12 +491,38 @@ export async function getDeviceSignatures(deviceId: string) {
     });
     const recordIds = records.map((r) => r.id);
 
-    // 2. Find all service tickets for this device
-    const tickets = await db.query.serviceTickets.findMany({
+    // 2. Find all service tickets for this device (with number + title)
+    const ticketRows = await db.query.serviceTickets.findMany({
       where: eq(serviceTickets.deviceId, deviceId),
-      columns: { id: true },
+      columns: { id: true, ticketNumber: true, title: true },
     });
-    const ticketIds = tickets.map((t) => t.id);
+    const ticketIds = ticketRows.map((t) => t.id);
+    const ticketMap = new Map(ticketRows.map((t) => [t.id, { ticketNumber: t.ticketNumber, title: t.title }]));
+
+    // 2b. Find all maintenance tasks for this device (with number + title)
+    const taskRows = await db.query.maintenanceTasks.findMany({
+      where: eq(maintenanceTasks.deviceId, deviceId),
+      columns: { id: true, taskNumber: true, title: true },
+    });
+    const taskMap = new Map(taskRows.map((t) => [t.id, { taskNumber: t.taskNumber, title: t.title }]));
+
+    // 2c. Build a map from maintenance record ID -> task info (including task ID for href)
+    const recordTaskMap = new Map<string, { taskId: string; taskNumber: string; title: string }>();
+    if (recordIds.length > 0) {
+      // Each maintenance record belongs to a task
+      const recordsWithTask = await db.query.maintenanceRecords.findMany({
+        where: inArray(maintenanceRecords.id, recordIds),
+        columns: { id: true, maintenanceTaskId: true },
+      });
+      for (const rec of recordsWithTask) {
+        if (rec.maintenanceTaskId) {
+          const taskInfo = taskMap.get(rec.maintenanceTaskId);
+          if (taskInfo) {
+            recordTaskMap.set(rec.id, { taskId: rec.maintenanceTaskId, ...taskInfo });
+          }
+        }
+      }
+    }
 
     // 3. Fetch signatures for the device itself, its maintenance records, or its service tickets
     const conditions = [
@@ -532,7 +558,47 @@ export async function getDeviceSignatures(deviceId: string) {
       orderBy: [desc(electronicSignatures.signedAt)],
     });
 
-    // 4. Fetch associated signature events (hash chain audit)
+    // 4. Enrich each signature with source metadata
+    const enrichedSignatures = signatures.map((sig) => {
+      let sourceLabel = '';
+      let sourceNumber = '';
+      let sourceHref = '';
+      let sourceType = sig.entityType || 'unknown';
+
+      if (sig.entityType === 'ticket_resolution') {
+        const ticket = ticketMap.get(sig.entityId);
+        if (ticket) {
+          sourceLabel = ticket.title || 'Service Ticket';
+          sourceNumber = ticket.ticketNumber || '';
+          sourceHref = `/tickets/${sig.entityId}`;
+        } else {
+          sourceLabel = 'Service Ticket';
+          sourceHref = `/tickets/${sig.entityId}`;
+        }
+      } else if (sig.entityType === 'maintenance_record') {
+        const task = recordTaskMap.get(sig.entityId);
+        if (task) {
+          sourceLabel = task.title || 'Maintenance Task';
+          sourceNumber = task.taskNumber || '';
+          sourceHref = `/maintenance/tasks/${task.taskId}`;
+        } else {
+          sourceLabel = 'Maintenance Record';
+        }
+      } else if (sig.entityType === 'device_status_change') {
+        sourceLabel = 'Device Status Change';
+        sourceType = 'device_status_change';
+      }
+
+      return {
+        ...sig,
+        sourceType,
+        sourceLabel,
+        sourceNumber,
+        sourceHref,
+      };
+    });
+
+    // 5. Fetch associated signature events (hash chain audit)
     const sigIds = signatures.map((s) => s.id);
     let events: any[] = [];
     if (sigIds.length > 0) {
@@ -542,7 +608,7 @@ export async function getDeviceSignatures(deviceId: string) {
       });
     }
 
-    return { success: true, data: { signatures, events } };
+    return { success: true, data: { signatures: enrichedSignatures, events } };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

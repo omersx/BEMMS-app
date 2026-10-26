@@ -60,6 +60,11 @@ export interface ElectronicSignatureItem {
     fullName?: string
     email?: string
   } | null
+  // Source context enrichment (from getDeviceSignatures)
+  sourceType?: string
+  sourceLabel?: string
+  sourceNumber?: string
+  sourceHref?: string
 }
 
 const PURPOSE_CONFIG: Record<
