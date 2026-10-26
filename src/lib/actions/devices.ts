@@ -499,15 +499,15 @@ export async function getDeviceSignatures(deviceId: string) {
     const ticketIds = ticketRows.map((t) => t.id);
     const ticketMap = new Map(ticketRows.map((t) => [t.id, { ticketNumber: t.ticketNumber, title: t.title }]));
 
-    // 2b. Find all maintenance tasks for this device (with number + title)
+    // 2b. Find all maintenance tasks for this device (with number + title + maintenanceType)
     const taskRows = await db.query.maintenanceTasks.findMany({
       where: eq(maintenanceTasks.deviceId, deviceId),
-      columns: { id: true, taskNumber: true, title: true },
+      columns: { id: true, taskNumber: true, title: true, maintenanceType: true },
     });
-    const taskMap = new Map(taskRows.map((t) => [t.id, { taskNumber: t.taskNumber, title: t.title }]));
+    const taskMap = new Map(taskRows.map((t) => [t.id, { taskNumber: t.taskNumber, title: t.title, maintenanceType: t.maintenanceType }]));
 
     // 2c. Build a map from maintenance record ID -> task info (including task ID for href)
-    const recordTaskMap = new Map<string, { taskId: string; taskNumber: string; title: string }>();
+    const recordTaskMap = new Map<string, { taskId: string; taskNumber: string; title: string; maintenanceType: string | null }>();
     if (recordIds.length > 0) {
       // Each maintenance record belongs to a task
       const recordsWithTask = await db.query.maintenanceRecords.findMany({
@@ -563,7 +563,7 @@ export async function getDeviceSignatures(deviceId: string) {
       let sourceLabel = '';
       let sourceNumber = '';
       let sourceHref = '';
-      let sourceType = sig.entityType || 'unknown';
+      let sourceType: string = sig.entityType || 'unknown';
 
       if (sig.entityType === 'ticket_resolution') {
         const ticket = ticketMap.get(sig.entityId);
@@ -581,12 +581,23 @@ export async function getDeviceSignatures(deviceId: string) {
           sourceLabel = task.title || 'Maintenance Task';
           sourceNumber = task.taskNumber || '';
           sourceHref = `/maintenance/tasks/${task.taskId}`;
+          if (task.maintenanceType === 'preventive_maintenance') {
+            sourceType = 'preventive_maintenance';
+          } else if (task.maintenanceType === 'calibration') {
+            sourceType = 'calibration';
+          } else {
+            sourceType = 'corrective_maintenance';
+          }
         } else {
           sourceLabel = 'Maintenance Record';
+          sourceType = 'corrective_maintenance';
         }
       } else if (sig.entityType === 'device_status_change') {
         sourceLabel = 'Device Status Change';
         sourceType = 'device_status_change';
+      } else if (sig.entityType === 'engineer_round') {
+        sourceLabel = 'Daily Round / Inspection';
+        sourceType = 'engineer_round';
       }
 
       return {
