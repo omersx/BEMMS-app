@@ -175,22 +175,9 @@ describe('Tickets Server Actions (Integration)', () => {
     });
   });
 
-  describe('acceptTicket with Electronic Signature', () => {
-    it('fails if electronic signature password is wrong', async () => {
-      const result: any = await acceptTicket('a0000000-0000-0000-0000-000000000020', {
-        signaturePassword: 'WrongPassword!',
-        signatureComments: 'Accepting ticket',
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Invalid password');
-    });
-
-    it('successfully accepts ticket and records electronic signature with valid credentials', async () => {
-      const result: any = await acceptTicket('a0000000-0000-0000-0000-000000000020', {
-        signaturePassword: 'ValidPass123!',
-        signatureComments: 'On my way to ICU to inspect device',
-      });
+  describe('acceptTicket direct 1-click acceptance', () => {
+    it('successfully accepts ticket and moves status to in_progress', async () => {
+      const result: any = await acceptTicket('a0000000-0000-0000-0000-000000000020');
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
@@ -202,9 +189,7 @@ describe('Tickets Server Actions (Integration)', () => {
         statusCode: 'resolved',
       });
 
-      const result: any = await acceptTicket('a0000000-0000-0000-0000-000000000020', {
-        signaturePassword: 'ValidPass123!',
-      });
+      const result: any = await acceptTicket('a0000000-0000-0000-0000-000000000020');
 
       expect(result.success).toBe(false);
       expect(result.error).toContain("Cannot accept ticket in 'resolved' status");

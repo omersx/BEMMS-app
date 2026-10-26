@@ -485,23 +485,14 @@ export async function assignTicket(ticketId: string, input: unknown) {
 
 // ── Accept Ticket (with Electronic Signature) ───────────────────────────────────
 
-export async function acceptTicket(ticketId: string, input: unknown) {
+export async function acceptTicket(ticketId: string, input?: unknown) {
   const session = await requireAuth();
   await requireRole('SYS_ADMIN', 'BIOMED_MGR', 'BIOMED_ENG', 'BIOMED_TECH');
-  const validated = acceptTicketSchema.safeParse(input);
-  if (!validated.success) return { success: false, error: validated.error.message };
-
   try {
     const ticket = await db.query.serviceTickets.findFirst({ where: eq(serviceTickets.id, ticketId) });
     if (!ticket) return { success: false, error: 'Ticket not found' };
     if (['resolved', 'closed', 'cancelled'].includes(ticket.statusCode)) {
       return { success: false, error: `Cannot accept ticket in '${ticket.statusCode}' status` };
-    }
-
-    // Verify password for electronic signature
-    const authResult = await verifySignatureAuth(session.id, validated.data.signaturePassword);
-    if (!authResult.success) {
-      return { success: false, error: authResult.error };
     }
 
     const result = await db.transaction(async (tx) => {
@@ -530,80 +521,25 @@ export async function acceptTicket(ticketId: string, input: unknown) {
         }
       }
 
-      // Record Version + Electronic Signature + Hash Chain
-      const prevVersions = await tx.query.recordVersions.findMany({
-        where: and(
-          eq(recordVersions.entityType, 'ticket_resolution'),
-          eq(recordVersions.entityId, ticketId),
-        ),
-      });
-      const versionNumber = prevVersions.length + 1;
-
-      const snapshotData = {
-        ticketId,
-        ticketNumber: ticket.ticketNumber,
-        title: ticket.title,
-        action: 'accept',
-        acceptedByUserId: session.id,
-        acceptedAt: new Date().toISOString(),
-      };
-      const canonicalJson = buildCanonicalSnapshot(snapshotData as any);
-      const contentHash = computeSHA256(canonicalJson);
-
-      const [version] = await tx.insert(recordVersions).values({
-        organizationId: ticket.organizationId,
-        entityType: 'ticket_resolution',
-        entityId: ticketId,
-        versionNumber,
-        canonicalSnapshotJsonb: snapshotData,
-        contentHashSha256: contentHash,
-        createdByUserId: session.id,
-      }).returning();
-
-      const [sig] = await tx.insert(electronicSignatures).values({
-        organizationId: ticket.organizationId,
-        recordVersionId: version.id,
-        entityType: 'ticket_resolution',
-        entityId: ticketId,
-        signaturePurpose: 'accept',
-        signerUserId: session.id,
-        signerNameSnapshot: session.fullName || session.email || 'Biomedical Engineer',
-        signerRoleSnapshot: session.roles?.join(', ') || 'BIOMED_ENG',
-        attestationTextVersion: getAttestationText('accept'),
-        authMethod: 'password_reauth',
-        signedAt: new Date(),
-        signedContentHashSha256: contentHash,
-        comments: validated.data.signatureComments || null,
-      }).returning();
-
-      await createSignatureEvent(tx, {
-        signatureId: sig.id,
-        eventType: 'created',
-        actorUserId: session.id,
-        organizationId: ticket.organizationId,
-        newStatus: 'active',
-      });
-
       await tx.insert(serviceTicketEvents).values({
         serviceTicketId: ticketId,
         eventType: 'accepted',
         previousValueJsonb: { statusCode: ticket.statusCode },
         newValueJsonb: {
           statusCode: 'in_progress',
-          signatureId: sig.id,
-          contentHash: sig.signedContentHashSha256,
+          assignedEngineerUserId: updated.assignedEngineerUserId,
         },
-        reason: 'Engineer accepted work on ticket and signed electronically',
+        reason: 'Engineer accepted ticket and started work',
         visibility: 'public',
         actorUserId: session.id,
       });
 
       await createAuditLog(tx, {
         action: 'UPDATE', entityType: 'service_ticket', entityId: ticketId,
-        actorId: session.id, details: { action: 'accept', signatureId: sig.id },
+        actorId: session.id, details: { action: 'accept', newStatus: 'in_progress' },
       });
 
-      return { success: true, data: updated, signature: sig };
+      return { success: true, data: updated };
     });
 
     // Notify reporter that their ticket has been accepted (fire-and-forget)

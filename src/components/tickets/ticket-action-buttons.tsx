@@ -58,7 +58,7 @@ export function TicketActionButtons({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {canAccept && (
-        <AcceptDialog ticketId={ticketId} ticketNumber={ticketNumber} />
+        <AcceptButton ticketId={ticketId} />
       )}
       {statusCode === "in_progress" && (
         <>
@@ -98,32 +98,18 @@ export function TicketActionButtons({
   )
 }
 
-// ── Accept Dialog (with Electronic Signature) ───────────────────────────────────
+// ── 1-Click Accept Button ───────────────────────────────────────────────────
 
-function AcceptDialog({ ticketId, ticketNumber }: { ticketId: string; ticketNumber?: string }) {
+function AcceptButton({ ticketId }: { ticketId: string }) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [password, setPassword] = useState("")
-  const [comments, setComments] = useState("")
 
   const handleAccept = async () => {
-    if (!password) {
-      toast.error("Password is required for electronic signature authentication")
-      return
-    }
-
     setLoading(true)
-    const result = await acceptTicket(ticketId, {
-      signaturePassword: password,
-      signatureComments: comments.trim() || undefined,
-    })
+    const result = await acceptTicket(ticketId)
 
     if (result?.success) {
-      toast.success("Ticket accepted and electronically signed")
-      setOpen(false)
-      setPassword("")
-      setComments("")
+      toast.success("Ticket accepted and moved to In Progress")
       router.refresh()
     } else {
       toast.error((result as any)?.error || "Failed to accept ticket")
@@ -132,78 +118,15 @@ function AcceptDialog({ ticketId, ticketNumber }: { ticketId: string; ticketNumb
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white">
-          <ShieldCheck className="w-4 h-4" />
-          Accept &amp; Sign
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-indigo-600" />
-            <DialogTitle>Accept Ticket Responsibility</DialogTitle>
-          </div>
-          <DialogDescription>
-            {ticketNumber ? `Ticket ${ticketNumber}` : "Service Ticket"} — Electronically sign to accept and begin work.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-2">
-          {/* Legal Attestation Statement */}
-          <div className="rounded-md bg-indigo-50/50 dark:bg-indigo-950/30 p-3 border border-indigo-200/60 text-xs text-indigo-950 dark:text-indigo-200">
-            <span className="font-semibold block mb-1">Attestation Statement:</span>
-            <p className="italic text-muted-foreground">
-              &quot;I accept responsibility for the assigned work and confirm I will perform it in accordance with applicable biomedical engineering procedures.&quot;
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="acceptPassword" className="flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-              Electronic Signature Password *
-            </Label>
-            <Input
-              id="acceptPassword"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your account password to sign..."
-              className="mt-1.5"
-            />
-            <p className="text-[11px] text-muted-foreground mt-1">
-              Re-authentication creates a permanent cryptographic record in the audit chain.
-            </p>
-          </div>
-
-          <div>
-            <Label htmlFor="acceptComments">Comments / Initial Notes (optional)</Label>
-            <Input
-              id="acceptComments"
-              value={comments}
-              onChange={(e) => setComments(e.target.value)}
-              placeholder="e.g. Arrived on-site, starting physical inspection..."
-              className="mt-1.5 text-sm"
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)} disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleAccept}
-            disabled={loading || !password}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5"
-          >
-            <ShieldCheck className="w-4 h-4" />
-            {loading ? "Signing..." : "Sign & Accept Work"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <Button
+      size="sm"
+      onClick={handleAccept}
+      disabled={loading}
+      className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-xs"
+    >
+      <CheckCircle className="w-4 h-4" />
+      <span>{loading ? "Accepting..." : "Accept Ticket"}</span>
+    </Button>
   )
 }
 

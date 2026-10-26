@@ -51,9 +51,10 @@ export const assignTicketSchema = z.object({
 });
 
 export const acceptTicketSchema = z.object({
-  signaturePassword: z.string().min(1, 'Password is required to sign ticket acceptance'),
+  signaturePassword: z.string().optional(),
   signatureComments: z.string().max(500).optional(),
-});
+  note: z.string().max(500).optional(),
+}).optional().default({});
 
 export const updateTicketDeviceStatusSchema = z.object({
   deviceStatusCode: z.enum([
