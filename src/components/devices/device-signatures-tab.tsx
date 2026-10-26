@@ -329,7 +329,7 @@ function ActivitySignatureCard({ group }: { group: SourceGroup }) {
         <div className="border-t bg-muted/20 px-4 py-4 space-y-4 animate-in fade-in-50 duration-150">
           <div className="flex items-center justify-between text-xs text-muted-foreground pb-1">
             <span className="font-semibold uppercase tracking-wider text-[11px]">
-              Electronic Signatures Breakdown (21 CFR Part 11)
+              Signatures Breakdown
             </span>
             <span>
               {group.signatures.length} cryptographically verified {group.signatures.length === 1 ? "record" : "records"}
@@ -481,14 +481,9 @@ export function DeviceSignaturesTab({
             <ShieldCheck className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-foreground">
-                Electronic Signatures & Sign-Offs
-              </h3>
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/5 text-primary border-primary/20">
-                21 CFR Part 11
-              </Badge>
-            </div>
+            <h3 className="text-sm font-semibold text-foreground">
+              Electronic Signatures & Sign-Offs
+            </h3>
             <p className="text-xs text-muted-foreground">
               Cryptographically verified sign-offs for tickets, maintenance, and device operations.
             </p>
