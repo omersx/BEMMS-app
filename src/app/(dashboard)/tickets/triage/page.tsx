@@ -1,6 +1,7 @@
 import { getTriageQueue } from "@/lib/actions/tickets"
 import { PageHeader } from "@/components/shared/page-header"
 import { DataTable } from "@/components/shared/data-table"
+import { TicketsNav } from "@/components/tickets/tickets-nav"
 import { TicketStatusBadge, TicketPriorityBadge, TicketImpactBadge } from "@/components/tickets/ticket-badges"
 import { WaitingForEngineerBanner } from "@/components/tickets/ticket-dispatch-status"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -80,6 +81,8 @@ export default async function TriageQueuePage() {
         title="Triage Queue"
         description="Review, classify, and assign incoming service requests"
       />
+
+      <TicketsNav />
 
       {/* Queue Metrics */}
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">

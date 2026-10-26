@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TicketCardsView } from "@/components/tickets/ticket-cards-view";
 import { StaffTicketsView } from "@/components/tickets/staff-tickets-view";
 import { TicketListAutoRefresh } from "@/components/tickets/ticket-list-auto-refresh";
+import { TicketsNav } from "@/components/tickets/tickets-nav";
 import { Button } from "@/components/ui/button";
 import { Plus, Filter } from "lucide-react";
 import Link from "next/link";
@@ -44,22 +45,9 @@ export default async function TicketsPage() {
       <PageHeader
         title="Helpdesk Tickets"
         description="Track device problems, service requests, and maintenance progress"
-      >
-        <div className="flex gap-2">
-          <Link href="/tickets/triage">
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              Triage Queue
-            </Button>
-          </Link>
-          <Link href="/tickets/create">
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Report Problem
-            </Button>
-          </Link>
-        </div>
-      </PageHeader>
+      />
+
+      <TicketsNav />
 
       <TicketCardsView tickets={tickets as any} />
     </div>

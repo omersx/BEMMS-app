@@ -47,7 +47,6 @@ const ENGINEER_LINKS: SidebarLink[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/rounds', label: 'Daily Round', icon: Route },
   { href: '/scan', label: 'Scan QR', icon: QrCode },
-  { href: '/tickets/triage', label: 'Triage Queue', icon: Inbox, badgeKey: 'triage' },
   { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck, badgeKey: 'tickets' },
   { href: '/devices', label: 'Devices', icon: Monitor },
   { href: '/departments', label: 'Departments', icon: Building2 },
@@ -66,7 +65,6 @@ const FULL_LINKS: SidebarLink[] = [
   { href: '/departments', label: 'Departments', icon: Building2 },
   { href: '/team', label: 'Engineering Team', icon: UsersRound },
   { href: '/tickets', label: 'Helpdesk Tickets', icon: TicketCheck, badgeKey: 'tickets' },
-  { href: '/tickets/triage', label: 'Triage Queue', icon: AlertTriangle, badgeKey: 'triage' },
   { href: '/maintenance', label: 'Maintenance', icon: Wrench, badgeKey: 'maintenance' },
   { href: '/reports', label: 'Reports', icon: BarChart3 },
   { href: '/notifications', label: 'Notifications', icon: Bell, badgeKey: 'notifications' },
@@ -135,8 +133,8 @@ export function Sidebar({ user }: SidebarProps) {
           <TooltipProvider delayDuration={0}>
             {links.map((link) => {
               const active = pathname === link.href || 
-                (link.href !== '/tickets' && link.href !== '/maintenance' && link.href !== '/tickets/create' && pathname.startsWith(link.href + '/')) || 
-                (link.href === '/tickets' && pathname.startsWith('/tickets') && !pathname.startsWith('/tickets/triage') && !pathname.startsWith('/tickets/create')) ||
+                (link.href !== '/tickets' && link.href !== '/maintenance' && pathname.startsWith(link.href + '/')) || 
+                (link.href === '/tickets' && pathname.startsWith('/tickets')) ||
                 (link.href === '/maintenance' && pathname.startsWith('/maintenance'))
 
               const badge = resolveBadge(link.badgeKey, link.badgeConfig, { isCollapsed: collapsed })

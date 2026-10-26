@@ -40,12 +40,12 @@ export function MobileNav({ roles = [] }: MobileNavProps) {
     { href: '/more', label: 'More', icon: Menu, badgeKey: 'notifications' },
   ]
 
-  // Engineer-optimized: Quick access to Daily Round, Scan, and Triage
+  // Engineer-optimized: Quick access to Daily Round, Scan, and Tickets
   const engineerTabs: MobileTab[] = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/rounds', label: 'Round', icon: Route },
     { href: '/scan', label: 'Scan', icon: QrCode },
-    { href: '/tickets/triage', label: 'Triage', icon: Inbox, badgeKey: 'triage' },
+    { href: '/tickets', label: 'Tickets', icon: TicketCheck, badgeKey: 'tickets' },
     { href: '/more', label: 'More', icon: Menu, badgeKey: 'notifications' },
   ]
 
