@@ -296,8 +296,8 @@ function ActivitySignatureCard({ group }: { group: SourceGroup }) {
         </div>
 
         {/* ── 2. Compact Lifecycle Progress Stepper ─────────────────────────── */}
-        <div className="pt-1">
-          <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+        <div className="pt-0.5">
+          <div className="flex flex-wrap items-center gap-2 py-0.5">
             {group.signatures.map((sig, idx) => {
               const purposeKey = sig.signaturePurpose?.toLowerCase() || ""
               const purposeText = PURPOSE_LABELS[purposeKey] || sig.signaturePurpose
@@ -497,9 +497,11 @@ export function DeviceSignaturesTab({
 
         {hasSignatures && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground self-end sm:self-center">
-            <span className="font-medium text-foreground">{signatures.length} Total Signatures</span>
-            <span>across</span>
-            <span className="font-medium text-foreground">{sourceGroups.length} Activities</span>
+            <span className="font-semibold text-foreground">
+              {sourceGroups.length} {sourceGroups.length === 1 ? "Signed Record" : "Signed Records"}
+            </span>
+            <span>•</span>
+            <span>{signatures.length} {signatures.length === 1 ? "signature" : "signatures"}</span>
           </div>
         )}
       </div>

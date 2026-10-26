@@ -63,6 +63,9 @@ async function DeviceDetailContent({ deviceId }: { deviceId: string }) {
   const maintenanceTasks = maintenanceResult?.success ? (maintenanceResult.data?.tasks || []) : []
   const signatures = signaturesResult?.success ? (signaturesResult.data?.signatures || []) : []
   const signatureEvents = signaturesResult?.success ? (signaturesResult.data?.events || []) : []
+  const signedActivitiesCount = new Set(
+    signatures.map((s: any) => `${s.sourceType || s.entityType}:${s.entityId}`)
+  ).size
   const documents = (documentsResult?.success && Array.isArray(documentsResult.data)) ? documentsResult.data : []
 
   if (!device) {
@@ -131,7 +134,7 @@ async function DeviceDetailContent({ deviceId }: { deviceId: string }) {
           {showSignatures && (
             <TabsTrigger value="signatures" className="gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5" />
-              Signatures ({signatures.length})
+              Signatures ({signedActivitiesCount})
             </TabsTrigger>
           )}
           {showStatusHistory && <TabsTrigger value="status-history">Status History</TabsTrigger>}
