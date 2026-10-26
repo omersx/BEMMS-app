@@ -670,7 +670,7 @@ export function TaskActionBar({
               Sign & Submit Maintenance Record
             </DialogTitle>
             <DialogDescription>
-              Electronically attest that the recorded maintenance work is accurate and complete under 21 CFR Part 11 compliance.
+              Electronically attest that the recorded maintenance work is accurate and complete.
             </DialogDescription>
           </DialogHeader>
 

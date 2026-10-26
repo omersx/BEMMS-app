@@ -943,7 +943,7 @@ export default async function MaintenanceTaskDetailPage({
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-5 w-5 text-primary" />
                     <CardTitle className="text-base font-semibold">
-                      21 CFR Part 11 Electronic Signatures & Audit Trail
+                      Electronic Signatures & Audit Trail
                     </CardTitle>
                   </div>
                   <CardDescription className="text-xs">

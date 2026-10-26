@@ -120,7 +120,7 @@ function AcceptDialog({ ticketId, ticketNumber }: { ticketId: string; ticketNumb
     })
 
     if (result?.success) {
-      toast.success("Ticket accepted and electronically signed (21 CFR Part 11)")
+      toast.success("Ticket accepted and electronically signed")
       setOpen(false)
       setPassword("")
       setComments("")
@@ -153,7 +153,7 @@ function AcceptDialog({ ticketId, ticketNumber }: { ticketId: string; ticketNumb
         <div className="space-y-4 py-2">
           {/* Legal Attestation Statement */}
           <div className="rounded-md bg-indigo-50/50 dark:bg-indigo-950/30 p-3 border border-indigo-200/60 text-xs text-indigo-950 dark:text-indigo-200">
-            <span className="font-semibold block mb-1">Attestation Statement (21 CFR Part 11):</span>
+            <span className="font-semibold block mb-1">Attestation Statement:</span>
             <p className="italic text-muted-foreground">
               &quot;I accept responsibility for the assigned work and confirm I will perform it in accordance with applicable biomedical engineering procedures.&quot;
             </p>
@@ -348,7 +348,7 @@ function ResolveDialog({ ticketId, hasDevice, ticketNumber }: { ticketId: string
 
           {/* Legal Attestation Statement */}
           <div className="rounded-md bg-emerald-50/50 dark:bg-emerald-950/30 p-3 border border-emerald-200/60 text-xs text-emerald-950 dark:text-emerald-200">
-            <span className="font-semibold block mb-1">Attestation Statement (21 CFR Part 11):</span>
+            <span className="font-semibold block mb-1">Attestation Statement:</span>
             <p className="italic text-muted-foreground">
               &quot;I confirm that the issue has been resolved and the resolution summary accurately describes the work performed.&quot;
             </p>
@@ -462,7 +462,7 @@ function CloseDialog({ ticketId, ticketNumber }: { ticketId: string; ticketNumbe
         <div className="space-y-4 py-2">
           {/* Legal Attestation Statement */}
           <div className="rounded-md bg-muted/50 p-3 border text-xs">
-            <span className="font-semibold block mb-1">Attestation Statement (21 CFR Part 11):</span>
+            <span className="font-semibold block mb-1">Attestation Statement:</span>
             <p className="italic text-muted-foreground">
               &quot;I confirm that the ticket resolution is sufficiently documented and complete under the applicable policy.&quot;
             </p>
