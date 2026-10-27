@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -54,17 +54,19 @@ export function EngineerDetailsDialog({
   onEdit,
   onStatusUpdated,
 }: EngineerDetailsDialogProps) {
-  if (!engineer) return null;
-
-  const [currentStatus, setCurrentStatus] = useState<EngineerDutyStatus>(engineer.dutyStatus);
+  const [currentStatus, setCurrentStatus] = useState<EngineerDutyStatus>(engineer?.dutyStatus || 'off_duty');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  // Sync state if engineer changes
-  if (engineer.dutyStatus !== currentStatus && !isUpdatingStatus) {
-    setCurrentStatus(engineer.dutyStatus);
-  }
+  useEffect(() => {
+    if (engineer?.dutyStatus) {
+      setCurrentStatus(engineer.dutyStatus);
+    }
+  }, [engineer?.dutyStatus]);
+
+  if (!engineer) return null;
 
   const handleStatusChange = async (newStatus: EngineerDutyStatus) => {
+    if (!engineer) return;
     setIsUpdatingStatus(true);
     try {
       const res = await updateEngineerDutyStatus(engineer.id, newStatus);

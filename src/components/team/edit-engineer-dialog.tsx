@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -31,17 +31,30 @@ export function EditEngineerDialog({
   onOpenChange,
   onSuccess,
 }: EditEngineerDialogProps) {
-  if (!engineer) return null;
-
-  const [jobTitle, setJobTitle] = useState(engineer.jobTitle);
-  const [specialization, setSpecialization] = useState(engineer.specialization || '');
-  const [extension, setExtension] = useState(engineer.extension || '');
-  const [mobileNumber, setMobileNumber] = useState(engineer.mobileNumber || '');
-  const [shiftHours, setShiftHours] = useState(engineer.shiftHours || '08:00 AM - 04:00 PM');
-  const [workingDays, setWorkingDays] = useState<string[]>(engineer.workingDays || []);
-  const [onCallDays, setOnCallDays] = useState<string[]>(engineer.onCallDays || []);
-  const [notes, setNotes] = useState(engineer.notes || '');
+  const [jobTitle, setJobTitle] = useState(engineer?.jobTitle || '');
+  const [specialization, setSpecialization] = useState(engineer?.specialization || '');
+  const [extension, setExtension] = useState(engineer?.extension || '');
+  const [mobileNumber, setMobileNumber] = useState(engineer?.mobileNumber || '');
+  const [shiftHours, setShiftHours] = useState(engineer?.shiftHours || '08:00 AM - 04:00 PM');
+  const [workingDays, setWorkingDays] = useState<string[]>(engineer?.workingDays || []);
+  const [onCallDays, setOnCallDays] = useState<string[]>(engineer?.onCallDays || []);
+  const [notes, setNotes] = useState(engineer?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (engineer) {
+      setJobTitle(engineer.jobTitle || '');
+      setSpecialization(engineer.specialization || '');
+      setExtension(engineer.extension || '');
+      setMobileNumber(engineer.mobileNumber || '');
+      setShiftHours(engineer.shiftHours || '08:00 AM - 04:00 PM');
+      setWorkingDays(engineer.workingDays || []);
+      setOnCallDays(engineer.onCallDays || []);
+      setNotes(engineer.notes || '');
+    }
+  }, [engineer]);
+
+  if (!engineer) return null;
 
   const toggleWorkingDay = (day: string) => {
     setWorkingDays((prev) =>
@@ -57,6 +70,7 @@ export function EditEngineerDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!engineer) return;
     setIsSubmitting(true);
 
     try {

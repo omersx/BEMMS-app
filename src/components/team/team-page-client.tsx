@@ -190,21 +190,26 @@ export function TeamPageClient({ initialMembers, stats, coverage }: TeamPageClie
       </Tabs>
 
       {/* Full Engineer Details Dialog */}
-      <EngineerDetailsDialog
-        engineer={viewEngineer}
-        open={isDetailsOpen}
-        onOpenChange={setIsDetailsOpen}
-        onEdit={handleEdit}
-        onStatusUpdated={() => router.refresh()}
-      />
+      {viewEngineer && (
+        <EngineerDetailsDialog
+          engineer={viewEngineer}
+          open={isDetailsOpen}
+          onOpenChange={setIsDetailsOpen}
+          onEdit={handleEdit}
+          onStatusUpdated={() => router.refresh()}
+        />
+      )}
 
       {/* Edit Engineer Dialog */}
-      <EditEngineerDialog
-        engineer={selectedEngineer}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onSuccess={() => router.refresh()}
-      />
+      {selectedEngineer && (
+        <EditEngineerDialog
+          key={selectedEngineer.id}
+          engineer={selectedEngineer}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onSuccess={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }

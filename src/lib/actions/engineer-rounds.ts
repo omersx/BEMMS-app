@@ -619,7 +619,7 @@ export async function getRoundDetail(roundId: string) {
 
     // Get ticket counts per visit
     const visitIds = round.departmentVisits.map(v => v.id);
-    let ticketsByVisit: Record<string, any[]> = {};
+    const ticketsByVisit: Record<string, any[]> = {};
 
     if (visitIds.length > 0) {
       const tickets = await db
