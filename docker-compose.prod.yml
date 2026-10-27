@@ -29,6 +29,7 @@ services:
       - bemms_network
 
   app:
+    image: omersx/bemms:latest
     build:
       context: .
       target: runner
@@ -50,6 +51,7 @@ services:
       - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:?VAPID private key required}
       - VAPID_SUBJECT=${VAPID_SUBJECT:-mailto:admin@bemms.app}
       - DB_POOL_MAX=${DB_POOL_MAX:-20}
+      - DB_SSL=${DB_SSL:-false}
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
