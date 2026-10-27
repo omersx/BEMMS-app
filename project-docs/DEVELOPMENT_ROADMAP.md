@@ -6,8 +6,8 @@
 
 - **Repository:** Production Ready
 - **Technology:** Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, PostgreSQL, Auth.js, Docker Compose, Vitest, Caddy
-- **Current Phase:** Production Hardened & Verified (`v1.0.0-rc1`)
-- **Last Updated:** 2026-10-21
+- **Current Phase:** Automated CI/CD & Multi-Registry Pipeline Complete (`v1.0.0`)
+- **Last Updated:** 2026-10-27
 
 ---
 
@@ -472,5 +472,27 @@ Digitize the biomedical engineer's daily physical walk-through across hospital d
 8. Daily rounds can be exported in JSON, Excel (.xlsx), and CSV formats from both the History page and the Admin Export Center.
 9. `npx tsc --noEmit` passes with 0 errors.
 10. All 18 test suites pass (169/169 tests passed).
+
+### Status: `COMPLETE`
+
+
+---
+
+## Phase 14: Automated CI/CD & Multi-Registry Distribution Pipeline — `COMPLETE`
+
+### Objective & Business Value
+Establish a robust, automated continuous integration, testing, packaging, and delivery pipeline using GitHub Actions, Docker Hub container registry (`omersx/bemms`), and the public npm package registry (`@omersx/bemms`).
+
+### Implementation Summary
+- **Continuous Integration (`ci.yml`):** Runs on PRs and pushes to `main`. Automates dependency caching with pnpm 9, type checks (`tsc --noEmit`), Vitest suite, and standalone production build.
+- **Continuous Deployment & Release (`release.yml`):** Runs on push to `main` and semver tags (`v*.*.*`). Automatically builds and pushes multi-platform Docker images to Docker Hub with semver/latest tagging. Publishes public scoped package to npm with idempotency detection. Automatically generates GitHub Releases with release notes upon tag push.
+- **PR Docker Validation (`docker-build-test.yml`):** Validates Dockerfile multi-stage build cleanly on PRs without pushing.
+- **Packaging & Registry Preparation:** Updated `package.json` to `@omersx/bemms` with public publish config and specified distribution files. Added optimized `.dockerignore` and `.npmignore` to keep image and package sizes lean.
+
+### Acceptance Criteria
+1. CI workflow passes type checking, unit tests, and Next.js standalone build.
+2. Docker images build with layer caching and push to Docker Hub.
+3. npm registry publication handles idempotent checks without breaking continuous pushes.
+4. Semver release tags trigger official GitHub Releases.
 
 ### Status: `COMPLETE`

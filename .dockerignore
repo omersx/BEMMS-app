@@ -1,7 +1,25 @@
+# Dependencies and cache
 node_modules
 .next
+.pnpm-store
+
+# Version control & CI/CD
 .git
+.github
+
+# Documentation and project notes
 *.md
 !README.md
-.env*
+project-docs
+scratch
 
+# Local environment secrets
+.env*
+!.env.example
+
+# Development artifacts & backups
+backups
+coverage
+*.tsbuildinfo
+hospital_demo_devices.csv
+start.bat

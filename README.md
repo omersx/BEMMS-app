@@ -1,5 +1,8 @@
 # 🏥 BEMMS — Biomedical Engineering & Maintenance Management System
 
+[![CI](https://github.com/omersx/bemms/actions/workflows/ci.yml/badge.svg)](https://github.com/omersx/bemms/actions/workflows/ci.yml)
+[![Docker Hub](https://img.shields.io/docker/pulls/omersx/bemms?logo=docker&label=Docker%20Hub)](https://hub.docker.com/r/omersx/bemms)
+[![npm version](https://img.shields.io/npm/v/@omersx/bemms.svg?logo=npm)](https://www.npmjs.com/package/@omersx/bemms)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38bdf8?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
@@ -94,8 +97,8 @@ It bridges the gap between frontline clinical healthcare workers and biomedical 
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/omersx/BEMMS-app.git
-cd BEMMS-app
+git clone https://github.com/omersx/bemms.git
+cd bemms
 ```
 
 ### 2. Configure Environment Variables

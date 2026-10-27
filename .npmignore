@@ -1,0 +1,30 @@
+# Environment and secrets
+.env*
+!.env.example
+
+# Version control and CI
+.git
+.github
+
+# Build cache and outputs
+.next
+node_modules
+coverage
+*.tsbuildinfo
+
+# Project docs and temporary files
+project-docs/
+scratch/
+backups/
+hospital_demo_devices.csv
+
+# Docker and deployment configs
+Dockerfile
+docker-compose*.yml
+Caddyfile
+start.bat
+
+# Tests
+**/*.test.ts
+**/*.test.tsx
+vitest.config.ts
