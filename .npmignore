@@ -14,7 +14,9 @@ coverage
 
 # Project docs and temporary files
 project-docs/
+project-docs/**
 scratch/
+scratch/**
 backups/
 hospital_demo_devices.csv
 

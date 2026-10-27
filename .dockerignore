@@ -10,8 +10,10 @@ node_modules
 # Documentation and project notes
 *.md
 !README.md
-project-docs
-scratch
+project-docs/
+project-docs/**
+scratch/
+scratch/**
 
 # Local environment secrets
 .env*

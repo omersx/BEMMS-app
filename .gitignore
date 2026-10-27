@@ -38,6 +38,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Documentation and scratch
+project-docs/
+scratch/
+
 # Editor & OS Files
 .DS_Store
 .AppleDouble
