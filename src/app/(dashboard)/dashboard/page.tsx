@@ -40,7 +40,10 @@ export default async function DashboardPage() {
   };
 
   const roles = user.roles || [];
-  const firstName = user.fullName?.split(' ')[0] || 'there';
+  const parts = (user.fullName || '').trim().split(/\s+/);
+  const displayName = parts.length > 1 && /^(eng\.?|dr\.?|mr\.?|mrs\.?|ms\.?|prof\.?)$/i.test(parts[0])
+    ? `${parts[0]} ${parts[1]}`
+    : parts[0] || 'there';
 
   const isBME = hasRole(roles, 'BIOMED_ENG', 'BIOMED_TECH', 'BIOMED_MGR');
   const isManager = hasRole(roles, 'BIOMED_MGR', 'HOSP_ADMIN', 'ORG_ADMIN');
@@ -57,7 +60,7 @@ export default async function DashboardPage() {
       {/* Greeting */}
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          Welcome back, {firstName}
+          Welcome back, {displayName}
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {roles.map(r => r.replace(/_/g, ' ')).join(' · ')}

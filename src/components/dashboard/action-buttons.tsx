@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { QrCode, PlusCircle, Inbox, Users, MonitorSmartphone, Monitor, Building2 } from "lucide-react";
+import { QrCode, PlusCircle, TicketCheck, Wrench, Users, MonitorSmartphone, Monitor, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -17,7 +17,7 @@ export function ActionButtons({ role, triageCount = 0 }: ActionButtonsProps) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
       <Button asChild size="lg" className="w-full sm:w-auto min-h-[44px]">
-        <Link href="/devices/scan">
+        <Link href="/scan">
           <QrCode className="mr-2 h-5 w-5" />
           Scan Device
         </Link>
@@ -25,7 +25,7 @@ export function ActionButtons({ role, triageCount = 0 }: ActionButtonsProps) {
 
       {isStaff && (
         <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto min-h-[44px]">
-          <Link href="/tickets/new">
+          <Link href="/tickets/create">
             <PlusCircle className="mr-2 h-5 w-5" />
             Report a Problem
           </Link>
@@ -35,20 +35,20 @@ export function ActionButtons({ role, triageCount = 0 }: ActionButtonsProps) {
       {isBiomed && (
         <>
           <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto min-h-[44px] relative">
-            <Link href="/tickets/triage">
-              <Inbox className="mr-2 h-5 w-5" />
-              Triage Queue
+            <Link href="/tickets">
+              <TicketCheck className="mr-2 h-5 w-5" />
+              Helpdesk Tickets
               {triageCount > 0 && (
-                <Badge variant="destructive" className="ml-2 absolute -top-2 -right-2">
-                  {triageCount}
+                <Badge variant="destructive" className="ml-2 text-xs">
+                  {triageCount} new
                 </Badge>
               )}
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-h-[44px]">
-            <Link href="/tickets">
-              <Inbox className="mr-2 h-5 w-5" />
-              Helpdesk Tickets
+            <Link href="/maintenance">
+              <Wrench className="mr-2 h-5 w-5" />
+              Maintenance
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-h-[44px]">
