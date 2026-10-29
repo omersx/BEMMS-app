@@ -128,12 +128,12 @@ export async function getTodayRound() {
       return { success: false, error: 'Engineer profile not found. Please set up your profile first.' };
     }
 
-    // Check if today is a working day
+    // Check if today is a working day (allow if on_duty or workingDays includes today or workingDays is empty)
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const todayDay = dayNames[new Date().getDay()];
     const workingDays = (profile.workingDays as string[]) || [];
 
-    if (!workingDays.includes(todayDay)) {
+    if (workingDays.length > 0 && !workingDays.includes(todayDay) && profile.dutyStatus !== 'on_duty') {
       return {
         success: true,
         data: null,
@@ -142,30 +142,94 @@ export async function getTodayRound() {
       };
     }
 
-    // Get covered departments
-    const coveredDeptIds = (profile.coveredDepartmentIds as string[]) || [];
-    if (coveredDeptIds.length === 0) {
+    // Get covered departments (if empty or contains 'all', engineer has facility-wide coverage)
+    const coveredDeptIds = ((profile.coveredDepartmentIds as string[]) || [])
+      .filter((id) => id && id !== 'all');
+    const isFacilityWide = coveredDeptIds.length === 0;
+
+    let deptList: { id: string; name: string; code: string; hospitalId?: string | null }[] = [];
+
+    if (!isFacilityWide) {
+      // Specific assigned departments
+      deptList = await db.query.departments.findMany({
+        where: and(
+          inArray(departments.id, coveredDeptIds),
+          eq(departments.status, 'active'),
+        ),
+        columns: { id: true, name: true, code: true, hospitalId: true },
+        orderBy: [asc(departments.name)],
+      });
+    } else {
+      // Facility-wide: cover all active departments in the engineer's assigned hospital
+      const deptConditions = [eq(departments.status, 'active')];
+      if (profile.hospitalId) {
+        deptConditions.push(eq(departments.hospitalId, profile.hospitalId));
+      } else if (profile.organizationId) {
+        deptConditions.push(eq(departments.organizationId, profile.organizationId));
+      }
+
+      deptList = await db.query.departments.findMany({
+        where: and(...deptConditions),
+        columns: { id: true, name: true, code: true, hospitalId: true },
+        orderBy: [asc(departments.name)],
+      });
+
+      // Fallback: If no departments matched profile.hospitalId, try organization-wide active departments
+      if (deptList.length === 0 && profile.organizationId) {
+        deptList = await db.query.departments.findMany({
+          where: and(
+            eq(departments.organizationId, profile.organizationId),
+            eq(departments.status, 'active'),
+          ),
+          columns: { id: true, name: true, code: true, hospitalId: true },
+          orderBy: [asc(departments.name)],
+        });
+      }
+    }
+
+    if (deptList.length === 0) {
       return {
         success: false,
-        error: 'No departments assigned to your profile. Please contact your manager.',
+        error: 'No active departments found for your facility. Please ensure departments are configured or contact your manager.',
       };
     }
 
-    // Fetch department details
-    const deptList = await db.query.departments.findMany({
-      where: and(
-        inArray(departments.id, coveredDeptIds),
-        eq(departments.status, 'active'),
-      ),
-      columns: { id: true, name: true, code: true },
-    });
+    let resolvedHospitalId = profile.hospitalId;
+    let resolvedHospitalName = profile.hospital?.name;
+
+    if (!resolvedHospitalId && deptList.length > 0 && deptList[0].hospitalId) {
+      resolvedHospitalId = deptList[0].hospitalId;
+      const hosp = await db.query.hospitals.findFirst({
+        where: eq(hospitals.id, resolvedHospitalId),
+        columns: { name: true },
+      });
+      resolvedHospitalName = hosp?.name;
+    }
+
+    if (!resolvedHospitalId && profile.organizationId) {
+      const defaultHosp = await db.query.hospitals.findFirst({
+        where: eq(hospitals.organizationId, profile.organizationId),
+        columns: { id: true, name: true },
+      });
+      if (defaultHosp) {
+        resolvedHospitalId = defaultHosp.id;
+        resolvedHospitalName = defaultHosp.name;
+      }
+    }
+
+    if (!resolvedHospitalId) {
+      return {
+        success: false,
+        error: 'No hospital facility is assigned to your profile. Please contact your manager.',
+      };
+    }
 
     return {
       success: true,
       data: null,
       canStart: true,
-      hospitalId: profile.hospitalId,
-      hospitalName: profile.hospital?.name,
+      hospitalId: resolvedHospitalId,
+      hospitalName: resolvedHospitalName,
       departments: deptList,
       shiftType: inferShiftType(),
     };
@@ -217,19 +281,51 @@ export async function startRound(input: unknown) {
     return { success: false, error: 'Engineer profile not found' };
   }
 
-  const coveredDeptIds = (profile.coveredDepartmentIds as string[]) || [];
-  if (coveredDeptIds.length === 0) {
-    return { success: false, error: 'No departments assigned to your profile' };
+  const coveredDeptIds = ((profile.coveredDepartmentIds as string[]) || [])
+    .filter((id) => id && id !== 'all');
+  const isFacilityWide = coveredDeptIds.length === 0;
+
+  let deptList: { id: string; name: string }[] = [];
+
+  if (!isFacilityWide) {
+    deptList = await db.query.departments.findMany({
+      where: and(
+        inArray(departments.id, coveredDeptIds),
+        eq(departments.status, 'active'),
+      ),
+      columns: { id: true, name: true },
+      orderBy: [asc(departments.name)],
+    });
+  } else {
+    const targetHospitalId = hospitalId || profile.hospitalId;
+    const deptConditions = [eq(departments.status, 'active')];
+    if (targetHospitalId) {
+      deptConditions.push(eq(departments.hospitalId, targetHospitalId));
+    } else if (profile.organizationId) {
+      deptConditions.push(eq(departments.organizationId, profile.organizationId));
+    }
+
+    deptList = await db.query.departments.findMany({
+      where: and(...deptConditions),
+      columns: { id: true, name: true },
+      orderBy: [asc(departments.name)],
+    });
+
+    if (deptList.length === 0 && profile.organizationId) {
+      deptList = await db.query.departments.findMany({
+        where: and(
+          eq(departments.organizationId, profile.organizationId),
+          eq(departments.status, 'active'),
+        ),
+        columns: { id: true, name: true },
+        orderBy: [asc(departments.name)],
+      });
+    }
   }
 
-  // Fetch active departments
-  const deptList = await db.query.departments.findMany({
-    where: and(
-      inArray(departments.id, coveredDeptIds),
-      eq(departments.status, 'active'),
-    ),
-    columns: { id: true, name: true },
-  });
+  if (deptList.length === 0) {
+    return { success: false, error: 'No active departments found to inspect for your round' };
+  }
 
   try {
     const result = await db.transaction(async (tx) => {
@@ -281,6 +377,7 @@ export async function startRound(input: unknown) {
       if (existing) {
         await tx.update(engineerRounds)
           .set({
+            hospitalId,
             status: 'in_progress',
             startedAt: new Date(),
             startSignatureId: signature.id,
@@ -288,6 +385,8 @@ export async function startRound(input: unknown) {
             updatedAt: new Date(),
           })
           .where(eq(engineerRounds.id, existing.id));
+
+        await tx.delete(roundDepartmentVisits).where(eq(roundDepartmentVisits.roundId, existing.id));
       } else {
         await tx.insert(engineerRounds).values({
           id: roundId,

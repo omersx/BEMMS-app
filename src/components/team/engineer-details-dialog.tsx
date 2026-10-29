@@ -367,7 +367,9 @@ export function EngineerDetailsDialog({
           {/* 4. Department Coverage */}
           <div>
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center justify-between">
-              <span>Department Coverage ({engineer.coveredDepartments.length})</span>
+              <span>
+                Department Coverage {engineer.coveredDepartments.length > 0 ? `(${engineer.coveredDepartments.length})` : '(Facility-wide)'}
+              </span>
               {engineer.hospitalName && (
                 <span className="text-muted-foreground font-normal normal-case">{engineer.hospitalName}</span>
               )}
@@ -388,8 +390,9 @@ export function EngineerDetailsDialog({
                   );
                 })
               ) : (
-                <span className="text-muted-foreground italic text-xs">
-                  Assigned to hospital general biomedical pool
+                <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+                  <Building2 className="w-3.5 h-3.5 text-primary" />
+                  Facility-wide Coverage (All active departments{engineer.hospitalName ? ` in ${engineer.hospitalName}` : ''})
                 </span>
               )}
             </div>

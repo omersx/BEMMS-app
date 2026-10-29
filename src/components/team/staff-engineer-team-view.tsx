@@ -319,13 +319,13 @@ function EngineerCard({
         </div>
 
         {/* Covered Departments */}
-        {engineer.coveredDepartments.length > 0 && (
-          <div className="mt-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-              Covers Departments
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {engineer.coveredDepartments.map((dept) => (
+        <div className="mt-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+            Covers Departments
+          </p>
+          <div className="flex flex-wrap gap-1">
+            {engineer.coveredDepartments.length > 0 ? (
+              engineer.coveredDepartments.map((dept) => (
                 <Badge
                   key={dept.id}
                   variant="secondary"
@@ -333,10 +333,14 @@ function EngineerCard({
                 >
                   {dept.name}
                 </Badge>
-              ))}
-            </div>
+              ))
+            ) : (
+              <Badge variant="outline" className="text-xs text-muted-foreground border-dashed">
+                All Departments (Facility-wide)
+              </Badge>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Current Workload */}
         {(engineer.activeTicketsCount > 0 ||
