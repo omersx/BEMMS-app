@@ -8,8 +8,9 @@ import {
   maintenanceTasks,
   maintenanceScheduleOccurrences,
   maintenancePlans,
+  userAccessScopes,
 } from '@/lib/db/schema';
-import { eq, and, isNull, inArray, notInArray, sql } from 'drizzle-orm';
+import { eq, and, isNull, inArray, notInArray, or, sql } from 'drizzle-orm';
 
 export interface NavBadgeCounts {
   notifications: number;
@@ -39,6 +40,7 @@ export async function getNavBadgeCounts(): Promise<NavBadgeCounts> {
     const user = await requireAuth();
     const userId = user.id;
     const orgId = user.organizationId;
+    if (!orgId) return DEFAULT_COUNTS;
     const roles = user.roles || [];
 
     const isStaffOnly =
@@ -65,16 +67,31 @@ export async function getNavBadgeCounts(): Promise<NavBadgeCounts> {
     let pmDueCount = 0;
 
     if (isStaffOnly) {
-      // Staff: open tickets reported by this user
+      // Staff: open tickets reported by this user or within their assigned department
+      const userScopes = await db.query.userAccessScopes.findMany({
+        where: eq(userAccessScopes.userId, userId),
+      });
+      const deptIds = userScopes.map((s) => s.departmentId).filter(Boolean) as string[];
+
+      const ticketCondition = deptIds.length > 0
+        ? and(
+            eq(serviceTickets.organizationId, orgId),
+            or(
+              eq(serviceTickets.reportedByUserId, userId),
+              inArray(serviceTickets.departmentId, deptIds)
+            ),
+            notInArray(serviceTickets.statusCode, ['resolved', 'closed', 'cancelled'])
+          )
+        : and(
+            eq(serviceTickets.reportedByUserId, userId),
+            notInArray(serviceTickets.statusCode, ['resolved', 'closed', 'cancelled'])
+          );
+
       const [staffTicketsResult] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(serviceTickets)
-        .where(
-          and(
-            eq(serviceTickets.reportedByUserId, userId),
-            notInArray(serviceTickets.statusCode, ['resolved', 'closed', 'cancelled'])
-          )
-        );
+        .where(ticketCondition);
+
       ticketsCount = staffTicketsResult?.count || 0;
     } else if (isBmeOrAdmin && orgId) {
       // BME / Admin: Triage queue tickets (new, acknowledged, in_triage)

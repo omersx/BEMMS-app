@@ -8,7 +8,7 @@ import {
   departments, organizations, hospitals, roles,
   userRoleAssignments
 } from '@/lib/db/schema';
-import { eq, and, sql, isNull, inArray, or, desc, lt, gte, ne, not } from 'drizzle-orm';
+import { eq, and, sql, isNull, inArray, notInArray, or, desc, lt, gte, ne, not } from 'drizzle-orm';
 
 export async function getDashboardStats() {
   const user = await requireAuth();
@@ -52,13 +52,24 @@ export async function getMyTickets(limit = 5) {
   const orgId = user.organizationId;
   if (!orgId) return [];
 
+  // Get user's assigned department scopes
+  const userScopes = await db.query.userAccessScopes.findMany({
+    where: eq(userAccessScopes.userId, user.id),
+  });
+  const deptIds = userScopes.map((s) => s.departmentId).filter(Boolean) as string[];
+
+  // Staff should only see tickets they reported, or tickets within their assigned department
+  const scopeCondition = deptIds.length > 0
+    ? or(
+        eq(serviceTickets.reportedByUserId, user.id),
+        inArray(serviceTickets.departmentId, deptIds)
+      )
+    : eq(serviceTickets.reportedByUserId, user.id);
+
   const tickets = await db.query.serviceTickets.findMany({
     where: and(
       eq(serviceTickets.organizationId, orgId),
-      or(
-        eq(serviceTickets.reportedByUserId, user.id),
-        eq(serviceTickets.statusCode, 'waiting_requester')
-      )
+      scopeCondition
     ),
     with: {
       device: true,
@@ -80,6 +91,98 @@ export async function getMyTickets(limit = 5) {
     deviceAssetNumber: t.device?.assetNumber,
     assignedEngineerName: t.assignedEngineer?.fullName || null,
   }));
+}
+
+export async function getStaffDepartmentStats() {
+  const user = await requireAuth();
+  const orgId = user.organizationId;
+  if (!orgId) return null;
+
+  // Get user's assigned department scopes
+  const userScopes = await db.query.userAccessScopes.findMany({
+    where: eq(userAccessScopes.userId, user.id),
+  });
+  const deptIds = userScopes.map((s) => s.departmentId).filter(Boolean) as string[];
+
+  let departmentInfo: { id: string; name: string; hospitalName?: string } | null = null;
+
+  if (deptIds.length > 0) {
+    const dept = await db.query.departments.findFirst({
+      where: eq(departments.id, deptIds[0]),
+      with: {
+        hospital: true,
+      },
+    });
+    if (dept) {
+      departmentInfo = {
+        id: dept.id,
+        name: dept.name,
+        hospitalName: (dept as any).hospital?.name || undefined,
+      };
+    }
+  }
+
+  let totalDevices = 0;
+  let activeDevices = 0;
+  let outOfService = 0;
+
+  if (deptIds.length > 0) {
+    const [devCounts] = await db
+      .select({
+        total: sql<number>`count(*)::int`,
+        active: sql<number>`count(*) filter (where ${devices.currentStatusCode} = 'operational')::int`,
+        oos: sql<number>`count(*) filter (where ${devices.currentStatusCode} IN ('out_of_service', 'decommissioned'))::int`,
+      })
+      .from(devices)
+      .where(
+        and(
+          eq(devices.organizationId, orgId),
+          inArray(devices.departmentId, deptIds)
+        )
+      );
+
+    totalDevices = devCounts?.total || 0;
+    activeDevices = devCounts?.active || 0;
+    outOfService = devCounts?.oos || 0;
+  }
+
+  let openTickets = 0;
+  let criticalTickets = 0;
+
+  const ticketCondition = deptIds.length > 0
+    ? and(
+        eq(serviceTickets.organizationId, orgId),
+        or(
+          eq(serviceTickets.reportedByUserId, user.id),
+          inArray(serviceTickets.departmentId, deptIds)
+        ),
+        notInArray(serviceTickets.statusCode, ['resolved', 'closed', 'cancelled'])
+      )
+    : and(
+        eq(serviceTickets.organizationId, orgId),
+        eq(serviceTickets.reportedByUserId, user.id),
+        notInArray(serviceTickets.statusCode, ['resolved', 'closed', 'cancelled'])
+      );
+
+  const [ticketCounts] = await db
+    .select({
+      open: sql<number>`count(*)::int`,
+      critical: sql<number>`count(*) filter (where ${serviceTickets.priorityCode} = 'p1_critical')::int`,
+    })
+    .from(serviceTickets)
+    .where(ticketCondition);
+
+  openTickets = ticketCounts?.open || 0;
+  criticalTickets = ticketCounts?.critical || 0;
+
+  return {
+    department: departmentInfo,
+    totalDevices,
+    activeDevices,
+    outOfService,
+    openTickets,
+    criticalTickets,
+  };
 }
 
 export async function getDepartmentAlerts() {

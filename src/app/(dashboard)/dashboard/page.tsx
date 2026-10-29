@@ -5,6 +5,7 @@ import {
   getDashboardStats,
   getMyTickets,
   getDepartmentAlerts,
+  getStaffDepartmentStats,
   getTriageQueue,
   getMyAssignedWork,
   getMaintenanceDueSummary,
@@ -25,8 +26,26 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import {
   Monitor, TicketCheck, Wrench, AlertTriangle,
-  ShieldAlert, ClipboardCheck, Clock, UsersRound, MessageCircle,
+  ShieldAlert, ClipboardCheck, Clock, UsersRound, MessageCircle, Building2,
 } from 'lucide-react';
+
+function formatGreetingName(fullName?: string | null): string {
+  if (!fullName) return 'there';
+  const clean = fullName.trim().replace(/\s+/g, ' ');
+  const parts = clean.split(' ');
+  if (!parts[0]) return 'there';
+
+  const isTitle = /^(eng\.?|dr\.?|mr\.?|mrs\.?|ms\.?|prof\.?)$/i.test(parts[0]);
+  if (isTitle && parts.length > 1) {
+    const rawTitle = parts[0].toLowerCase();
+    const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
+    const formattedTitle = title.endsWith('.') ? title : `${title}.`;
+    const firstName = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
+    return `${formattedTitle} ${firstName}`;
+  }
+
+  return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+}
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -40,10 +59,7 @@ export default async function DashboardPage() {
   };
 
   const roles = user.roles || [];
-  const parts = (user.fullName || '').trim().split(/\s+/);
-  const displayName = parts.length > 1 && /^(eng\.?|dr\.?|mr\.?|mrs\.?|ms\.?|prof\.?)$/i.test(parts[0])
-    ? `${parts[0]} ${parts[1]}`
-    : parts[0] || 'there';
+  const displayName = formatGreetingName(user.fullName);
 
   const isBME = hasRole(roles, 'BIOMED_ENG', 'BIOMED_TECH', 'BIOMED_MGR');
   const isManager = hasRole(roles, 'BIOMED_MGR', 'HOSP_ADMIN', 'ORG_ADMIN');
@@ -51,8 +67,9 @@ export default async function DashboardPage() {
   const isStaff = hasRole(roles, 'STAFF', 'DEPT_MGR');
 
   // Fetch data based on role
-  const [stats] = await Promise.all([
+  const [stats, staffDeptStats] = await Promise.all([
     getDashboardStats(),
+    isStaff ? getStaffDepartmentStats() : Promise.resolve(null),
   ]);
 
   return (
@@ -68,7 +85,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Staff Dashboard */}
-      {isStaff && <StaffDashboard stats={stats} userId={user.id} />}
+      {isStaff && <StaffDashboard stats={stats} userId={user.id} deptStats={staffDeptStats} />}
 
       {/* BME Dashboard */}
       {isBME && !isManager && <BMEDashboard stats={stats} />}
@@ -88,19 +105,35 @@ export default async function DashboardPage() {
 }
 
 // ── Staff Dashboard ─────────────────────────────────────────────────────
-async function StaffDashboard({ stats, userId }: { stats: any; userId: string }) {
-  const [myTickets, alerts, teamRes] = await Promise.all([
+async function StaffDashboard({
+  stats,
+  userId,
+  deptStats,
+}: {
+  stats: any;
+  userId: string;
+  deptStats: any;
+}) {
+  const [myTickets, alerts] = await Promise.all([
     getMyTickets(5),
     getDepartmentAlerts(),
-    getEngineersTeam(),
   ]);
 
-  const engineers = teamRes.data || [];
-  const onDutyEngineers = engineers.filter((e: any) => e.dutyStatus === 'on_duty' || e.dutyStatus === 'on_call');
   const responseNeededTickets = myTickets.filter((t: any) => t.statusCode === 'waiting_requester');
 
   return (
     <>
+      {/* Department Context Badge */}
+      {deptStats?.department && (
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-900/60 text-sky-900 dark:text-sky-200 text-xs font-medium">
+          <Building2 className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
+          <span className="font-semibold">{deptStats.department.name}</span>
+          {deptStats.department.hospitalName && (
+            <span className="text-muted-foreground font-normal">· {deptStats.department.hospitalName}</span>
+          )}
+        </div>
+      )}
+
       {/* Quick Actions - full width on mobile */}
       <ActionButtons role="staff" />
 
@@ -137,45 +170,6 @@ async function StaffDashboard({ stats, userId }: { stats: any; userId: string })
         <AvailabilityAlerts devices={alerts} />
       )}
 
-      {/* Biomedical Engineering Coverage / On-Duty Team Widget */}
-      <Card className="border shadow-sm">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
-                <UsersRound className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm">Biomedical Engineering Support</h3>
-                <p className="text-xs text-muted-foreground">
-                  {onDutyEngineers.length > 0
-                    ? `${onDutyEngineers.length} engineer(s) available in hospital today`
-                    : 'Biomedical support on duty & on call'}
-                </p>
-              </div>
-            </div>
-            <Button asChild variant="outline" size="sm" className="self-start sm:self-auto text-xs">
-              <Link href="/engineering-team">View Team & Schedules →</Link>
-            </Button>
-          </div>
-          {onDutyEngineers.length > 0 && (
-            <div className="mt-3 pt-3 border-t grid sm:grid-cols-2 md:grid-cols-3 gap-2">
-              {onDutyEngineers.slice(0, 3).map((eng: any) => (
-                <div key={eng.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/40 text-xs">
-                  <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-                  <span className="font-medium truncate">{eng.fullName}</span>
-                  {eng.extension ? (
-                    <span className="text-muted-foreground ml-auto shrink-0 font-mono">Ext. {eng.extension}</span>
-                  ) : eng.mobileNumber ? (
-                    <span className="text-muted-foreground ml-auto shrink-0">{eng.mobileNumber}</span>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* My Tickets */}
       <TicketListCompact
         tickets={myTickets}
@@ -183,17 +177,17 @@ async function StaffDashboard({ stats, userId }: { stats: any; userId: string })
         emptyMessage="No tickets need your attention."
       />
 
-      {/* Stats row */}
+      {/* Stats row - scoped to staff's department */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Open Tickets"
-          value={stats?.openTickets || 0}
+          value={deptStats?.openTickets ?? 0}
           icon={<TicketCheck className="h-4 w-4 text-orange-500" />}
           href="/tickets"
         />
         <StatCard
           title="Devices Available"
-          value={stats?.activeDevices || 0}
+          value={deptStats?.activeDevices ?? 0}
           icon={<Monitor className="h-4 w-4 text-green-500" />}
           href="/my-department"
         />
