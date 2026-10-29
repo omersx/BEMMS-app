@@ -24,12 +24,20 @@ export function ActionButtons({ role, triageCount = 0 }: ActionButtonsProps) {
       </Button>
 
       {isStaff && (
-        <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto min-h-[44px]">
-          <Link href="/tickets/create">
-            <PlusCircle className="mr-2 h-5 w-5" />
-            Report a Problem
-          </Link>
-        </Button>
+        <>
+          <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto min-h-[44px]">
+            <Link href="/tickets/create">
+              <PlusCircle className="mr-2 h-5 w-5" />
+              Report a Problem
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-h-[44px]">
+            <Link href="/my-department">
+              <Building2 className="mr-2 h-5 w-5" />
+              My Department
+            </Link>
+          </Button>
+        </>
       )}
 
       {isBiomed && (
