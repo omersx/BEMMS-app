@@ -24,9 +24,13 @@ import { TicketStatusBadge } from "@/components/tickets/ticket-badges"
 import { DeviceMiniQr } from "@/components/devices/device-mini-qr"
 import { AlertTriangle, Wrench, ShieldCheck, FileText, Activity, MapPin, Ticket } from "lucide-react"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
 export default async function DeviceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  if (id === 'scan') {
+    redirect('/scan')
+  }
   return <DeviceDetailContent deviceId={id} />
 }
 

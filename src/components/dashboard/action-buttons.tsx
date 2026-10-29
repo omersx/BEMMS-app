@@ -81,7 +81,7 @@ export function ActionButtons({ role, triageCount = 0 }: ActionButtonsProps) {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full sm:w-auto min-h-[44px]">
-            <Link href="/admin/devices">
+            <Link href="/devices">
               <MonitorSmartphone className="mr-2 h-5 w-5" />
               Manage Devices
             </Link>
