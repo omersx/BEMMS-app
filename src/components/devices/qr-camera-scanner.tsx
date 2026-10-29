@@ -312,15 +312,15 @@ export function QrCameraScanner() {
               </div>
             )}
 
-            {/* Primary Actions */}
-            <div className="flex flex-col sm:flex-row gap-2 w-full max-w-xs pt-1">
+            {/* Primary Actions: Enable Camera on Top, Upload Image Below */}
+            <div className="flex flex-col gap-2.5 w-full max-w-xs pt-1">
               <Button
                 type="button"
                 variant="default"
                 size="default"
                 onClick={() => startCamera()}
                 disabled={isStarting || isProcessingFile}
-                className="flex-1 gap-2 font-medium h-10 shadow-sm"
+                className="w-full gap-2 font-medium h-11 shadow-sm"
               >
                 {isStarting ? (
                   <>
@@ -335,23 +335,34 @@ export function QrCameraScanner() {
                 )}
               </Button>
 
+              <div className="relative w-full my-0.5">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border/60" />
+                </div>
+                <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
+                  <span className="bg-muted/80 px-2 text-muted-foreground font-medium rounded">
+                    or
+                  </span>
+                </div>
+              </div>
+
               <Button
                 type="button"
                 variant="outline"
                 size="default"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isStarting || isProcessingFile}
-                className="flex-1 gap-2 font-medium h-10"
+                className="w-full gap-2 font-medium h-10 border-border/80 hover:bg-background/80"
               >
                 {isProcessingFile ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Scanning...
+                    Scanning Image...
                   </>
                 ) : (
                   <>
-                    <Upload className="w-4 h-4" />
-                    Upload Image
+                    <Upload className="w-4 h-4 text-primary" />
+                    Upload QR Image
                   </>
                 )}
               </Button>
