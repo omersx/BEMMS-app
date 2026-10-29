@@ -10,11 +10,8 @@ import {
   QrCode,
   TicketCheck,
   PlusCircle,
-  AlertTriangle,
   Wrench,
   ClipboardList,
-  Calendar,
-  CheckSquare,
   BarChart3,
   Bell,
   Users,
@@ -119,14 +116,6 @@ export default async function MorePage() {
                 icon: Users,
                 color: 'text-purple-500 bg-purple-50 dark:bg-purple-950',
               },
-              {
-                label: 'Triage Queue',
-                description: 'Review, prioritize, and assign new incoming tickets',
-                href: '/tickets/triage',
-                icon: AlertTriangle,
-                color: 'text-amber-500 bg-amber-50 dark:bg-amber-950',
-                badgeKey: 'triage',
-              },
             ]
           : []),
       ],
@@ -134,7 +123,7 @@ export default async function MorePage() {
     ...(!isStaffOnly
       ? [
           {
-            title: 'Maintenance & Work Orders',
+            title: 'Maintenance & Operations',
             items: [
               {
                 label: "Engineer's Daily Round",
@@ -150,29 +139,6 @@ export default async function MorePage() {
                 icon: Wrench,
                 color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950',
                 badgeKey: 'maintenance',
-              },
-              {
-                label: 'Work Orders / Tasks',
-                description: 'Assigned maintenance tasks and due schedules',
-                href: '/maintenance/tasks',
-                icon: ClipboardList,
-                color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-950',
-                badgeKey: 'workOrders',
-              },
-              {
-                label: 'PM Plans & Schedules',
-                description: 'Recurring inspection and calibration schedules',
-                href: '/maintenance/plans',
-                icon: Calendar,
-                color: 'text-violet-500 bg-violet-50 dark:bg-violet-950',
-                badgeKey: 'pmPlans',
-              },
-              {
-                label: 'Checklists',
-                description: 'Standardized safety and inspection checklists',
-                href: '/maintenance/checklists',
-                icon: CheckSquare,
-                color: 'text-teal-500 bg-teal-50 dark:bg-teal-950',
               },
             ],
           },
