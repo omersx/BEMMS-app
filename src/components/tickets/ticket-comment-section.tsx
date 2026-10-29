@@ -298,7 +298,7 @@ export function TicketCommentSection({
   };
 
   return (
-    <div className="flex flex-col h-[580px] rounded-xl overflow-hidden bg-background border shadow-xs">
+    <div className="flex flex-col h-[380px] sm:h-[480px] md:h-[560px] rounded-xl overflow-hidden bg-background border shadow-xs">
       {/* Hidden File Pickers */}
       <input
         ref={fileInputRef}
@@ -320,26 +320,26 @@ export function TicketCommentSection({
       <div className="px-4 py-2.5 bg-muted/40 border-b flex items-center justify-between text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span>
+          <span className="truncate">
             {assignedEngineerName
               ? `Direct chat with ${assignedEngineerName}`
               : "Direct chat with Biomedical Engineering"}
           </span>
         </div>
-        <span>{sortedComments.length} messages</span>
+        <span className="shrink-0">{sortedComments.length} messages</span>
       </div>
 
       {/* Chat History / Bubble Thread Feed */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/50 dark:bg-muted/10"
+        className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3.5 bg-slate-50/50 dark:bg-muted/10"
       >
         {sortedComments.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-2 p-6 text-center">
-            <MessageCircle className="w-10 h-10 opacity-20" />
-            <p className="text-sm font-medium">No messages yet in this ticket.</p>
-            <p className="text-xs max-w-sm">
-              Use this chat to ask the assigned engineer questions, confirm room locations, attach error screenshots, or receive live repair updates.
+          <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-1.5 p-4 text-center">
+            <MessageCircle className="w-8 h-8 opacity-25 text-primary" />
+            <p className="text-sm font-medium text-foreground">No messages yet in this ticket</p>
+            <p className="text-xs max-w-xs text-muted-foreground">
+              Use this chat to ask questions, confirm room locations, attach photos, or receive live repair updates.
             </p>
           </div>
         ) : (
@@ -363,7 +363,7 @@ export function TicketCommentSection({
       </div>
 
       {/* Quick clinical templates */}
-      <div className="px-4 py-1.5 bg-card border-t border-border/60 overflow-x-auto flex gap-1.5 scrollbar-none">
+      <div className="px-3 py-1.5 bg-card border-t border-border/60 overflow-x-auto flex gap-1.5 scrollbar-none touch-pan-x">
         {QUICK_CHAT_TEMPLATES.map((tmpl) => (
           <button
             key={tmpl}
@@ -377,7 +377,7 @@ export function TicketCommentSection({
       </div>
 
       {/* Chat Input Box */}
-      <div className="p-3 bg-card border-t shadow-xs z-10 space-y-2">
+      <div className="p-2.5 sm:p-3 bg-card border-t shadow-xs z-10 space-y-2">
         {canAddInternal && (
           <Tabs
             value={visibility}
@@ -446,10 +446,10 @@ export function TicketCommentSection({
             onPaste={handlePaste}
             placeholder={
               visibility === "internal"
-                ? "Type an internal note for biomedical team (Press Enter to send)..."
-                : "Type a message to biomedical engineering (or paste screenshot, press Enter to send)..."
+                ? "Type an internal note for biomedical team..."
+                : "Type a message to biomedical engineering..."
             }
-            className="border-0 bg-transparent focus-visible:ring-0 resize-none min-h-[60px] max-h-[120px] text-xs sm:text-sm p-3"
+            className="border-0 bg-transparent focus-visible:ring-0 resize-none min-h-[50px] max-h-[120px] text-xs sm:text-sm p-2.5 sm:p-3"
           />
 
           {/* Action Toolbar */}
@@ -494,7 +494,7 @@ export function TicketCommentSection({
                 onClick={handleSubmit}
                 disabled={(!body.trim() && pendingFiles.length === 0) || loading}
                 className={cn(
-                  "h-7 text-xs gap-1.5 px-3 font-semibold",
+                  "h-8 sm:h-7 text-xs gap-1.5 px-3 sm:px-3 font-semibold",
                   visibility === "internal" ? "bg-amber-600 hover:bg-amber-700 text-white" : ""
                 )}
               >

@@ -28,6 +28,25 @@ import { use } from "react"
 
 export const dynamic = 'force-dynamic'
 
+function formatProblemCategory(category?: string | null): string {
+  if (!category) return "Not specified"
+  const map: Record<string, string> = {
+    power_issue: "Power Issue",
+    device_not_starting: "Device Not Starting",
+    display_interface: "Display / Screen Issue",
+    alarm_problem: "Alarm / Safety System",
+    physical_damage: "Physical Damage / Casework",
+    sensor_probe_failure: "Sensor / Cable Failure",
+    software_error: "Software / System Error",
+    calibration_drift: "Calibration / Accuracy Drift",
+    fluid_leak: "Fluid / Pneumatic Leak",
+    battery_failure: "Battery / Charging Failure",
+    accessory_missing: "Accessory Missing / Faulty",
+    other: "Other Technical Issue",
+  }
+  return map[category] || category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   return <TicketDetailContent ticketId={id} />
@@ -92,7 +111,7 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
           ) : (
             <TicketStatusBadge status={ticket.statusCode} />
           )}
-          {!isStaffOnly && (
+          {!isStaffOnly && (ticket.statusCode !== 'new' || ticket.assignedEngineerUserId) && (
             <TicketActionButtons
               ticketId={ticketId}
               statusCode={ticket.statusCode}
@@ -136,6 +155,60 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
         />
       )}
 
+      {/* Mobile Quick Equipment & Location Context (Visible on mobile, hides on desktop where sidebar is present) */}
+      <div className="block md:hidden">
+        <Card className="border-border bg-card shadow-xs">
+          <CardContent className="p-3.5 space-y-2.5 text-xs">
+            <div className="flex items-center justify-between gap-2 border-b border-border/60 pb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <Monitor className="w-4 h-4 text-primary shrink-0" />
+                <div className="min-w-0">
+                  <span className="font-semibold text-foreground truncate block">
+                    {ticket.device?.name || "No linked device"}
+                  </span>
+                  {ticket.device?.assetNumber && (
+                    <span className="text-muted-foreground font-mono text-[11px]">
+                      Asset: {ticket.device.assetNumber}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {ticket.deviceId && (
+                <Link
+                  href={`/devices/${ticket.deviceId}`}
+                  className="text-primary hover:underline font-medium shrink-0 text-xs"
+                >
+                  View Device
+                </Link>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-start gap-2 min-w-0">
+                <MapPin className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <span className="font-medium text-foreground block truncate">
+                    {(ticket as any).department?.name || "Department"} · {(ticket as any).hospital?.name || "Hospital"}
+                  </span>
+                  <span className="text-muted-foreground block text-[11px] truncate">
+                    {ticket.reportedLocationCorrection || (ticket as any).location?.name || "No specific room"}
+                  </span>
+                </div>
+              </div>
+              {(ticket.requesterContactPhone || (ticket as any).reportedByUser?.phone) && (
+                <a
+                  href={`tel:${ticket.requesterContactPhone || (ticket as any).reportedByUser?.phone}`}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-green-600 hover:bg-green-700 text-white font-medium text-xs shrink-0 shadow-xs transition"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call</span>
+                </a>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-3">
         {/* Left Column: Details */}
         <div className="md:col-span-2 space-y-6">
@@ -151,7 +224,7 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
                 </div>
                 <div className="space-y-1">
                   <span className="text-xs text-muted-foreground uppercase">Category</span>
-                  <div className="text-sm font-medium">{ticket.reportedProblemCategory || "Not specified"}</div>
+                  <div className="text-sm font-medium">{formatProblemCategory(ticket.reportedProblemCategory)}</div>
                 </div>
               </div>
             </CardContent>

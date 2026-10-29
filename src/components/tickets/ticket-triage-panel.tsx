@@ -46,18 +46,18 @@ export function TicketTriagePanel({ ticketId, currentPriority, engineers }: { ti
   }
 
   return (
-    <Card className="border-indigo-200">
-      <CardHeader className="bg-indigo-50/50 pb-4">
-        <CardTitle className="text-lg text-indigo-900">Biomedical Triage</CardTitle>
+    <Card className="border-indigo-200/80 dark:border-indigo-800/60 shadow-xs overflow-hidden">
+      <CardHeader className="bg-indigo-50/60 dark:bg-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/40 pb-3">
+        <CardTitle className="text-base sm:text-lg font-semibold text-indigo-950 dark:text-indigo-200">Biomedical Triage</CardTitle>
       </CardHeader>
       <CardContent className="pt-4">
         {error && <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm mb-4">{error}</div>}
         <form onSubmit={handleTriage} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <Label htmlFor="priorityCode">Priority</Label>
               <select id="priorityCode" name="priorityCode" defaultValue={currentPriority}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1">
                 <option value="p1_critical">P1 Critical</option>
                 <option value="p2_high">P2 High</option>
                 <option value="p3_normal">P3 Normal</option>
@@ -66,14 +66,14 @@ export function TicketTriagePanel({ ticketId, currentPriority, engineers }: { ti
             </div>
             <div>
               <Label htmlFor="priorityReason">Priority Justification</Label>
-              <Textarea id="priorityReason" name="priorityReason" placeholder="Required if changing priority" rows={1} />
+              <Textarea id="priorityReason" name="priorityReason" placeholder="Required if changing priority..." rows={2} className="mt-1 resize-none" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <Label htmlFor="selectedMaintenanceType">Maintenance Type</Label>
               <select id="selectedMaintenanceType" name="selectedMaintenanceType"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1">
                 <option value="">Select type...</option>
                 <option value="corrective_maintenance">Corrective Maintenance</option>
                 <option value="preventive_maintenance">Preventive Maintenance</option>
@@ -87,7 +87,7 @@ export function TicketTriagePanel({ ticketId, currentPriority, engineers }: { ti
             <div>
               <Label htmlFor="selectedTechnicalCategory">Technical Category</Label>
               <select id="selectedTechnicalCategory" name="selectedTechnicalCategory"
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1">
                 <option value="">Select category...</option>
                 <option value="electrical_power">Electrical / Power</option>
                 <option value="display_user_interface">Display / UI</option>
@@ -102,17 +102,17 @@ export function TicketTriagePanel({ ticketId, currentPriority, engineers }: { ti
           <div>
             <Label htmlFor="assignedEngineerUserId">Assign To</Label>
             <select id="assignedEngineerUserId" name="assignedEngineerUserId"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-1">
               <option value="">Leave unassigned</option>
               {engineers.map(e => <option key={e.id} value={e.id}>{e.fullName}</option>)}
             </select>
           </div>
           <div>
             <Label htmlFor="internalTriageNote">Internal Triage Note</Label>
-            <Textarea id="internalTriageNote" name="internalTriageNote" placeholder="Visible only to biomedical team" rows={2} />
+            <Textarea id="internalTriageNote" name="internalTriageNote" placeholder="Visible only to biomedical team" rows={2} className="mt-1" />
           </div>
           <div className="flex justify-end pt-2">
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
               {loading ? "Saving..." : "Complete Triage"}
             </Button>
           </div>

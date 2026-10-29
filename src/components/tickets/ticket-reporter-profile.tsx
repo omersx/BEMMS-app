@@ -87,19 +87,28 @@ export function TicketReporterProfile({
         {/* Quick Call & Email actions */}
         <div className="space-y-1.5 pt-2 border-t text-xs">
           {phone && (
-            <a
-              href={`tel:${phone}`}
-              className="flex items-center gap-2 p-1 rounded-md hover:bg-muted text-primary font-medium transition"
-            >
-              <Phone className="w-3.5 h-3.5 text-green-600 shrink-0" />
-              <span className="truncate">{phone}</span>
-            </a>
+            <div className="flex items-center justify-between p-1 rounded-md hover:bg-muted/50 transition">
+              <div className="flex items-center gap-2 min-w-0">
+                <Phone className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                <span className="text-[11px] text-muted-foreground shrink-0">Phone:</span>
+                <span className="truncate font-medium text-foreground">{phone}</span>
+              </div>
+              {phone.match(/\d/) && (
+                <a
+                  href={`tel:${phone}`}
+                  className="text-xs text-primary font-semibold hover:underline px-1.5 py-0.5 rounded bg-primary/10 shrink-0 ml-1"
+                >
+                  Call
+                </a>
+              )}
+            </div>
           )}
 
-          {extension && (
+          {extension && extension !== phone && (
             <div className="flex items-center gap-2 p-1 text-muted-foreground">
               <IdCard className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{extension}</span>
+              <span className="text-[11px] shrink-0">Staff ID:</span>
+              <span className="truncate font-medium text-foreground">{extension}</span>
             </div>
           )}
 
