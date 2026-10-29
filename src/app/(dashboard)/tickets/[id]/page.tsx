@@ -216,6 +216,26 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
                 </a>
               )}
             </div>
+
+            {/* Reporter & Assignment summary line for mobile */}
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/60 text-[11px] text-muted-foreground">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <UserIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <span className="truncate">
+                  By <strong className="text-foreground">{(ticket as any).reportedByUser?.fullName || ticket.requesterContactName || "Staff"}</strong>
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <span>
+                  {ticket.assignedEngineerUserId ? (
+                    <strong className="text-foreground">{(ticket as any).assignedEngineer?.fullName || "Assigned"}</strong>
+                  ) : (
+                    <span className="italic">Unassigned</span>
+                  )}
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -454,7 +474,7 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
 
         {/* Right Column: Meta & Timeline */}
         <div className="space-y-6">
-          <Card>
+          <Card className="hidden md:block">
             <CardHeader><CardTitle>Context</CardTitle></CardHeader>
             <CardContent className="space-y-4 text-sm">
               <div className="space-y-2">

@@ -298,7 +298,14 @@ export function TicketCommentSection({
   };
 
   return (
-    <div className="flex flex-col h-[380px] sm:h-[480px] md:h-[560px] rounded-xl overflow-hidden bg-background border shadow-xs">
+    <div
+      className={cn(
+        "flex flex-col rounded-xl overflow-hidden bg-background border shadow-xs transition-all",
+        sortedComments.length === 0
+          ? "h-[250px] sm:h-[360px] md:h-[460px]"
+          : "h-[360px] sm:h-[460px] md:h-[540px]"
+      )}
+    >
       {/* Hidden File Pickers */}
       <input
         ref={fileInputRef}
@@ -317,7 +324,7 @@ export function TicketCommentSection({
       />
 
       {/* Chat Sub-header */}
-      <div className="px-4 py-2.5 bg-muted/40 border-b flex items-center justify-between text-xs text-muted-foreground">
+      <div className="px-4 py-2 bg-muted/40 border-b flex items-center justify-between text-xs text-muted-foreground">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           <span className="truncate">
@@ -332,14 +339,14 @@ export function TicketCommentSection({
       {/* Chat History / Bubble Thread Feed */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3.5 bg-slate-50/50 dark:bg-muted/10"
+        className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 bg-slate-50/50 dark:bg-muted/10"
       >
         {sortedComments.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-1.5 p-4 text-center">
-            <MessageCircle className="w-8 h-8 opacity-25 text-primary" />
-            <p className="text-sm font-medium text-foreground">No messages yet in this ticket</p>
-            <p className="text-xs max-w-xs text-muted-foreground">
-              Use this chat to ask questions, confirm room locations, attach photos, or receive live repair updates.
+          <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-1 p-3 text-center">
+            <MessageCircle className="w-6 h-6 opacity-25 text-primary" />
+            <p className="text-xs sm:text-sm font-medium text-foreground">No messages yet in this ticket</p>
+            <p className="text-[11px] sm:text-xs max-w-xs text-muted-foreground">
+              Direct communication between clinical staff and biomedical engineering.
             </p>
           </div>
         ) : (

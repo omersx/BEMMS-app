@@ -85,7 +85,19 @@
 
 @layer base {
   * { @apply border-border; }
+  html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
   body { @apply bg-background text-foreground; }
+
+  /* Prevent react-remove-scroll / Radix UI from shifting body layout or squishing mobile viewport */
+  body[data-scroll-locked] {
+    --removed-body-scroll-bar-size: 0px !important;
+    margin-right: 0px !important;
+    padding-right: 0px !important;
+    overflow: hidden !important;
+  }
 }
 
 /* ── QR Scanner Custom Theme & Animations ───────────────────────────────── */
