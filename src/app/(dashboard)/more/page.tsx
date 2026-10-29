@@ -145,15 +145,19 @@ export default async function MorePage() {
         ]
       : []),
     {
-      title: 'Analytics & Notifications',
+      title: isStaffOnly ? 'Notifications' : 'Analytics & Notifications',
       items: [
-        {
-          label: 'Reports & Compliance',
-          description: 'Inventory, tickets, PM compliance, workload & cost reports',
-          href: '/reports',
-          icon: BarChart3,
-          color: 'text-rose-500 bg-rose-50 dark:bg-rose-950',
-        },
+        ...(!isStaffOnly
+          ? [
+              {
+                label: 'Reports & Compliance',
+                description: 'Inventory, tickets, PM compliance, workload & cost reports',
+                href: '/reports',
+                icon: BarChart3,
+                color: 'text-rose-500 bg-rose-50 dark:bg-rose-950',
+              },
+            ]
+          : []),
         {
           label: 'Notifications',
           description: 'Alerts, updates, and notification settings',
