@@ -1,13 +1,10 @@
 import { getTriageQueue } from "@/lib/actions/tickets"
 import { PageHeader } from "@/components/shared/page-header"
-import { DataTable } from "@/components/shared/data-table"
 import { TicketsNav } from "@/components/tickets/tickets-nav"
-import { TicketStatusBadge, TicketPriorityBadge, TicketImpactBadge } from "@/components/tickets/ticket-badges"
-import { WaitingForEngineerBanner } from "@/components/tickets/ticket-dispatch-status"
+import { TriageQueueView } from "@/components/tickets/triage-queue-view"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TicketListAutoRefresh } from "@/components/tickets/ticket-list-auto-refresh"
-import { AlertTriangle, Clock, Inbox, CheckCircle2, Timer } from "lucide-react"
-import Link from "next/link"
+import { AlertTriangle, Clock, Inbox, Timer } from "lucide-react"
 
 export default async function TriageQueuePage() {
   const result = await getTriageQueue()
@@ -24,58 +21,22 @@ export default async function TriageQueuePage() {
 
   // Calculate average wait time for new tickets
   const newTickets = tickets.filter((t: any) => t.statusCode === 'new')
-  const avgWaitHours = newTickets.length > 0
+  const avgWaitMinutes = newTickets.length > 0
     ? Math.round(newTickets.reduce((sum: number, t: any) => {
-        return sum + (Date.now() - new Date(t.reportedAt).getTime()) / (1000 * 60 * 60)
+        return sum + Math.max(0, (Date.now() - new Date(t.reportedAt).getTime()) / (1000 * 60))
       }, 0) / newTickets.length)
     : 0
 
-  const columns = [
-    { key: "priority", header: "Priority", render: (item: any) => (
-      <TicketPriorityBadge priority={item.priorityCode} />
-    )},
-    { key: "ticketNumber", header: "Ticket #", render: (item: any) => (
-      <Link href={`/tickets/${item.id}`} className="text-primary hover:underline font-mono text-sm">
-        {item.ticketNumber}
-      </Link>
-    )},
-    { key: "title", header: "Issue", render: (item: any) => (
-      <div className="space-y-1">
-        <Link href={`/tickets/${item.id}`} className="font-medium hover:underline line-clamp-1">
-          {item.title}
-        </Link>
-        <span className="text-xs text-muted-foreground">{item.device?.name || "No device"}</span>
-        {/* Show waiting status for unaccepted tickets */}
-        {item.statusCode === 'new' && !item.assignedEngineerUserId && (
-          <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-medium">
-            <Clock className="w-3 h-3 animate-pulse" />
-            <span>Waiting for engineer</span>
-          </div>
-        )}
-      </div>
-    )},
-    { key: "impact", header: "Reported Impact", render: (item: any) => (
-      <TicketImpactBadge impact={item.reportedImpact} />
-    )},
-    { key: "location", header: "Location", render: (item: any) => (
-      <span className="text-sm">{item.hospital?.name} / {item.department?.name}</span>
-    )},
-    { key: "status", header: "Status", render: (item: any) => (
-      <TicketStatusBadge status={item.statusCode} />
-    )},
-    { key: "age", header: "Age", render: (item: any) => {
-      const hours = Math.floor((Date.now() - new Date(item.reportedAt).getTime()) / (1000 * 60 * 60))
-      return (
-        <span className={`text-sm flex items-center gap-1 ${hours > 24 ? 'text-red-600 dark:text-red-400 font-medium' : hours > 4 ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-muted-foreground'}`}>
-          <Clock className="w-3 h-3" />
-          {hours < 1 ? '< 1h' : `${hours}h`}
-        </span>
-      )
-    }},
-  ]
+  function formatWaitTime(mins: number): string {
+    if (mins <= 0) return "< 1m"
+    if (mins < 60) return `${mins}m`
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    return m === 0 ? `${h}h` : `${h}h ${m}m`
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <TicketListAutoRefresh />
       <PageHeader
         title="Triage Queue"
@@ -85,77 +46,65 @@ export default async function TriageQueuePage() {
       <TicketsNav />
 
       {/* Queue Metrics */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Awaiting Triage</CardTitle>
-            <Inbox className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{newCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">New tickets to review</p>
-          </CardContent>
+      <div className="grid gap-2.5 sm:gap-3 grid-cols-2 lg:grid-cols-4">
+        <Card className="p-3 sm:p-4 shadow-xs">
+          <div className="flex items-center justify-between gap-1 pb-1">
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Awaiting Triage</span>
+            <Inbox className="h-4 w-4 text-blue-500 shrink-0" />
+          </div>
+          <div className="text-xl sm:text-2xl font-bold text-foreground">{newCount}</div>
+          <p className="text-[11px] sm:text-xs text-muted-foreground truncate mt-0.5">New tickets to review</p>
         </Card>
 
-        <Card className={criticalCount > 0 ? 'border-red-300 dark:border-red-800' : ''}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical</CardTitle>
-            <AlertTriangle className={`h-4 w-4 ${criticalCount > 0 ? 'text-red-600 animate-pulse' : 'text-muted-foreground'}`} />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${criticalCount > 0 ? 'text-red-600' : ''}`}>
-              {criticalCount}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Patient care affected</p>
-          </CardContent>
+        <Card className={`p-3 sm:p-4 shadow-xs ${criticalCount > 0 ? 'border-red-300 dark:border-red-800 bg-red-50/20 dark:bg-red-950/10' : ''}`}>
+          <div className="flex items-center justify-between gap-1 pb-1">
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Critical</span>
+            <AlertTriangle className={`h-4 w-4 shrink-0 ${criticalCount > 0 ? 'text-red-600 animate-pulse' : 'text-muted-foreground'}`} />
+          </div>
+          <div className={`text-xl sm:text-2xl font-bold ${criticalCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
+            {criticalCount}
+          </div>
+          <p className="text-[11px] sm:text-xs text-muted-foreground truncate mt-0.5">Patient care affected</p>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unaccepted</CardTitle>
-            <Timer className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{unacceptedCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">No engineer assigned yet</p>
-          </CardContent>
+        <Card className={`p-3 sm:p-4 shadow-xs ${unacceptedCount > 0 ? 'border-amber-200 dark:border-amber-800/60' : ''}`}>
+          <div className="flex items-center justify-between gap-1 pb-1">
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Unaccepted</span>
+            <Timer className="h-4 w-4 text-amber-500 shrink-0" />
+          </div>
+          <div className="text-xl sm:text-2xl font-bold text-foreground">{unacceptedCount}</div>
+          <p className="text-[11px] sm:text-xs text-muted-foreground truncate mt-0.5">No engineer assigned</p>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Wait</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${avgWaitHours > 24 ? 'text-red-600' : avgWaitHours > 4 ? 'text-amber-600' : ''}`}>
-              {avgWaitHours}h
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Average queue time</p>
-          </CardContent>
+        <Card className="p-3 sm:p-4 shadow-xs">
+          <div className="flex items-center justify-between gap-1 pb-1">
+            <span className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Avg Wait</span>
+            <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+          </div>
+          <div className={`text-xl sm:text-2xl font-bold ${avgWaitMinutes > 24 * 60 ? 'text-red-600' : avgWaitMinutes > 4 * 60 ? 'text-amber-600' : 'text-foreground'}`}>
+            {formatWaitTime(avgWaitMinutes)}
+          </div>
+          <p className="text-[11px] sm:text-xs text-muted-foreground truncate mt-0.5">Average queue time</p>
         </Card>
       </div>
 
       {/* Critical Alert */}
       {criticalCount > 0 && (
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0 animate-pulse" />
+        <div className="bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 rounded-xl p-3.5 flex items-start gap-3 shadow-xs">
+          <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0 animate-pulse" />
           <div>
-            <h3 className="font-semibold text-red-800 dark:text-red-200">
+            <h3 className="font-semibold text-sm text-red-800 dark:text-red-200">
               {criticalCount} Critical Ticket{criticalCount > 1 ? 's' : ''} Awaiting Triage
             </h3>
-            <p className="text-sm text-red-700 dark:text-red-300">
-              Tickets marked as affecting patient care require immediate attention. Please review and accept now.
+            <p className="text-xs text-red-700 dark:text-red-300 mt-0.5">
+              Tickets marked as affecting patient care require immediate attention. Review and assign immediately.
             </p>
           </div>
         </div>
       )}
 
-      <DataTable
-        data={tickets}
-        columns={columns}
-        searchKey="title"
-        searchPlaceholder="Filter queue..."
-      />
+      {/* Triage Queue Client View (Adaptive Mobile Cards & Desktop Table) */}
+      <TriageQueueView tickets={tickets as any} />
     </div>
   )
 }

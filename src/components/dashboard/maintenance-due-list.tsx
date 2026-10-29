@@ -38,19 +38,19 @@ export function MaintenanceDueList({ tasks, title }: MaintenanceDueListProps) {
           <div className="space-y-3">
             {tasks.map((task) => {
               let dueLabel = "Scheduled";
-              let dueColor = "bg-blue-100 text-blue-800 border-blue-200";
+              let dueColor = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800";
 
               if (task.dueDate) {
                 const date = new Date(task.dueDate);
                 if (isPast(date) && !isToday(date)) {
                   dueLabel = "Overdue";
-                  dueColor = "bg-red-100 text-red-800 border-red-200 font-medium";
+                  dueColor = "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800 font-medium";
                 } else if (isToday(date)) {
                   dueLabel = "Due Today";
-                  dueColor = "bg-orange-100 text-orange-800 border-orange-200 font-medium";
+                  dueColor = "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800 font-medium";
                 } else {
                   dueLabel = "Due Soon";
-                  dueColor = "bg-yellow-100 text-yellow-800 border-yellow-200";
+                  dueColor = "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800";
                 }
               }
 

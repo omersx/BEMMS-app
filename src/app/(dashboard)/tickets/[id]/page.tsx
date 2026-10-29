@@ -22,6 +22,7 @@ import { TicketSignaturesPanel } from "@/components/tickets/ticket-signatures-pa
 import { TicketReporterProfile } from "@/components/tickets/ticket-reporter-profile"
 import { WaitingForEngineerBanner, AcceptedByEngineerBanner } from "@/components/tickets/ticket-dispatch-status"
 import { TicketAutoRefresh } from "@/components/tickets/ticket-auto-refresh"
+import { TicketTimeDisplay } from "@/components/tickets/ticket-time-display"
 import { MapPin, Phone, User as UserIcon, Monitor, Clock, AlertTriangle, CheckCircle, ShieldCheck, AlertOctagon, Package, Info, Mail, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { use } from "react"
@@ -102,7 +103,17 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
       />
       <PageHeader
         title={ticket.title}
-        description={`Ticket ${ticket.ticketNumber}${reportedDate ? ` — Reported ${reportedDate} UTC` : ''}`}
+        description={
+          <span className="flex items-center gap-1.5 flex-wrap text-sm text-muted-foreground">
+            <span>Ticket {ticket.ticketNumber}</span>
+            {ticket.reportedAt && (
+              <>
+                <span>·</span>
+                <TicketTimeDisplay reportedAt={ticket.reportedAt} />
+              </>
+            )}
+          </span>
+        }
       >
         <div className="flex gap-2 items-center flex-wrap">
           <TicketPriorityBadge priority={ticket.priorityCode} />
@@ -400,7 +411,7 @@ async function TicketDetailContent({ ticketId }: { ticketId: string }) {
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{ticket.resolutionSummary}</p>
                     {ticket.resolvedAt && (
                       <p className="text-xs text-muted-foreground pt-2 border-t border-border/50">
-                        Resolved {new Date(ticket.resolvedAt).toISOString().replace('T', ' ').substring(0, 16)} UTC
+                        Resolved {new Date(ticket.resolvedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
                         {(ticket as any).resolvedByUser?.fullName ? ` by ${(ticket as any).resolvedByUser.fullName}` : ''}
                       </p>
                     )}

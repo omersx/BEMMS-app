@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { TicketPriorityBadge } from "@/components/tickets/ticket-badges";
 import { Ticket } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,41 +36,22 @@ export function TicketListCompact({ tickets, title, emptyMessage }: TicketListCo
             {emptyMessage}
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {tickets.map((ticket) => {
-              // Determine priority badge color
-              let priorityColor = "bg-gray-100 text-gray-800";
-              let priorityLabel = ticket.priorityCode;
-              if (ticket.priorityCode === 'p1_critical') {
-                priorityColor = "bg-red-100 text-red-800 border-red-200";
-                priorityLabel = "Critical";
-              } else if (ticket.priorityCode === 'p2_high') {
-                priorityColor = "bg-orange-100 text-orange-800 border-orange-200";
-                priorityLabel = "High";
-              } else if (ticket.priorityCode === 'p3_normal') {
-                priorityColor = "bg-blue-100 text-blue-800 border-blue-200";
-                priorityLabel = "Normal";
-              } else if (ticket.priorityCode === 'p4_low') {
-                priorityColor = "bg-gray-100 text-gray-800 border-gray-200";
-                priorityLabel = "Low";
-              }
-
               return (
                 <Link key={ticket.id} href={`/tickets/${ticket.id}`} className="block">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors gap-2 min-h-[44px]">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-primary">{ticket.ticketNumber}</span>
-                        <Badge variant="outline" className={cn("text-xs font-normal", priorityColor)}>
-                          {priorityLabel}
-                        </Badge>
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-primary font-mono">{ticket.ticketNumber}</span>
+                        <TicketPriorityBadge priority={ticket.priorityCode} />
                       </div>
                       <span className="text-sm font-medium line-clamp-1">{ticket.title}</span>
                       {ticket.deviceName && (
                         <span className="text-xs text-muted-foreground line-clamp-1">{ticket.deviceName}</span>
                       )}
                     </div>
-                    <div className="text-xs text-muted-foreground whitespace-nowrap self-start sm:self-auto">
+                    <div className="text-xs text-muted-foreground whitespace-nowrap self-start sm:self-auto shrink-0">
                       {formatDistanceToNow(new Date(ticket.reportedAt), { addSuffix: true })}
                     </div>
                   </div>

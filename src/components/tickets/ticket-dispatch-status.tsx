@@ -17,7 +17,7 @@ interface WaitingForEngineerBannerProps {
 function getWaitingDuration(reportedAt: Date | string): string {
   const now = Date.now();
   const reported = new Date(reportedAt).getTime();
-  const diffMs = now - reported;
+  const diffMs = Math.max(0, now - reported);
   const minutes = Math.floor(diffMs / (1000 * 60));
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
@@ -25,7 +25,7 @@ function getWaitingDuration(reportedAt: Date | string): string {
   if (days > 0) return `${days}d ${hours % 24}h`;
   if (hours > 0) return `${hours}h ${minutes % 60}m`;
   if (minutes > 0) return `${minutes}m`;
-  return 'just now';
+  return '< 1m';
 }
 
 /**
