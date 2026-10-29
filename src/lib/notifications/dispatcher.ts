@@ -3,7 +3,7 @@
 import { db } from '@/lib/db';
 import { notifications, users } from '@/lib/db/schema';
 import { userRoleAssignments, userAccessScopes, roles as rolesTable } from '@/lib/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, or, inArray, isNull } from 'drizzle-orm';
 import { sendPushToUser, type PushNotificationPayload } from './push-sender';
 
 // ── Types ────────────────────────────────────────────────────────────────────────
@@ -58,22 +58,35 @@ async function findScopedEngineers(
   organizationId: string,
   hospitalId: string,
 ): Promise<Array<{ id: string; fullName: string; notificationPreferences: UserNotificationPreferences }>> {
-  const BME_ROLE_CODES = ['BIOMED_ENG', 'BIOMED_TECH', 'BIOMED_MGR'];
+  const TARGET_ROLE_CODES = [
+    'BIOMED_ENG',
+    'biomed_eng',
+    'BIOMED_TECH',
+    'biomed_tech',
+    'BIOMED_MGR',
+    'biomed_mgr',
+    'SYS_ADMIN',
+    'sys_admin',
+    'ORG_ADMIN',
+    'org_admin',
+    'HOSP_ADMIN',
+    'hosp_admin',
+  ];
 
-  // Find role IDs for BME roles
-  const bmeRoles = await db.query.roles.findMany({
-    where: inArray(rolesTable.code, BME_ROLE_CODES),
+  // Find role IDs for target roles
+  const roles = await db.query.roles.findMany({
+    where: inArray(rolesTable.code, TARGET_ROLE_CODES),
     columns: { id: true, code: true },
   });
 
-  if (bmeRoles.length === 0) return [];
-  const bmeRoleIds = bmeRoles.map((r) => r.id);
+  if (roles.length === 0) return [];
+  const roleIds = roles.map((r) => r.id);
 
-  // Find users with BME role assignments
+  // Find users with target role assignments
   const roleAssignments = await db.query.userRoleAssignments.findMany({
     where: and(
-      inArray(userRoleAssignments.roleId, bmeRoleIds),
-      eq(userRoleAssignments.status, 'active'),
+      inArray(userRoleAssignments.roleId, roleIds),
+      or(eq(userRoleAssignments.status, 'active'), isNull(userRoleAssignments.status)),
     ),
     columns: { userId: true },
   });
@@ -89,17 +102,42 @@ async function findScopedEngineers(
       where: and(
         eq(userAccessScopes.userId, userId),
         eq(userAccessScopes.organizationId, organizationId),
-        eq(userAccessScopes.status, 'active'),
+        or(eq(userAccessScopes.status, 'active'), isNull(userAccessScopes.status)),
       ),
     });
 
     // User has access if they have an org-level scope, or a scope matching the hospital
-    const hasAccess = scopes.some(
+    const hasExplicitScope = scopes.some(
       (s) => !s.hospitalId || s.hospitalId === hospitalId,
     );
 
-    if (hasAccess) {
+    if (hasExplicitScope) {
       scopedUserIds.push(userId);
+    } else if (scopes.length === 0) {
+      // User has no custom hospital-restricted scopes, check if user belongs to this organization
+      const u = await db.query.users.findFirst({
+        where: and(eq(users.id, userId), eq(users.accountStatus, 'active')),
+        columns: { organizationId: true },
+      });
+      if (u && (!u.organizationId || u.organizationId === organizationId)) {
+        scopedUserIds.push(userId);
+      }
+    }
+  }
+
+  // Fallback: If no users matched explicit scopes, notify all active candidate users in this organization
+  if (scopedUserIds.length === 0) {
+    const orgUsers = await db.query.users.findMany({
+      where: and(
+        inArray(users.id, candidateUserIds),
+        eq(users.accountStatus, 'active'),
+      ),
+      columns: { id: true, organizationId: true },
+    });
+    for (const u of orgUsers) {
+      if (!u.organizationId || u.organizationId === organizationId) {
+        scopedUserIds.push(u.id);
+      }
     }
   }
 
@@ -317,11 +355,15 @@ export async function notifyReporterOnStatusChange(params: {
 }): Promise<void> {
   try {
     const STATUS_MESSAGES: Record<string, string> = {
-      in_progress: 'is being investigated',
+      in_progress: 'is being investigated by biomedical engineering',
+      in_triage: 'is being evaluated in the engineering triage queue',
+      acknowledged: 'has been received and acknowledged by engineering',
       waiting_requester: 'needs your response — please reply',
       waiting_parts_vendor: 'is waiting for parts to arrive',
-      resolved: 'has been resolved',
+      resolved: 'has been resolved and repair work is complete',
       closed: 'has been closed',
+      cancelled: 'has been cancelled',
+      reopened: 'has been reopened for further investigation',
     };
 
     const statusMsg = STATUS_MESSAGES[params.newStatus];
@@ -329,6 +371,8 @@ export async function notifyReporterOnStatusChange(params: {
 
     const notifTitle = params.newStatus === 'waiting_requester'
       ? '💬 Response needed on your ticket'
+      : params.newStatus === 'resolved'
+      ? `✅ Ticket Resolved: ${params.ticketNumber}`
       : `📋 Ticket update: ${params.ticketNumber}`;
     const notifBody = `Your ticket "${params.title}" ${statusMsg}.`;
 
@@ -344,7 +388,17 @@ export async function notifyReporterOnStatusChange(params: {
     });
 
     // Push for important statuses
-    const pushStatuses = ['waiting_requester', 'resolved'];
+    const pushStatuses = [
+      'waiting_requester',
+      'waiting_parts_vendor',
+      'resolved',
+      'closed',
+      'cancelled',
+      'in_progress',
+      'in_triage',
+      'acknowledged',
+      'reopened',
+    ];
     if (pushStatuses.includes(params.newStatus)) {
       const reporter = await db.query.users.findFirst({
         where: eq(users.id, params.reporterUserId),

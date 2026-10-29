@@ -1,10 +1,13 @@
 // BEMMS Service Worker
 // Handles: caching, push notifications, offline shell
 
-const CACHE_NAME = 'bemms-v3';
+const CACHE_NAME = 'bemms-v4';
 const STATIC_ASSETS = [
   '/login',
   '/dashboard',
+  '/sounds/notification.wav',
+  '/sounds/urgent.wav',
+  '/sounds/beep.wav',
 ];
 
 // Install — pre-cache shell
@@ -50,6 +53,9 @@ self.addEventListener('fetch', (event) => {
   if (
     url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/icons/') ||
+    url.pathname.startsWith('/sounds/') ||
+    url.pathname.endsWith('.wav') ||
+    url.pathname.endsWith('.mp3') ||
     url.pathname.endsWith('.png') ||
     url.pathname.endsWith('.ico')
   ) {

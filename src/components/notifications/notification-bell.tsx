@@ -4,7 +4,13 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bell, CheckCheck, TicketCheck, Wrench, Monitor, AlertTriangle } from 'lucide-react';
-import { playNotificationSound, playUrgentNotificationSound, unlockAudio } from '@/lib/utils/sound';
+import {
+  playNotificationSound,
+  playUrgentNotificationSound,
+  unlockAudio,
+  showNativeNotification,
+  requestNativeNotificationPermission,
+} from '@/lib/utils/sound';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -120,18 +126,22 @@ export function NotificationBell() {
     }
   }, [showNextToast]);
 
-  // Unlock Web Audio API on first user interaction for mobile device sound support
+  // Unlock Web Audio API & request native notification permission on first user interaction for desktop & mobile
   useEffect(() => {
     const handleFirstInteraction = () => {
       unlockAudio();
+      requestNativeNotificationPermission().catch(() => {});
       document.removeEventListener('click', handleFirstInteraction);
       document.removeEventListener('touchstart', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
     };
     document.addEventListener('click', handleFirstInteraction, { once: true });
     document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+    document.addEventListener('keydown', handleFirstInteraction, { once: true });
     return () => {
       document.removeEventListener('click', handleFirstInteraction);
       document.removeEventListener('touchstart', handleFirstInteraction);
+      document.removeEventListener('keydown', handleFirstInteraction);
     };
   }, []);
 
@@ -154,16 +164,23 @@ export function NotificationBell() {
           if (data.type === 'new_notifications' && Array.isArray(data.notifications)) {
             let hasCritical = false;
             data.notifications.forEach((notif: any) => {
+              const isItemCritical = notif.title?.includes('🚨') || notif.title?.includes('URGENT');
+              if (isItemCritical) {
+                hasCritical = true;
+              }
               queueToast({
                 title: notif.title,
                 body: notif.body,
                 actionUrl: notif.actionUrl || undefined,
                 notificationType: notif.notificationType,
               });
-              // Check if any notification is urgent/critical
-              if (notif.title?.includes('🚨') || notif.title?.includes('URGENT')) {
-                hasCritical = true;
-              }
+              // Show native OS notification (desktop notification center / mobile notification drawer)
+              showNativeNotification({
+                title: notif.title,
+                body: notif.body,
+                actionUrl: notif.actionUrl || undefined,
+                isCritical: isItemCritical,
+              }).catch(() => {});
             });
 
             // Play notification sound (urgent alarm for critical, chime for normal)
@@ -221,6 +238,14 @@ export function NotificationBell() {
           } else {
             playNotificationSound();
           }
+
+          // Show native OS notification if not in background
+          showNativeNotification({
+            title: notif.title,
+            body: notif.body,
+            actionUrl: notif.url || undefined,
+            isCritical,
+          }).catch(() => {});
 
           // Dispatch global event for live page sync
           if (typeof window !== 'undefined') {

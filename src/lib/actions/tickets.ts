@@ -357,7 +357,7 @@ export async function triageTicket(ticketId: string, input: unknown) {
     const ticket = await db.query.serviceTickets.findFirst({ where: eq(serviceTickets.id, ticketId) });
     if (!ticket) return { success: false, error: 'Ticket not found' };
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       // If an engineer is assigned, triage is complete → advance to in_progress
       // Otherwise, mark as in_triage (awaiting assignment)
       const newStatus = validated.data.assignedEngineerUserId ? 'in_progress' : 'in_triage';
@@ -405,6 +405,34 @@ export async function triageTicket(ticketId: string, input: unknown) {
 
       return { success: true, data: updated };
     });
+
+    // Notify assigned engineer and reporter on triage completion (fire-and-forget)
+    if (result.success && result.data) {
+      if (validated.data.assignedEngineerUserId) {
+        notifyEngineerOnAssign({
+          ticketId,
+          ticketNumber: ticket.ticketNumber,
+          title: ticket.title,
+          organizationId: ticket.organizationId,
+          assignedEngineerUserId: validated.data.assignedEngineerUserId,
+          assignerName: session.fullName || session.email || 'Biomedical Manager',
+        }).catch((err) => console.error('[Ticket] Engineer triage assignment notification failed:', err));
+      }
+
+      if (ticket.reportedByUserId) {
+        notifyReporterOnStatusChange({
+          ticketId,
+          ticketNumber: ticket.ticketNumber,
+          title: ticket.title,
+          organizationId: ticket.organizationId,
+          reporterUserId: ticket.reportedByUserId,
+          newStatus: validated.data.assignedEngineerUserId ? 'in_progress' : 'in_triage',
+          actorName: session.fullName || session.email || 'Biomedical Engineer',
+        }).catch((err) => console.error('[Ticket] Reporter triage notification failed:', err));
+      }
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -892,7 +920,7 @@ export async function cancelTicket(ticketId: string, input: unknown) {
       return { success: false, error: `Cannot cancel ticket in '${ticket.statusCode}' status` };
     }
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [updated] = await tx.update(serviceTickets)
         .set({
           statusCode: 'cancelled',
@@ -921,6 +949,20 @@ export async function cancelTicket(ticketId: string, input: unknown) {
 
       return { success: true, data: updated };
     });
+
+    if (result.success && ticket.reportedByUserId) {
+      notifyReporterOnStatusChange({
+        ticketId,
+        ticketNumber: ticket.ticketNumber,
+        title: ticket.title,
+        organizationId: ticket.organizationId,
+        reporterUserId: ticket.reportedByUserId,
+        newStatus: 'cancelled',
+        actorName: session.fullName || session.email || 'User',
+      }).catch((err) => console.error('[Ticket] Reporter cancel notification failed:', err));
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -1314,7 +1356,7 @@ export async function holdTicketForParts(ticketId: string, input: { waitingReaso
       return { success: false, error: 'Ticket must be in progress to put on hold for parts' };
     }
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [updated] = await tx.update(serviceTickets)
         .set({
           statusCode: 'waiting_parts_vendor',
@@ -1367,6 +1409,20 @@ export async function holdTicketForParts(ticketId: string, input: { waitingReaso
 
       return { success: true, data: updated };
     });
+
+    if (result.success && ticket.reportedByUserId) {
+      notifyReporterOnStatusChange({
+        ticketId,
+        ticketNumber: ticket.ticketNumber,
+        title: ticket.title,
+        organizationId: ticket.organizationId,
+        reporterUserId: ticket.reportedByUserId,
+        newStatus: 'waiting_parts_vendor',
+        actorName: session.fullName || session.email || 'Biomedical Engineer',
+      }).catch((err) => console.error('[Ticket] Reporter hold notification failed:', err));
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -1385,7 +1441,7 @@ export async function resumeTicketWork(ticketId: string) {
       return { success: false, error: `Cannot resume ticket from '${ticket.statusCode}' status` };
     }
 
-    return await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const [updated] = await tx.update(serviceTickets)
         .set({
           statusCode: 'in_progress',
@@ -1436,6 +1492,20 @@ export async function resumeTicketWork(ticketId: string) {
 
       return { success: true, data: updated };
     });
+
+    if (result.success && ticket.reportedByUserId) {
+      notifyReporterOnStatusChange({
+        ticketId,
+        ticketNumber: ticket.ticketNumber,
+        title: ticket.title,
+        organizationId: ticket.organizationId,
+        reporterUserId: ticket.reportedByUserId,
+        newStatus: 'in_progress',
+        actorName: session.fullName || session.email || 'Biomedical Engineer',
+      }).catch((err) => console.error('[Ticket] Reporter resume notification failed:', err));
+    }
+
+    return result;
   } catch (error: any) {
     return { success: false, error: error.message };
   }
