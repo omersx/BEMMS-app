@@ -125,7 +125,16 @@ export async function getTodayRound() {
     // No round exists — get engineer profile to determine if they should have one
     const profile = await getEngineerProfile(session.id);
     if (!profile) {
-      return { success: false, error: 'Engineer profile not found. Please set up your profile first.' };
+      const isManager = hasRole(session.roles, 'BIOMED_MGR', 'HOSP_ADMIN', 'ORG_ADMIN', 'SYS_ADMIN');
+      if (isManager) {
+        return {
+          success: true,
+          data: null,
+          canStart: false,
+          isManagerView: true,
+        };
+      }
+      return { success: false, error: 'Engineer profile not found. Please contact your manager.' };
     }
 
     // Check if today is a working day (allow if on_duty or workingDays includes today or workingDays is empty)
@@ -1003,6 +1012,7 @@ export async function getTeamRoundCompliance(dateStr?: string) {
         engineerId: p.userId,
         engineerName: p.user?.fullName || 'Unknown',
         hospitalName: p.hospital?.name || 'Unknown',
+        jobTitle: p.jobTitle || 'Biomedical Engineer',
         isWorkingDay,
         status,
         round: round || null,
