@@ -87,3 +87,99 @@
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
 }
+
+/* ── QR Scanner Custom Theme & Animations ───────────────────────────────── */
+@keyframes qr-scan-laser {
+  0% {
+    top: 6%;
+    opacity: 0.6;
+  }
+  50% {
+    top: 88%;
+    opacity: 1;
+  }
+  100% {
+    top: 6%;
+    opacity: 0.6;
+  }
+}
+
+.animate-scan-laser {
+  animation: qr-scan-laser 2.2s ease-in-out infinite;
+}
+
+/* Html5Qrcode Injected DOM overrides (for dark mode & mobile buttons) */
+#bemms-qr-reader {
+  border: none !important;
+  background: transparent !important;
+  width: 100% !important;
+}
+
+#bemms-qr-reader video {
+  border-radius: 0.75rem !important;
+  object-fit: cover !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 380px !important;
+}
+
+#bemms-qr-reader__scan_region {
+  background: transparent !important;
+  min-height: auto !important;
+}
+
+#bemms-qr-reader__dashboard_section {
+  padding: 0.5rem !important;
+  background: transparent !important;
+}
+
+#bemms-qr-reader__dashboard_section_csr {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+  align-items: center !important;
+}
+
+/* Fallback styling for any internal html5-qrcode buttons / selects */
+#bemms-qr-reader button,
+#bemms-qr-reader .html5-qrcode-element {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 500 !important;
+  border: none !important;
+  cursor: pointer !important;
+  font-size: 0.875rem !important;
+  transition: opacity 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#bemms-qr-reader button:hover {
+  opacity: 0.9 !important;
+}
+
+#bemms-qr-reader select {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--input)) !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  width: 100% !important;
+  max-width: 280px !important;
+}
+
+#bemms-qr-reader a {
+  color: hsl(var(--primary)) !important;
+  font-size: 0.875rem !important;
+  text-decoration: underline !important;
+  margin-top: 0.25rem !important;
+  display: inline-block !important;
+}
+
+#bemms-qr-reader img[alt="Info icon"] {
+  display: none !important;
+}
